@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>NetToolbox</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #050705; --surface: rgba(19,26,19,0.55); --surface-solid: #0d120d; --surface-2: #182018;
+    --line: rgba(140,150,140,0.22); --ink: #baf7c4; --ink-dim: #8a938a;
+    --accent: #33ff66; --accent2: #17b357;
+    --up: #4dff88; --down: #ff5555; --closed: #8a938a;
+    --grad: linear-gradient(135deg, var(--accent), var(--accent2));
+    --glow: rgba(51,255,102,.30); --on-accent: #04140a;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f5f1; --surface: rgba(255,255,255,0.75); --surface-solid: #ffffff; --surface-2: #e6ebe4;
+    --line: rgba(20,40,20,0.15); --ink: #0f3d1e; --ink-dim: #5c645c;
+    --accent: #0f7a39; --accent2: #158a42;
+    --up: #157a3a; --down: #c8323a; --closed: #5c645c;
+    --glow: rgba(15,122,57,.16); --on-accent: #ffffff;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Vazirmatn", -apple-system, "Segoe UI", Tahoma, sans-serif;
+    min-height: 100vh; position: relative; transition: background .2s ease, color .2s ease;
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 44px 44px; opacity: .5;
+    mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 0%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 0%, transparent 78%);
+  }
+
+  .app-shell { display: flex; min-height: 100vh; align-items: stretch; }
+
+  .sidebar {
+    width: 264px; flex-shrink: 0; border-inline-end: 1px solid var(--line);
+    display: flex; flex-direction: column; background: var(--surface);
+    max-height: 100vh; position: sticky; top: 0;
+  }
+  .sidebar-brand { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+  .brand .mark {
+    width: 32px; height: 32px; border-radius: 7px; background: var(--grad);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .brand .mark svg { width: 18px; height: 18px; stroke: var(--on-accent); }
+  .brand h1 { margin: 0; font-size: 16px; letter-spacing: .1px; font-weight: 700; }
+  .brand p {
+    margin: 2px 0 0; color: var(--ink-dim); font-size: 10.5px; letter-spacing: .03em;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  .toggles { display: flex; align-items: center; gap: 8px; }
+  #langToggle, #themeToggle {
+    display: flex; background: var(--surface-solid); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px; cursor: pointer; gap: 2px; font-size: 12px;
+  }
+  #langToggle span {
+    padding: 6px 13px; border-radius: 999px; color: var(--ink-dim); transition: all .15s;
+    font-family: ui-monospace, monospace; font-weight: 700; letter-spacing: .02em;
+  }
+  #langToggle span.active { background: var(--grad); color: var(--on-accent); }
+  #themeToggle button {
+    background: none; border: none; width: 27px; height: 27px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--ink-dim);
+    transition: all .15s;
+  }
+  #themeToggle button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  #themeToggle button.active { background: var(--grad); color: var(--on-accent); }
+
+  .side-nav { flex: 1; overflow-y: auto; padding: 10px 12px 20px; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title {
+    color: var(--ink-dim); font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .12em; padding: 14px 10px 6px;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  nav.side-nav button.tab {
+    display: flex; align-items: center; gap: 10px; width: 100%; position: relative;
+    background: none; border: none; color: var(--ink-dim); padding: 9px 10px 9px 14px;
+    cursor: pointer; font-size: 13.5px; border-radius: 6px; white-space: nowrap;
+    transition: color .15s, background .15s; text-align: inherit; margin-bottom: 1px;
+  }
+  [dir="rtl"] nav.side-nav button.tab { padding: 9px 14px 9px 10px; }
+  nav.side-nav button.tab svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.75; flex-shrink: 0; }
+  nav.side-nav button.tab:hover { color: var(--ink); background: var(--surface-2); }
+  nav.side-nav button.tab.active { color: var(--ink); background: var(--surface-2); font-weight: 600; }
+  nav.side-nav button.tab.active::before {
+    content: ""; position: absolute; inset-inline-start: 0; top: 6px; bottom: 6px;
+    width: 3px; border-radius: 2px; background: var(--grad);
+  }
+
+  .main-wrap { flex: 1; min-width: 0; }
+  main { padding: 26px 28px 60px; max-width: 1040px; margin: 0 auto; }
+  .panel { display: none; animation: fade .18s ease; }
+  .panel.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  input, select, textarea {
+    background: var(--surface-solid); border: 1px solid var(--line); color: var(--ink);
+    padding: 10px 13px; border-radius: 7px; font-size: 14px; font-family: inherit;
+  }
+  textarea { width: 100%; min-height: 110px; resize: vertical; font-family: ui-monospace, monospace; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  input { min-width: 220px; }
+  button.action {
+    background: var(--grad); border: none; color: var(--on-accent); padding: 10px 20px;
+    border-radius: 7px; cursor: pointer; font-size: 14px; font-weight: 600; letter-spacing: .01em;
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  button.action:hover:not(:disabled) { transform: translateY(-1px); opacity: .92; }
+  button.action.secondary { background: var(--surface-solid); border: 1px solid var(--line); color: var(--ink); }
+  button.action:disabled { opacity: 0.5; cursor: default; transform: none; }
+  label.chk { display: flex; align-items: center; gap: 6px; color: var(--ink-dim); font-size: 13px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .card {
+    background: var(--surface-solid); border: 1px solid var(--line); border-radius: 8px;
+    padding: 15px; transition: transform .15s ease, border-color .15s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card .ip { font-size: 15px; font-weight: 700; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .card .meta { color: var(--ink-dim); font-size: 12px; margin-top: 6px; line-height: 1.7; font-family: ui-monospace, monospace; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; margin-top: 9px; font-family: ui-monospace, monospace; }
+  .badge.up { background: color-mix(in srgb, var(--up) 16%, transparent); color: var(--up); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  th, td { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  [dir="ltr"] th, [dir="ltr"] td { text-align: left; }
+  th {
+    color: var(--ink-dim); font-weight: 600; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .06em; font-family: ui-monospace, monospace;
+  }
+  td { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .state-open { color: var(--up); font-weight: 600; }
+  .state-closed, .state-filtered { color: var(--closed); }
+
+  .empty { color: var(--ink-dim); font-size: 13.5px; padding: 4px 2px; }
+  .hint { color: var(--ink-dim); font-size: 12.5px; margin-top: -8px; margin-bottom: 14px; }
+  iframe.term { width: 100%; height: 65vh; border: 1px solid var(--line); border-radius: 8px; background: #000; }
+
+  .spin { display:inline-block; width:14px; height:14px; border:2px solid color-mix(in srgb, var(--on-accent) 40%, transparent); border-top-color: var(--on-accent); border-radius:50%; animation: sp 0.7s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
+  /* Instrument bezel — the one signature device: every tool reads like a labeled gauge. */
+  .bezel {
+    position: relative; border: 1px solid var(--line); border-radius: 3px;
+    padding: 20px; background: var(--surface); margin-top: 2px;
+  }
+  .bezel::before, .bezel::after {
+    content: ""; position: absolute; width: 12px; height: 12px;
+    border-color: var(--accent); border-style: solid; border-width: 0; opacity: .6;
+  }
+  .bezel::before { top: -1px; inset-inline-start: -1px; border-top-width: 2px; border-inline-start-width: 2px; }
+  .bezel::after { bottom: -1px; inset-inline-end: -1px; border-bottom-width: 2px; border-inline-end-width: 2px; }
+  .bezel-label {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .14em; color: var(--ink-dim); margin-bottom: 12px;
+  }
+
+  .status-box { padding: 26px; border-radius: 4px; text-align: center; border: 1px solid var(--line); }
+  .status-box.up { border-color: var(--up); }
+  .status-box.down { border-color: var(--down); }
+  .status-box .big { font-size: 26px; font-weight: 700; }
+  .status-box.up .big { color: var(--up); }
+  .status-box.down .big { color: var(--down); }
+  .status-box .sub { color: var(--ink-dim); font-size: 13px; margin-top: 8px; font-family: ui-monospace, monospace; }
+
+  .info-grid { display: grid; grid-template-columns: 130px 1fr; gap: 10px 16px; font-size: 14px; }
+  .info-grid .k { color: var(--ink-dim); font-family: ui-monospace, monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .info-grid .v { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .subdomain-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .subdomain-list span {
+    background: var(--surface-solid); border: 1px solid var(--line); padding: 5px 11px;
+    border-radius: 5px; font-size: 12px; font-family: ui-monospace, monospace;
+  }
+
+  .graph-wrap { display: flex; justify-content: center; padding: 4px 0 18px; }
+  .net-graph { width: 100%; max-width: 380px; height: auto; }
+  .net-graph .node-dot { animation: nodepulse 2.4s ease-in-out infinite; }
+  @keyframes nodepulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+  .mini-stats { display: flex; gap: 20px; margin-bottom: 10px; font-size: 13px; color: var(--ink-dim); font-family: ui-monospace, monospace; }
+  .mini-stats b { color: var(--ink); }
+  .ping-chart { width: 100%; height: 160px; }
+
+  .dns-block { margin-bottom: 10px; }
+  .dns-block:last-child { margin-bottom: 0; }
+  .dns-type {
+    color: var(--accent); font-weight: 700; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .05em; margin-bottom: 6px; font-family: ui-monospace, monospace;
+  }
+  .dns-value { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 13px; padding: 3px 0; word-break: break-all; }
+
+  .qc-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .qc-actions button {
+    background: var(--surface-solid); border: 1px solid var(--line); color: var(--ink-dim);
+    width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; transition: all .15s;
+  }
+  .qc-actions button:hover { color: var(--ink); border-color: var(--accent); }
+  .qc-actions button.qc-del:hover { color: var(--down); border-color: var(--down); }
+
+  [dir="rtl"] td, [dir="rtl"] .dns-value, [dir="rtl"] .card .ip, [dir="rtl"] .subdomain-list span,
+  [dir="rtl"] .info-grid .v, [dir="rtl"] .status-box .sub {
+    direction: ltr; text-align: right;
+  }
+
+  .sec-check { font-size: 20px; font-weight: 700; }
+  .sec-check.yes { color: var(--up); }
+  .sec-check.no { color: var(--down); }
+
+  @media (max-width: 760px) {
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; max-height: none; position: static; border-inline-end: none; border-bottom: 1px solid var(--line); }
+    .side-nav { display: flex; flex-wrap: wrap; }
+    .nav-group { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div>
+        <div>
+          <h1>NetToolbox</h1>
+          <p data-i18n="subtitle">ابزار شبکه و امنیت پرتابل</p>
+        </div>
+      </div>
+      <div class="toggles">
+        <div id="langToggle">
+          <span data-lang="fa">FA</span>
+          <span data-lang="en">EN</span>
+        </div>
+        <div id="themeToggle">
+          <button data-theme-choice="dark" title="Dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </button>
+          <button data-theme-choice="light" title="Light">
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="side-nav">
+      <div class="nav-group">
+        <div class="nav-group-title" data-i18n="cat_network">شبکه</div>
+        <button class="tab active" data-panel="discover">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+          <span data-i18n="nav_discover">کشف شبکه</span>
+        </button>
+        <button class="tab" data-panel="portscan">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span data-i18n="nav_portscan">اسکن پورت</span>
+        </button>
+        <button class="tab" data-panel="ping">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span data-i18n="nav_ping">پینگ</span>
+        </button>
+        <button class="tab" data-panel="traceroute">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+          <span data-i18n="nav_traceroute">Traceroute</span>
+        </button>
+        <button class="tab" data-panel="cdp">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          <span data-i18n="nav_neighbors">همسایه‌ها</span>
+        </button>
+        <button class="tab" data-panel="wifi">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+          <span data-i18n="nav_wifi">WiFi</span>
+        </button>
+        <button class="tab" data-panel="speedtest">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span data-i18n="nav_speedtest">Speed Test</span>
+        </button>
+        <button class="tab" data-panel="wol">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+          <span data-i18n="nav_wol">Wake-on-LAN</span>
+        </button>
+        <button class="tab" data-panel="arp">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span data-i18n="nav_arp">ARP Table</span>
+        </button>
+        <button class="tab" data-panel="bandwidth">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+          <span data-i18n="nav_bandwidth">پهنای‌باند</span>
+        </button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title" data-i18n="cat_security">امنیت</div>
+        <button class="tab" data-panel="dns">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"></path></svg>
+          <span data-i18n="nav_dns">DNS</span>
+        </button>
+        <button class="tab" data-panel="whatismyip">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <span data-i18n="nav_whatismyip">IP من</span>
+        </button>
+        <button class="tab" data-panel="domain">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          <span data-i18n="nav_domain">دامنه</span>
+        </button>
+        <button class="tab" data-panel="tls">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span data-i18n="nav_tls">SSL/TLS</span>
+        </button>
+        <button class="tab" data-panel="headers">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span data-i18n="nav_headers">HTTP Headers</span>
+        </button>
+        <button class="tab" data-panel="hashtools">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+          <span data-i18n="nav_hashtools">Hash/Base64/JWT</span>
+        </button>
+        <button class="tab" data-panel="geoip">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span data-i18n="nav_geoip">موقعیت IP</span>
+        </button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title" data-i18n="cat_utility">ابزار</div>
+        <button class="tab" data-panel="qrcode">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><line x1="14" y1="14" x2="14" y2="21"></line><line x1="21" y1="14" x2="21" y2="21"></line><line x1="14" y1="17.5" x2="21" y2="17.5"></line></svg>
+          <span data-i18n="nav_qrcode">QR Code</span>
+        </button>
+        <button class="tab" data-panel="quickconnect">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path><path d="M9 21v-4h6v4"></path><path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01"></path></svg>
+          <span data-i18n="nav_quickconnect">اتصال سریع</span>
+        </button>
+        <button class="tab" data-panel="terminal">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          <span data-i18n="nav_terminal">SSH/Telnet</span>
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="main-wrap">
+    <main>
+
+      <section id="discover" class="panel active">
+        <div class="row">
+          <select id="ifaceSelect"></select>
+          <input id="subnetInput" placeholder="192.168.1.0/24" />
+          <button class="action" id="discoverBtn" data-i18n="discover_btn">اسکن شبکه</button>
+        </div>
+        <div class="hint" data-i18n="discover_hint">اینترفیس رو انتخاب کنید تا ساب‌نتش خودکار پر بشه، یا دستی وارد کنید.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_discover">کشف شبکه</div>
+          <div id="discoverResult" class="empty" data-i18n="empty_generic">هنوز اسکنی انجام نشده.</div>
+        </div>
+      </section>
+
+      <section id="portscan" class="panel">
+        <div class="row">
+          <input id="ipInput" placeholder="192.168.1.10" />
+          <input id="portsInput" data-i18n-placeholder="ports_placeholder" placeholder="22,80,443 یا 1-1000 (خالی = 1000 پورت پرکاربرد)" style="min-width:320px" />
+          <label class="chk"><input type="checkbox" id="allPortsChk"> <span data-i18n="allports_label">همه 65535 پورت (کند)</span></label>
+          <button class="action" id="portscanBtn" data-i18n="portscan_btn">اسکن پورت</button>
+        </div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_portscan">اسکن پورت</div>
+          <div id="portscanResult" class="empty" data-i18n="empty_generic">هنوز اسکنی انجام نشده.</div>
+        </div>
+      </section>
+
+      <section id="ping" class="panel">
+        <div class="row">
+          <input id="pingInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com" />
+          <button class="action" id="pingBtn" data-i18n="ping_btn">پینگ</button>
+          <button class="action secondary" id="pingMonitorBtn" data-i18n="start_monitor">شروع مانیتور زنده</button>
+        </div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_ping">پینگ</div>
+          <div id="pingResult" class="empty" data-i18n="ping_empty">هنوز پینگی نزدید.</div>
+        </div>
+        <div id="pingMonitorChart"></div>
+      </section>
+
+      <section id="traceroute" class="panel">
+        <div class="row">
+          <input id="tracerouteInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com" />
+          <button class="action" id="tracerouteBtn" data-i18n="nav_traceroute">Traceroute</button>
+        </div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_traceroute">Traceroute</div>
+          <div id="tracerouteResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+      </section>
+
+      <section id="cdp" class="panel">
+        <div class="row">
+          <select id="neighborProto">
+            <option value="cdp">CDP (Cisco)</option>
+            <option value="lldp">LLDP (Standard)</option>
+          </select>
+          <select id="cdpIfaceSelect"></select>
+          <input id="cdpDuration" type="number" value="15" min="3" max="60" style="min-width:80px" />
+          <button class="action" id="cdpBtn" data-i18n="cdp_btn">شنیدن (ثانیه)</button>
+        </div>
+        <div class="hint" data-i18n="cdp_hint">کابل رو مستقیم به سوییچ وصل کنید. سوییچ‌ها معمولاً هر ۳۰ تا ۶۰ ثانیه یک بار پیام تبلیغ می‌کنند — عدد رو تا ۶۰ بالا ببرید اگر چیزی نگرفت.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_neighbors">همسایه‌ها</div>
+          <div id="cdpResult" class="empty" data-i18n="empty_generic">هنوز شنیده نشده.</div>
+        </div>
+      </section>
+
+      <section id="wifi" class="panel">
+        <div class="row">
+          <select id="wifiIfaceSelect"></select>
+          <button class="action" id="wifiScanBtn" data-i18n="wifi_scan_btn">اسکن WiFi</button>
+        </div>
+        <div class="hint" data-i18n="wifi_hint">فقط اگه از طریق WiFi وصلید کار می‌کنه — شبکه‌های اطراف رو با قدرت سیگنال نشون می‌ده.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_wifi">WiFi</div>
+          <div id="wifiResult" class="empty" data-i18n="empty_generic">هنوز اسکنی انجام نشده.</div>
+        </div>
+      </section>
+
+      <section id="speedtest" class="panel">
+        <div class="row">
+          <button class="action" id="speedtestBtn" data-i18n="speedtest_btn">شروع تست سرعت</button>
+        </div>
+        <div class="hint" data-i18n="speedtest_hint">حدود ۲۰-۳۰ ثانیه طول می‌کشه (دانلود/آپلود واقعی از سرورهای Cloudflare).</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_speedtest">Speed Test</div>
+          <div id="speedtestResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+      </section>
+
+      <section id="wol" class="panel">
+        <div class="row">
+          <input id="wolMac" placeholder="AA:BB:CC:DD:EE:FF" />
+          <input id="wolBroadcast" placeholder="255.255.255.255" value="255.255.255.255" />
+          <button class="action" id="wolBtn" data-i18n="wol_btn">فرستادن Magic Packet</button>
+        </div>
+        <div class="hint" data-i18n="wol_hint">دستگاه مقصد باید Wake-on-LAN رو توی BIOS/تنظیمات شبکه فعال داشته باشه و به همون شبکه‌ی فیزیکی وصل باشه.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_wol">Wake-on-LAN</div>
+          <div id="wolResult" class="empty" data-i18n="empty_generic">هنوز چیزی فرستاده نشده.</div>
+        </div>
+      </section>
+
+      <section id="arp" class="panel">
+        <div class="row">
+          <button class="action" id="arpBtn" data-i18n="arp_btn">نمایش ARP Cache</button>
+        </div>
+        <div class="hint" data-i18n="arp_hint">فقط کشی که سیستم از قبل داره رو نشون می‌ده (بدون اسکن فعال) — سریع و بی‌سروصداست.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_arp">ARP Table</div>
+          <div id="arpResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+      </section>
+
+      <section id="bandwidth" class="panel">
+        <div class="row">
+          <select id="bwIfaceSelect"></select>
+          <button class="action" id="bwStartBtn" data-i18n="start_monitor">شروع مانیتور زنده</button>
+        </div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_bandwidth">پهنای‌باند</div>
+          <div id="bwChart"></div>
+        </div>
+      </section>
+
+      <section id="dns" class="panel">
+        <div class="row">
+          <input id="dnsInput" placeholder="example.com" />
+          <button class="action" id="dnsBtn" data-i18n="dns_btn">جستجوی DNS</button>
+        </div>
+        <div class="hint" data-i18n="dns_hint">رکوردهای A، AAAA، MX، TXT، NS، CNAME و SOA رو یکجا نشون می‌ده.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_dns">DNS</div>
+          <div id="dnsResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+      </section>
+
+      <section id="whatismyip" class="panel">
+        <div class="row">
+          <button class="action" id="whatismyipBtn" data-i18n="whatismyip_btn">دریافت IP عمومی من</button>
+        </div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_whatismyip">IP من</div>
+          <div id="whatismyipResult" class="empty" data-i18n="empty_generic">هنوز چک نشده.</div>
+        </div>
+      </section>
+
+      <section id="domain" class="panel">
+        <div class="row">
+          <input id="domainInput" placeholder="example.com" />
+          <button class="action" id="domainBtn" data-i18n="domain_btn">بررسی دامنه</button>
+        </div>
+        <div class="hint" data-i18n="domain_hint">آی‌پی اصلی دامنه (DNS A record) + زیردامنه‌های شناخته‌شده از روی گواهی‌های SSL عمومی (crt.sh) — کاملاً passive، چیزی مستقیم به هدف ارسال نمی‌شه.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_domain">دامنه</div>
+          <div id="domainResult" class="empty" data-i18n="empty_generic">هنوز بررسی نشده.</div>
+        </div>
+      </section>
+
+      <section id="tls" class="panel">
+        <div class="row">
+          <input id="tlsInput" placeholder="example.com" />
+          <input id="tlsPort" type="number" value="443" style="min-width:100px" />
+          <button class="action" id="tlsBtn" data-i18n="tls_btn">بررسی گواهی</button>
+        </div>
+        <div class="hint" data-i18n="tls_hint">اطلاعات گواهی SSL/TLS رو حتی اگه نامعتبر/self-signed باشه نشون می‌ده — برای چک‌کردن سرورهای داخلی هم کار می‌کنه.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_tls">SSL/TLS</div>
+          <div id="tlsResult" class="empty" data-i18n="empty_generic">هنوز بررسی نشده.</div>
+        </div>
+      </section>
+
+      <section id="headers" class="panel">
+        <div class="row">
+          <input id="headersInput" placeholder="example.com" />
+          <button class="action" id="headersBtn" data-i18n="headers_btn">بررسی هدرها</button>
+        </div>
+        <div class="hint" data-i18n="headers_hint">هدرهای امنیتی مهم (HSTS، CSP، X-Frame-Options و...) رو چک می‌کنه و کل هدرهای HTTP رو نشون می‌ده.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_headers">HTTP Headers</div>
+          <div id="headersResult" class="empty" data-i18n="empty_generic">هنوز بررسی نشده.</div>
+        </div>
+      </section>
+
+      <section id="hashtools" class="panel">
+        <div class="row">
+          <select id="hashMode">
+            <option value="md5">MD5</option>
+            <option value="sha1">SHA-1</option>
+            <option value="sha256">SHA-256</option>
+            <option value="sha384">SHA-384</option>
+            <option value="sha512">SHA-512</option>
+            <option value="b64enc">Base64 Encode</option>
+            <option value="b64dec">Base64 Decode</option>
+            <option value="jwt">JWT Decode</option>
+          </select>
+        </div>
+        <div class="row">
+          <textarea id="hashInput" data-i18n-placeholder="hash_input_placeholder" placeholder="متن یا توکن رو اینجا وارد کنید..."></textarea>
+        </div>
+        <div class="row">
+          <button class="action" id="hashRunBtn" data-i18n="hash_run_btn">اجرا</button>
+        </div>
+        <div class="hint" data-i18n="hash_hint">همه‌چیز توی همین مرورگر انجام می‌شه، هیچی به سرور فرستاده نمی‌شه.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_hashtools">Hash/Base64/JWT</div>
+          <div id="hashResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+      </section>
+
+      <section id="geoip" class="panel">
+        <div class="row">
+          <input id="geoipInput" placeholder="1.1.1.1" />
+          <button class="action" id="geoipBtn" data-i18n="geoip_btn">پیدا کردن موقعیت</button>
+        </div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_geoip">موقعیت IP</div>
+          <div id="geoipResult" class="empty" data-i18n="empty_generic">هنوز چک نشده.</div>
+        </div>
+      </section>
+
+      <section id="qrcode" class="panel">
+        <div class="row">
+          <input id="qrInput" data-i18n-placeholder="qr_input_placeholder" placeholder="IP، URL یا هر متنی..." style="min-width:320px" />
+          <button class="action" id="qrBtn" data-i18n="qr_btn">ساخت QR</button>
+        </div>
+        <div class="hint" data-i18n="qr_hint">برای اشتراک سریع IP، آدرس داشبورد یا هر متنی با موبایل — کاملاً client-side.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_qrcode">QR Code</div>
+          <div id="qrResult" class="empty" data-i18n="empty_generic">هنوز ساخته نشده.</div>
+        </div>
+      </section>
+
+      <section id="quickconnect" class="panel">
+        <div class="row">
+          <input id="qcName" data-i18n-placeholder="qc_name_placeholder" placeholder="اسم (مثلاً سوییچ اصلی)" style="min-width:180px" />
+          <input id="qcHost" data-i18n-placeholder="qc_host_placeholder" placeholder="IP یا host" style="min-width:180px" />
+          <button class="action" id="qcAddBtn" data-i18n="qc_add_btn">افزودن</button>
+        </div>
+        <div class="hint" data-i18n="qc_hint">میزبان‌های پرکاربردتون رو ذخیره کنید و با یه کلیک پینگ/اسکن/SSH/Telnet بزنید. فقط توی همین مرورگر ذخیره می‌شه.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_quickconnect">اتصال سریع</div>
+          <div id="qcList" class="empty" data-i18n="qc_empty">هنوز میزبانی ذخیره نشده.</div>
+        </div>
+      </section>
+
+      <section id="terminal" class="panel">
+        <div class="row">
+          <select id="termProto">
+            <option value="ssh">SSH</option>
+            <option value="telnet">Telnet</option>
+          </select>
+          <input id="termHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" />
+          <input id="termPort" data-i18n-placeholder="term_port_placeholder" placeholder="پورت (پیش‌فرض 22/23)" style="min-width:160px" />
+          <input id="termUser" data-i18n-placeholder="term_user_placeholder" placeholder="یوزرنیم (فقط SSH)" />
+          <button class="action" id="termConnectBtn" data-i18n="term_connect_btn">اتصال</button>
+          <button class="action secondary" id="termBlankBtn" data-i18n="term_blank_btn">ترمینال خالی</button>
+        </div>
+        <div class="hint" data-i18n="term_hint">پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید.</div>
+        <div id="termPlaceholder" class="empty" data-i18n="term_placeholder">فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.</div>
+        <iframe class="term" id="termFrame" style="display:none"></iframe>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="qrcode.js"></script>
+<script>
+qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+const TTYD_BASE = "http://127.0.0.1:7681/";
+
+function esc(s) {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+const translations = {
+  fa: {
+    subtitle: "ابزار شبکه و امنیت پرتابل",
+    cat_network: "شبکه", cat_security: "امنیت", cat_utility: "ابزار",
+    nav_discover: "کشف شبکه", nav_portscan: "اسکن پورت", nav_ping: "پینگ",
+    nav_traceroute: "Traceroute", nav_neighbors: "همسایه‌ها", nav_wifi: "WiFi",
+    nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
+    nav_arp: "ARP Table", nav_bandwidth: "پهنای‌باند",
+    nav_dns: "DNS", nav_whatismyip: "IP من", nav_domain: "دامنه",
+    nav_tls: "SSL/TLS", nav_headers: "HTTP Headers", nav_hashtools: "Hash/Base64/JWT",
+    nav_geoip: "موقعیت IP",
+    nav_quickconnect: "اتصال سریع", nav_terminal: "SSH/Telnet", nav_qrcode: "QR Code",
+    discover_btn: "اسکن شبکه",
+    discover_hint: "اینترفیس رو انتخاب کنید تا ساب‌نتش خودکار پر بشه، یا دستی وارد کنید.",
+    empty_generic: "هنوز اجرا نشده.",
+    none_found: "چیزی پیدا نشد.",
+    running: "در حال اجرا...",
+    error_prefix: "خطا: ",
+    card_mac: "MAC", card_vendor: "Vendor", card_host: "Host",
+    badge_online: "آنلاین",
+    ports_placeholder: "22,80,443 یا 1-1000 (خالی = 1000 پورت پرکاربرد)",
+    allports_label: "همه 65535 پورت (کند)",
+    portscan_btn: "اسکن پورت",
+    th_port: "پورت", th_protocol: "پروتکل", th_state: "وضعیت", th_service: "سرویس",
+    host_placeholder: "192.168.1.1 یا example.com",
+    ping_btn: "پینگ", ping_empty: "هنوز پینگی نزدید.",
+    status_online: "آنلاین ✓", status_offline: "آفلاین ✗",
+    loss_label: "packet loss", avg_label: "میانگین", last_rtt: "آخرین RTT",
+    start_monitor: "شروع مانیتور زنده", stop_monitor: "توقف مانیتور",
+    traceroute_running: "در حال ردیابی مسیر...",
+    th_hop: "Hop", th_detail: "جزئیات",
+    cdp_btn: "شنیدن (ثانیه)",
+    cdp_hint: "کابل رو مستقیم به سوییچ وصل کنید. سوییچ‌ها معمولاً هر ۳۰ تا ۶۰ ثانیه یک بار پیام تبلیغ می‌کنند — عدد رو تا ۶۰ بالا ببرید اگر چیزی نگرفت.",
+    card_platform: "Platform", card_port: "Port",
+    dns_btn: "جستجوی DNS",
+    dns_hint: "رکوردهای A، AAAA، MX، TXT، NS، CNAME و SOA رو یکجا نشون می‌ده.",
+    whatismyip_btn: "دریافت IP عمومی من",
+    info_ip: "IP", info_city: "شهر", info_region: "منطقه", info_country: "کشور", info_isp: "ISP/Org",
+    domain_btn: "بررسی دامنه",
+    domain_hint: "آی‌پی اصلی دامنه (DNS A record) + زیردامنه‌های شناخته‌شده از روی گواهی‌های SSL عمومی (crt.sh) — کاملاً passive، چیزی مستقیم به هدف ارسال نمی‌شه.",
+    domain_checking: "در حال بررسی...",
+    info_domain: "دامنه", info_mainip: "IP اصلی", info_subdomains: "زیردامنه‌ها",
+    domain_found: "مورد پیدا شد",
+    wifi_scan_btn: "اسکن WiFi",
+    wifi_hint: "فقط اگه از طریق WiFi وصلید کار می‌کنه — شبکه‌های اطراف رو با قدرت سیگنال نشون می‌ده.",
+    no_wifi_iface: "اینترفیس بی‌سیمی پیدا نشد",
+    th_signal: "سیگنال", th_freq: "فرکانس",
+    speedtest_btn: "شروع تست سرعت",
+    speedtest_hint: "حدود ۲۰-۳۰ ثانیه طول می‌کشه (دانلود/آپلود واقعی از سرورهای Cloudflare).",
+    speedtest_running: "در حال تست...",
+    download_label: "دانلود", upload_label: "آپلود",
+    wol_btn: "فرستادن Magic Packet",
+    wol_hint: "دستگاه مقصد باید Wake-on-LAN رو توی BIOS/تنظیمات شبکه فعال داشته باشه و به همون شبکه‌ی فیزیکی وصل باشه.",
+    wol_sent: "پکت فرستاده شد",
+    arp_btn: "نمایش ARP Cache",
+    arp_hint: "فقط کشی که سیستم از قبل داره رو نشون می‌ده (بدون اسکن فعال) — سریع و بی‌سروصداست.",
+    th_ip: "IP", th_mac: "MAC", th_iface: "اینترفیس", th_state: "وضعیت",
+    bw_rx: "دریافت (RX)", bw_tx: "ارسال (TX)",
+    geoip_btn: "پیدا کردن موقعیت",
+    qr_btn: "ساخت QR", qr_input_placeholder: "IP، URL یا هر متنی...",
+    qr_hint: "برای اشتراک سریع IP، آدرس داشبورد یا هر متنی با موبایل — کاملاً client-side.",
+    tls_btn: "بررسی گواهی",
+    tls_hint: "اطلاعات گواهی SSL/TLS رو حتی اگه نامعتبر/self-signed باشه نشون می‌ده — برای چک‌کردن سرورهای داخلی هم کار می‌کنه.",
+    tls_trusted: "معتبر ✓", tls_untrusted: "نامعتبر ✗",
+    tls_subject: "Subject", tls_issuer: "Issuer", tls_valid_from: "معتبر از",
+    tls_valid_until: "معتبر تا", tls_days_left: "روز مونده",
+    headers_btn: "بررسی هدرها",
+    headers_hint: "هدرهای امنیتی مهم (HSTS، CSP، X-Frame-Options و...) رو چک می‌کنه و کل هدرهای HTTP رو نشون می‌ده.",
+    hash_input_placeholder: "متن یا توکن رو اینجا وارد کنید...",
+    hash_run_btn: "اجرا",
+    hash_hint: "همه‌چیز توی همین مرورگر انجام می‌شه، هیچی به سرور فرستاده نمی‌شه.",
+    qc_name_placeholder: "اسم (مثلاً سوییچ اصلی)", qc_host_placeholder: "IP یا host",
+    qc_add_btn: "افزودن",
+    qc_hint: "میزبان‌های پرکاربردتون رو ذخیره کنید و با یه کلیک پینگ/اسکن/SSH/Telnet بزنید. فقط توی همین مرورگر ذخیره می‌شه.",
+    qc_empty: "هنوز میزبانی ذخیره نشده.",
+    term_host_placeholder: "host یا IP", term_port_placeholder: "پورت (پیش‌فرض 22/23)",
+    term_user_placeholder: "یوزرنیم (فقط SSH)", term_connect_btn: "اتصال", term_blank_btn: "ترمینال خالی",
+    term_hint: "پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید.",
+    term_placeholder: "فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.",
+    invalid_host: "Host نامعتبر",
+    you_node: "شما",
+  },
+  en: {
+    subtitle: "Portable network & security toolkit",
+    cat_network: "Network", cat_security: "Security", cat_utility: "Utility",
+    nav_discover: "Discover", nav_portscan: "Port Scan", nav_ping: "Ping",
+    nav_traceroute: "Traceroute", nav_neighbors: "Neighbors", nav_wifi: "WiFi",
+    nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
+    nav_arp: "ARP Table", nav_bandwidth: "Bandwidth",
+    nav_dns: "DNS", nav_whatismyip: "My IP", nav_domain: "Domain",
+    nav_tls: "SSL/TLS", nav_headers: "HTTP Headers", nav_hashtools: "Hash/Base64/JWT",
+    nav_geoip: "IP Geolocation",
+    nav_quickconnect: "Quick Connect", nav_terminal: "SSH/Telnet", nav_qrcode: "QR Code",
+    discover_btn: "Scan network",
+    discover_hint: "Pick an interface to auto-fill its subnet, or type one manually.",
+    empty_generic: "Nothing run yet.",
+    none_found: "Nothing found.",
+    running: "Running...",
+    error_prefix: "Error: ",
+    card_mac: "MAC", card_vendor: "Vendor", card_host: "Host",
+    badge_online: "Online",
+    ports_placeholder: "22,80,443 or 1-1000 (empty = top 1000 ports)",
+    allports_label: "All 65535 ports (slow)",
+    portscan_btn: "Scan ports",
+    th_port: "Port", th_protocol: "Protocol", th_state: "State", th_service: "Service",
+    host_placeholder: "192.168.1.1 or example.com",
+    ping_btn: "Ping", ping_empty: "No ping yet.",
+    status_online: "Online ✓", status_offline: "Offline ✗",
+    loss_label: "packet loss", avg_label: "avg", last_rtt: "Last RTT",
+    start_monitor: "Start live monitor", stop_monitor: "Stop monitor",
+    traceroute_running: "Tracing route...",
+    th_hop: "Hop", th_detail: "Detail",
+    cdp_btn: "Listen (sec)",
+    cdp_hint: "Plug the cable directly into the switch. Switches usually advertise every 30-60s — raise the duration if you get nothing.",
+    card_platform: "Platform", card_port: "Port",
+    dns_btn: "DNS lookup",
+    dns_hint: "Shows A, AAAA, MX, TXT, NS, CNAME and SOA records at once.",
+    whatismyip_btn: "Get my public IP",
+    info_ip: "IP", info_city: "City", info_region: "Region", info_country: "Country", info_isp: "ISP/Org",
+    domain_btn: "Check domain",
+    domain_hint: "Main DNS A record + known subdomains from public SSL certificates (crt.sh) — fully passive, nothing is sent to the target.",
+    domain_checking: "Checking...",
+    info_domain: "Domain", info_mainip: "Main IP", info_subdomains: "Subdomains",
+    domain_found: "found",
+    wifi_scan_btn: "Scan WiFi",
+    wifi_hint: "Only works if connected via WiFi — shows nearby networks with signal strength.",
+    no_wifi_iface: "No wireless interface found",
+    th_signal: "Signal", th_freq: "Frequency",
+    speedtest_btn: "Start speed test",
+    speedtest_hint: "Takes about 20-30s (real download/upload against Cloudflare servers).",
+    speedtest_running: "Testing...",
+    download_label: "Download", upload_label: "Upload",
+    wol_btn: "Send Magic Packet",
+    wol_hint: "The target device must have Wake-on-LAN enabled in BIOS/network settings and be on the same physical network.",
+    wol_sent: "Packet sent",
+    arp_btn: "Show ARP cache",
+    arp_hint: "Shows only what the system already knows (no active scan) — fast and quiet.",
+    th_ip: "IP", th_mac: "MAC", th_iface: "Interface", th_state: "State",
+    bw_rx: "Download (RX)", bw_tx: "Upload (TX)",
+    geoip_btn: "Locate IP",
+    qr_btn: "Generate QR", qr_input_placeholder: "IP, URL, or any text...",
+    qr_hint: "Quickly share an IP, the dashboard address, or any text with a phone — fully client-side.",
+    tls_btn: "Check certificate",
+    tls_hint: "Shows SSL/TLS certificate info even if invalid/self-signed — works for checking internal servers too.",
+    tls_trusted: "Trusted ✓", tls_untrusted: "Untrusted ✗",
+    tls_subject: "Subject", tls_issuer: "Issuer", tls_valid_from: "Valid from",
+    tls_valid_until: "Valid until", tls_days_left: "days left",
+    headers_btn: "Check headers",
+    headers_hint: "Checks key security headers (HSTS, CSP, X-Frame-Options...) and shows all HTTP headers.",
+    hash_input_placeholder: "Enter text or a token here...",
+    hash_run_btn: "Run",
+    hash_hint: "Everything runs in this browser, nothing is sent to the server.",
+    qc_name_placeholder: "Name (e.g. Core switch)", qc_host_placeholder: "IP or host",
+    qc_add_btn: "Add",
+    qc_hint: "Save frequently-used hosts and ping/scan/SSH/Telnet them in one click. Stored only in this browser.",
+    qc_empty: "No saved hosts yet.",
+    term_host_placeholder: "host or IP", term_port_placeholder: "port (default 22/23)",
+    term_user_placeholder: "username (SSH only)", term_connect_btn: "Connect", term_blank_btn: "Blank shell",
+    term_hint: "Type your password inside the terminal after connecting.",
+    term_placeholder: "Fill the form above and hit \"Connect\", or \"Blank shell\" for a plain shell.",
+    invalid_host: "Invalid host",
+    you_node: "YOU",
+  }
+};
+
+let lang = localStorage.getItem("nettoolbox_lang") || "fa";
+function t(key) { return translations[lang][key] || key; }
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.getAttribute("data-i18n"));
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+  });
+  document.querySelectorAll("#langToggle span").forEach(s => {
+    s.classList.toggle("active", s.dataset.lang === lang);
+  });
+  localStorage.setItem("nettoolbox_lang", lang);
+}
+document.querySelectorAll("#langToggle span").forEach(s => {
+  s.onclick = () => { lang = s.dataset.lang; applyLang(); };
+});
+applyLang();
+
+let theme = localStorage.getItem("nettoolbox_theme") ||
+  (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+function applyTheme() {
+  document.documentElement.setAttribute("data-theme", theme);
+  document.querySelectorAll("#themeToggle button").forEach(b => {
+    b.classList.toggle("active", b.dataset.themeChoice === theme);
+  });
+  localStorage.setItem("nettoolbox_theme", theme);
+}
+document.querySelectorAll("#themeToggle button").forEach(b => {
+  b.onclick = () => { theme = b.dataset.themeChoice; applyTheme(); };
+});
+applyTheme();
+
+const tabs = document.querySelectorAll("nav.side-nav .tab");
+function switchTab(id) {
+  tabs.forEach(x => x.classList.toggle("active", x.dataset.panel === id));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === id));
+}
+tabs.forEach(tb => tb.onclick = () => switchTab(tb.dataset.panel));
+
+async function loadInterfaces() {
+  const res = await fetch("/api/interfaces");
+  const ifaces = await res.json();
+  const selects = [document.getElementById("ifaceSelect"), document.getElementById("cdpIfaceSelect")];
+  selects.forEach(sel => sel.innerHTML = "");
+  ifaces.forEach(iface => {
+    selects.forEach(sel => {
+      const opt = document.createElement("option");
+      opt.value = iface.name;
+      opt.textContent = `${iface.name} (${iface.addrs.join(", ") || iface.state})`;
+      sel.appendChild(opt);
+    });
+  });
+  if (ifaces.length) {
+    const first = ifaces[0].addrs.find(a => a.includes("."));
+    if (first) {
+      const [ip, cidr] = first.split("/");
+      const base = ip.split(".").slice(0,3).join(".") + ".0";
+      document.getElementById("subnetInput").value = `${base}/${cidr || 24}`;
+    }
+  }
+}
+loadInterfaces();
+
+async function loadWifiInterfaces() {
+  const res = await fetch("/api/wifi/interfaces");
+  const ifaces = await res.json();
+  const sel = document.getElementById("wifiIfaceSelect");
+  const btn = document.getElementById("wifiScanBtn");
+  sel.innerHTML = "";
+  if (!ifaces.length) {
+    sel.innerHTML = `<option value="">${t("no_wifi_iface")}</option>`;
+    btn.disabled = true;
+  } else {
+    btn.disabled = false;
+    ifaces.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  }
+}
+loadWifiInterfaces();
+
+function setLoading(btn, loading) {
+  btn.disabled = loading;
+  btn.dataset.label = btn.dataset.label || btn.textContent;
+  btn.innerHTML = loading ? `<span class="spin"></span> ${t("running")}` : btn.dataset.label;
+}
+
+function renderGraph(hosts) {
+  const size = 340, cx = size/2, cy = size/2, r = size/2 - 46;
+  const n = hosts.length;
+  const nodes = hosts.map((h, i) => {
+    const angle = (i / n) * 2 * Math.PI - Math.PI/2;
+    return { ...h, x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
+  const lines = nodes.map(nd =>
+    `<line x1="${cx}" y1="${cy}" x2="${nd.x.toFixed(1)}" y2="${nd.y.toFixed(1)}" stroke="${cssVar('--accent')}" stroke-opacity="0.32" stroke-width="1.4"/>`
+  ).join("");
+  const dots = nodes.map(nd => `
+    <g class="node-dot">
+      <circle cx="${nd.x.toFixed(1)}" cy="${nd.y.toFixed(1)}" r="6.5" fill="${cssVar('--up')}" stroke="${cssVar('--bg')}" stroke-width="2"/>
+      <text x="${nd.x.toFixed(1)}" y="${(nd.y + 18).toFixed(1)}" text-anchor="middle" fill="${cssVar('--ink-dim')}" font-size="9" font-family="monospace">.${esc(nd.ip.split(".").pop())}</text>
+    </g>`
+  ).join("");
+  return `<div class="graph-wrap"><svg class="net-graph" viewBox="0 0 ${size} ${size}">
+    ${lines}
+    <circle cx="${cx}" cy="${cy}" r="16" fill="${cssVar('--accent')}"/>
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" fill="${cssVar('--on-accent')}" font-size="9" font-weight="700">${esc(t("you_node"))}</text>
+    ${dots}
+  </svg></div>`;
+}
+
+document.getElementById("discoverBtn").onclick = async () => {
+  const btn = document.getElementById("discoverBtn");
+  const subnet = document.getElementById("subnetInput").value.trim();
+  const out = document.getElementById("discoverResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/discover", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({subnet})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    if (!data.hosts.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
+    out.className = "";
+    out.innerHTML = renderGraph(data.hosts) + `<div class="cards">${data.hosts.map(h => `
+      <div class="card">
+        <div class="ip">${esc(h.ip)}</div>
+        <div class="meta">
+          ${esc(t("card_mac"))}: ${esc(h.mac) || "—"}<br>
+          ${esc(t("card_vendor"))}: ${esc(h.vendor) || "—"}<br>
+          ${esc(t("card_host"))}: ${esc(h.hostname) || "—"}
+        </div>
+        <span class="badge up">${esc(t("badge_online"))}</span>
+      </div>`).join("")}</div>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("portscanBtn").onclick = async () => {
+  const btn = document.getElementById("portscanBtn");
+  const ip = document.getElementById("ipInput").value.trim();
+  const ports = document.getElementById("portsInput").value.trim();
+  const all = document.getElementById("allPortsChk").checked;
+  const out = document.getElementById("portscanResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/portscan", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ip, ports, all})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    if (!data.ports.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
+    out.className = "";
+    out.innerHTML = `<table>
+      <tr><th>${esc(t("th_port"))}</th><th>${esc(t("th_protocol"))}</th><th>${esc(t("th_state"))}</th><th>${esc(t("th_service"))}</th></tr>
+      ${data.ports.map(p => `<tr>
+        <td>${esc(p.port)}</td><td>${esc(p.protocol)}</td>
+        <td class="state-${esc(p.state)}">${esc(p.state)}</td><td>${esc(p.service) || "—"}</td>
+      </tr>`).join("")}
+    </table>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("pingBtn").onclick = async () => {
+  const btn = document.getElementById("pingBtn");
+  const ip = document.getElementById("pingInput").value.trim();
+  const out = document.getElementById("pingResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/ping", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ip})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    const cls = data.reachable ? "up" : "down";
+    const label = data.reachable ? t("status_online") : t("status_offline");
+    out.innerHTML = `<div class="status-box ${cls}">
+      <div class="big">${esc(label)}</div>
+      <div class="sub">${esc(data.target)} — ${esc(t("loss_label"))}: ${data.loss_percent ?? "—"}%${data.avg_ms ? " — " + esc(t("avg_label")) + ": " + data.avg_ms + "ms" : ""}</div>
+    </div>`;
+  } finally { setLoading(btn, false); }
+};
+
+let pingES = null;
+let pingPoints = [];
+function renderPingChart() {
+  const w = 600, h = 160, pad = 24, maxPoints = 40;
+  const pts = pingPoints.slice(-maxPoints);
+  const rtts = pts.filter(p => p.rtt != null).map(p => p.rtt);
+  const maxRtt = Math.max(10, ...rtts, 1);
+  const stepX = (w - pad*2) / Math.max(maxPoints - 1, 1);
+  let path = "", dots = "";
+  pts.forEach((p, i) => {
+    const x = pad + i * stepX;
+    if (p.rtt != null) {
+      const y = h - pad - (p.rtt / maxRtt) * (h - pad*2);
+      path += (path ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+      dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="${cssVar('--up')}"/>`;
+    } else {
+      dots += `<line x1="${x.toFixed(1)}" y1="${pad}" x2="${x.toFixed(1)}" y2="${h-pad}" stroke="${cssVar('--down')}" stroke-width="2" stroke-dasharray="3,3"/>`;
+    }
+  });
+  const lastRtt = [...pts].reverse().find(p => p.rtt != null);
+  const lossCount = pts.filter(p => p.rtt == null).length;
+  document.getElementById("pingMonitorChart").innerHTML = pts.length ? `
+    <div class="mini-stats">
+      <span>${esc(t("last_rtt"))}: <b>${lastRtt ? lastRtt.rtt.toFixed(2) + "ms" : "—"}</b></span>
+      <span>${esc(t("loss_label"))}: <b>${Math.round(lossCount/pts.length*100)}%</b></span>
+    </div>
+    <svg class="ping-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${path}" fill="none" stroke="${cssVar('--accent')}" stroke-width="2"/>
+      ${dots}
+    </svg>` : "";
+}
+document.getElementById("pingMonitorBtn").onclick = () => {
+  const btn = document.getElementById("pingMonitorBtn");
+  if (pingES) {
+    pingES.close(); pingES = null;
+    btn.textContent = t("start_monitor");
+    return;
+  }
+  const target = document.getElementById("pingInput").value.trim();
+  if (!target) { alert(t("invalid_host")); return; }
+  pingPoints = [];
+  btn.textContent = t("stop_monitor");
+  pingES = new EventSource(`/api/ping/stream?target=${encodeURIComponent(target)}`);
+  pingES.onmessage = (e) => {
+    pingPoints.push(JSON.parse(e.data));
+    renderPingChart();
+  };
+  pingES.onerror = () => {
+    if (pingES) { pingES.close(); pingES = null; }
+    btn.textContent = t("start_monitor");
+  };
+};
+
+document.getElementById("tracerouteBtn").onclick = async () => {
+  const btn = document.getElementById("tracerouteBtn");
+  const target = document.getElementById("tracerouteInput").value.trim();
+  const out = document.getElementById("tracerouteResult");
+  setLoading(btn, true);
+  out.innerHTML = `<div class="empty">${esc(t("traceroute_running"))}</div>`;
+  try {
+    const res = await fetch("/api/traceroute", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({target})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    if (!data.hops.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
+    out.innerHTML = `<table>
+      <tr><th>${esc(t("th_hop"))}</th><th>${esc(t("th_detail"))}</th></tr>
+      ${data.hops.map(h => `<tr><td>${esc(h.hop)}</td><td>${esc(h.detail)}</td></tr>`).join("")}
+    </table>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("cdpBtn").onclick = async () => {
+  const btn = document.getElementById("cdpBtn");
+  const protocol = document.getElementById("neighborProto").value;
+  const iface = document.getElementById("cdpIfaceSelect").value;
+  const duration = document.getElementById("cdpDuration").value;
+  const out = document.getElementById("cdpResult");
+  setLoading(btn, true);
+  out.innerHTML = `<div class="empty">${esc(t("running"))}</div>`;
+  try {
+    const res = await fetch("/api/neighbors", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({protocol, iface, duration})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    if (!data.neighbors.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
+    out.className = "cards";
+    out.innerHTML = data.neighbors.map(nb => `
+      <div class="card">
+        <div class="ip">${esc(nb.device_id)}</div>
+        <div class="meta">
+          ${esc(t("card_platform"))}: ${esc(nb.platform) || "—"}<br>
+          ${esc(t("card_port"))}: ${esc(nb.port_id) || "—"}
+        </div>
+      </div>`).join("");
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("dnsBtn").onclick = async () => {
+  const btn = document.getElementById("dnsBtn");
+  const domain = document.getElementById("dnsInput").value.trim();
+  const out = document.getElementById("dnsResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/dns", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({domain})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    const types = Object.keys(data.records);
+    if (!types.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
+    out.className = "";
+    out.innerHTML = types.map(ty => `
+      <div class="dns-block">
+        <div class="dns-type">${esc(ty)}</div>
+        ${data.records[ty].map(v => `<div class="dns-value">${esc(v)}</div>`).join("")}
+      </div>`).join("");
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("whatismyipBtn").onclick = async () => {
+  const btn = document.getElementById("whatismyipBtn");
+  const out = document.getElementById("whatismyipResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/whatismyip");
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    out.innerHTML = `<div class="info-grid">
+      <div class="k">${esc(t("info_ip"))}</div><div class="v">${esc(data.ip) || "—"}</div>
+      <div class="k">${esc(t("info_city"))}</div><div class="v">${esc(data.city) || "—"}</div>
+      <div class="k">${esc(t("info_region"))}</div><div class="v">${esc(data.region) || "—"}</div>
+      <div class="k">${esc(t("info_country"))}</div><div class="v">${esc(data.country) || "—"}</div>
+      <div class="k">${esc(t("info_isp"))}</div><div class="v">${esc(data.org) || "—"}</div>
+    </div>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("domainBtn").onclick = async () => {
+  const btn = document.getElementById("domainBtn");
+  const domain = document.getElementById("domainInput").value.trim();
+  const out = document.getElementById("domainResult");
+  setLoading(btn, true);
+  out.innerHTML = `<div class="empty">${esc(t("domain_checking"))}</div>`;
+  try {
+    const res = await fetch("/api/domain", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({domain})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    out.innerHTML = `
+      <div class="info-grid">
+        <div class="k">${esc(t("info_domain"))}</div><div class="v">${esc(data.domain)}</div>
+        <div class="k">${esc(t("info_mainip"))}</div><div class="v">${esc(data.ips.join(", ")) || "—"}</div>
+        <div class="k">${esc(t("info_subdomains"))}</div><div class="v">${data.subdomains.length} ${esc(t("domain_found"))} ${data.crt_error ? "(" + esc(data.crt_error) + ")" : ""}</div>
+      </div>
+      <div class="subdomain-list">${data.subdomains.map(s => `<span>${esc(s)}</span>`).join("")}</div>
+    `;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("wifiScanBtn").onclick = async () => {
+  const btn = document.getElementById("wifiScanBtn");
+  const iface = document.getElementById("wifiIfaceSelect").value;
+  const out = document.getElementById("wifiResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/wifi/scan", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({iface})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    if (!data.networks.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
+    out.innerHTML = `<table>
+      <tr><th>SSID</th><th>${esc(t("th_signal"))}</th><th>${esc(t("th_freq"))}</th><th>BSSID</th></tr>
+      ${data.networks.map(n => `<tr>
+        <td>${esc(n.ssid) || "—"}</td><td>${esc(n.signal) || "—"}</td><td>${esc(n.freq) || "—"}</td><td>${esc(n.bssid)}</td>
+      </tr>`).join("")}
+    </table>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("speedtestBtn").onclick = async () => {
+  const btn = document.getElementById("speedtestBtn");
+  const out = document.getElementById("speedtestResult");
+  setLoading(btn, true);
+  out.innerHTML = `<div class="empty">${esc(t("speedtest_running"))}</div>`;
+  try {
+    const res = await fetch("/api/speedtest", { method: "POST" });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    out.className = "cards";
+    out.innerHTML = `
+      <div class="card"><div class="meta">${esc(t("download_label"))}</div><div class="ip">${esc(data.download_mbps)} Mbps</div></div>
+      <div class="card"><div class="meta">${esc(t("upload_label"))}</div><div class="ip">${esc(data.upload_mbps)} Mbps</div></div>
+      <div class="card"><div class="meta">Ping</div><div class="ip">${data.ping_ms ?? "—"} ms</div></div>
+    `;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("wolBtn").onclick = async () => {
+  const btn = document.getElementById("wolBtn");
+  const mac = document.getElementById("wolMac").value.trim();
+  const broadcast = document.getElementById("wolBroadcast").value.trim() || "255.255.255.255";
+  const out = document.getElementById("wolResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/wol", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({mac, broadcast})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    out.innerHTML = `<div class="status-box up">
+      <div class="big">${esc(t("wol_sent"))} ✓</div>
+      <div class="sub">${esc(data.mac)} → ${esc(data.broadcast)}</div>
+    </div>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("arpBtn").onclick = async () => {
+  const btn = document.getElementById("arpBtn");
+  const out = document.getElementById("arpResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/arp");
+    const data = await res.json();
+    if (!data.entries.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
+    out.innerHTML = `<table>
+      <tr><th>${esc(t("th_ip"))}</th><th>${esc(t("th_mac"))}</th><th>${esc(t("th_iface"))}</th><th>${esc(t("th_state"))}</th></tr>
+      ${data.entries.map(e => `<tr>
+        <td>${esc(e.ip)}</td><td>${esc(e.mac) || "—"}</td><td>${esc(e.iface) || "—"}</td><td>${esc(e.state)}</td>
+      </tr>`).join("")}
+    </table>`;
+  } finally { setLoading(btn, false); }
+};
+
+const bwIfaceSelect = document.getElementById("bwIfaceSelect");
+(async () => {
+  const res = await fetch("/api/interfaces");
+  const ifaces = await res.json();
+  bwIfaceSelect.innerHTML = ifaces.map(i => `<option value="${esc(i.name)}">${esc(i.name)}</option>`).join("");
+})();
+
+let bwES = null;
+let bwPoints = [];
+function fmtBps(bps) {
+  if (bps > 1_000_000) return (bps / 1_000_000).toFixed(2) + " Mbps";
+  if (bps > 1_000) return (bps / 1_000).toFixed(1) + " Kbps";
+  return Math.round(bps) + " bps";
+}
+function renderBwChart() {
+  const w = 600, h = 160, pad = 24, maxPoints = 40;
+  const pts = bwPoints.slice(-maxPoints);
+  const allVals = pts.flatMap(p => [p.rx_bps, p.tx_bps]);
+  const maxVal = Math.max(1000, ...allVals);
+  const stepX = (w - pad*2) / Math.max(maxPoints - 1, 1);
+  function pathFor(key) {
+    let path = "";
+    pts.forEach((p, i) => {
+      const x = pad + i * stepX;
+      const y = h - pad - (p[key] / maxVal) * (h - pad*2);
+      path += (path ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+    });
+    return path;
+  }
+  const last = pts[pts.length - 1];
+  document.getElementById("bwChart").innerHTML = pts.length ? `
+    <div class="mini-stats">
+      <span>${esc(t("bw_rx"))}: <b>${last ? fmtBps(last.rx_bps) : "—"}</b></span>
+      <span>${esc(t("bw_tx"))}: <b>${last ? fmtBps(last.tx_bps) : "—"}</b></span>
+    </div>
+    <svg class="ping-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${pathFor('rx_bps')}" fill="none" stroke="${cssVar('--up')}" stroke-width="2"/>
+      <path d="${pathFor('tx_bps')}" fill="none" stroke="${cssVar('--accent2')}" stroke-width="2"/>
+    </svg>` : "";
+}
+document.getElementById("bwStartBtn").onclick = () => {
+  const btn = document.getElementById("bwStartBtn");
+  if (bwES) {
+    bwES.close(); bwES = null;
+    btn.textContent = t("start_monitor");
+    return;
+  }
+  const iface = bwIfaceSelect.value;
+  bwPoints = [];
+  btn.textContent = t("stop_monitor");
+  bwES = new EventSource(`/api/bandwidth/stream?iface=${encodeURIComponent(iface)}`);
+  bwES.onmessage = (e) => {
+    bwPoints.push(JSON.parse(e.data));
+    renderBwChart();
+  };
+  bwES.onerror = () => {
+    if (bwES) { bwES.close(); bwES = null; }
+    btn.textContent = t("start_monitor");
+  };
+};
+
+document.getElementById("geoipBtn").onclick = async () => {
+  const btn = document.getElementById("geoipBtn");
+  const ip = document.getElementById("geoipInput").value.trim();
+  const out = document.getElementById("geoipResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/geoip", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ip})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    out.innerHTML = `<div class="info-grid">
+      <div class="k">${esc(t("info_ip"))}</div><div class="v">${esc(data.ip) || "—"}</div>
+      <div class="k">${esc(t("info_city"))}</div><div class="v">${esc(data.city) || "—"}</div>
+      <div class="k">${esc(t("info_region"))}</div><div class="v">${esc(data.region) || "—"}</div>
+      <div class="k">${esc(t("info_country"))}</div><div class="v">${esc(data.country) || "—"}</div>
+      <div class="k">${esc(t("info_isp"))}</div><div class="v">${esc(data.org) || "—"}</div>
+    </div>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("qrBtn").onclick = () => {
+  const text = document.getElementById("qrInput").value.trim();
+  const out = document.getElementById("qrResult");
+  if (!text) { out.innerHTML = `<div class="empty">${esc(t("invalid_host"))}</div>`; return; }
+  try {
+    const qr = qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+    const n = qr.getModuleCount();
+    const scale = 7, quiet = 3;
+    const size = (n + quiet * 2) * scale;
+    let rects = "";
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) {
+          rects += `<rect x="${(c+quiet)*scale}" y="${(r+quiet)*scale}" width="${scale}" height="${scale}"/>`;
+        }
+      }
+    }
+    out.className = "";
+    out.innerHTML = `<div style="background:white;border-radius:14px;padding:16px;display:inline-block">
+      <svg width="240" height="240" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">
+        <rect width="${size}" height="${size}" fill="white"/>
+        <g fill="black">${rects}</g>
+      </svg>
+    </div>`;
+  } catch (e) {
+    out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(e.message)}</div>`;
+  }
+};
+
+document.getElementById("tlsBtn").onclick = async () => {
+  const btn = document.getElementById("tlsBtn");
+  const domain = document.getElementById("tlsInput").value.trim();
+  const port = document.getElementById("tlsPort").value.trim() || 443;
+  const out = document.getElementById("tlsResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/tls", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({domain, port})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    const cls = data.verified ? "up" : "down";
+    const label = data.verified ? t("tls_trusted") : t("tls_untrusted");
+    out.innerHTML = `
+      <div class="status-box ${cls}">
+        <div class="big">${esc(label)}</div>
+        <div class="sub">${esc(data.verify_message) || "—"}</div>
+      </div>
+      <div class="info-grid" style="margin-top:18px">
+        <div class="k">${esc(t("tls_subject"))}</div><div class="v">${esc(data.subject) || "—"}</div>
+        <div class="k">${esc(t("tls_issuer"))}</div><div class="v">${esc(data.issuer) || "—"}</div>
+        <div class="k">${esc(t("tls_valid_from"))}</div><div class="v">${esc(data.not_before) || "—"}</div>
+        <div class="k">${esc(t("tls_valid_until"))}</div><div class="v">${esc(data.not_after) || "—"} ${data.days_left != null ? "(" + data.days_left + " " + esc(t("tls_days_left")) + ")" : ""}</div>
+        <div class="k">SHA-256</div><div class="v" style="font-size:11px">${esc(data.fingerprint_sha256) || "—"}</div>
+      </div>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("headersBtn").onclick = async () => {
+  const btn = document.getElementById("headersBtn");
+  const url = document.getElementById("headersInput").value.trim();
+  const out = document.getElementById("headersResult");
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/headers", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({url})
+    });
+    const data = await res.json();
+    if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    const secCards = Object.entries(data.security).map(([k, v]) => `
+      <div class="card" style="padding:12px 15px">
+        <div class="meta" style="text-transform:uppercase;font-size:10px">${esc(k)}</div>
+        <div class="sec-check ${v ? 'yes' : 'no'}">${v ? "✓" : "✕"}</div>
+      </div>`).join("");
+    const headerLines = Object.entries(data.headers).map(([k, v]) => `<div class="dns-value"><b>${esc(k)}:</b> ${esc(v)}</div>`).join("");
+    out.innerHTML = `
+      <div class="hint">${esc(data.status)}</div>
+      <div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:18px">${secCards}</div>
+      <div class="dns-block">${headerLines}</div>
+    `;
+  } finally { setLoading(btn, false); }
+};
+
+function md5(input) {
+  function rotl(n, s) { return (n << s) | (n >>> (32 - s)); }
+  const K = new Array(64);
+  for (let i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) >>> 0;
+  const S = [
+    7,12,17,22, 7,12,17,22, 7,12,17,22, 7,12,17,22,
+    5, 9,14,20, 5, 9,14,20, 5, 9,14,20, 5, 9,14,20,
+    4,11,16,23, 4,11,16,23, 4,11,16,23, 4,11,16,23,
+    6,10,15,21, 6,10,15,21, 6,10,15,21, 6,10,15,21
+  ];
+  const bytes = new TextEncoder().encode(input);
+  const origLenBits = BigInt(bytes.length) * 8n;
+  let msg = Array.from(bytes);
+  msg.push(0x80);
+  while (msg.length % 64 !== 56) msg.push(0);
+  for (let i = 0; i < 8; i++) msg.push(Number((origLenBits >> BigInt(8 * i)) & 0xffn));
+  let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+  for (let chunkStart = 0; chunkStart < msg.length; chunkStart += 64) {
+    const M = new Array(16);
+    for (let i = 0; i < 16; i++) {
+      M[i] = (msg[chunkStart + i*4] | (msg[chunkStart + i*4+1] << 8) |
+              (msg[chunkStart + i*4+2] << 16) | (msg[chunkStart + i*4+3] << 24)) >>> 0;
+    }
+    let A = a0, B = b0, C = c0, D = d0;
+    for (let i = 0; i < 64; i++) {
+      let F, g;
+      if (i < 16) { F = (B & C) | (~B & D); g = i; }
+      else if (i < 32) { F = (D & B) | (~D & C); g = (5*i + 1) % 16; }
+      else if (i < 48) { F = B ^ C ^ D; g = (3*i + 5) % 16; }
+      else { F = C ^ (B | ~D); g = (7*i) % 16; }
+      F = (F + A + K[i] + M[g]) >>> 0;
+      A = D; D = C; C = B;
+      B = (B + rotl(F, S[i])) >>> 0;
+    }
+    a0 = (a0 + A) >>> 0; b0 = (b0 + B) >>> 0; c0 = (c0 + C) >>> 0; d0 = (d0 + D) >>> 0;
+  }
+  function toHexLE(n) {
+    return [n & 0xff, (n>>>8)&0xff, (n>>>16)&0xff, (n>>>24)&0xff].map(b => b.toString(16).padStart(2,"0")).join("");
+  }
+  return toHexLE(a0) + toHexLE(b0) + toHexLE(c0) + toHexLE(d0);
+}
+async function shaDigest(algo, str) {
+  const buf = await crypto.subtle.digest(algo, new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+function b64encode(str) { return btoa(unescape(encodeURIComponent(str))); }
+function b64decode(str) { return decodeURIComponent(escape(atob(str))); }
+function base64UrlDecode(str) {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) str += "=";
+  return decodeURIComponent(escape(atob(str)));
+}
+function decodeJWT(token) {
+  const parts = token.split(".");
+  if (parts.length < 2) throw new Error("not a valid JWT");
+  const header = JSON.parse(base64UrlDecode(parts[0]));
+  const payload = JSON.parse(base64UrlDecode(parts[1]));
+  return JSON.stringify({header, payload}, null, 2);
+}
+document.getElementById("hashRunBtn").onclick = async () => {
+  const mode = document.getElementById("hashMode").value;
+  const input = document.getElementById("hashInput").value;
+  const out = document.getElementById("hashResult");
+  out.className = "";
+  try {
+    let result;
+    if (mode === "md5") result = md5(input);
+    else if (mode === "sha1") result = await shaDigest("SHA-1", input);
+    else if (mode === "sha256") result = await shaDigest("SHA-256", input);
+    else if (mode === "sha384") result = await shaDigest("SHA-384", input);
+    else if (mode === "sha512") result = await shaDigest("SHA-512", input);
+    else if (mode === "b64enc") result = b64encode(input);
+    else if (mode === "b64dec") result = b64decode(input);
+    else if (mode === "jwt") result = decodeJWT(input.trim());
+    out.innerHTML = `<div class="dns-block"><div class="dns-value" style="white-space:pre-wrap">${esc(result)}</div></div>`;
+  } catch (e) {
+    out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(e.message)}</div>`;
+  }
+};
+
+function loadSavedHosts() { return JSON.parse(localStorage.getItem("nettoolbox_hosts") || "[]"); }
+function saveSavedHosts(list) { localStorage.setItem("nettoolbox_hosts", JSON.stringify(list)); }
+function renderQuickConnect() {
+  const hosts = loadSavedHosts();
+  const out = document.getElementById("qcList");
+  if (!hosts.length) { out.className = "empty"; out.textContent = t("qc_empty"); return; }
+  out.className = "cards";
+  out.innerHTML = hosts.map((h, i) => `
+    <div class="card">
+      <div class="ip">${esc(h.name)}</div>
+      <div class="meta">${esc(h.host)}</div>
+      <div class="qc-actions">
+        <button data-act="ping" data-i="${i}" title="Ping">↗</button>
+        <button data-act="portscan" data-i="${i}" title="Port scan">▤</button>
+        <button data-act="ssh" data-i="${i}" title="SSH">›_</button>
+        <button data-act="telnet" data-i="${i}" title="Telnet">⌁</button>
+        <button data-act="del" data-i="${i}" title="Delete" class="qc-del">✕</button>
+      </div>
+    </div>`).join("");
+}
+document.getElementById("qcAddBtn").onclick = () => {
+  const name = document.getElementById("qcName").value.trim();
+  const host = document.getElementById("qcHost").value.trim();
+  if (!name || !host) return;
+  const hosts = loadSavedHosts();
+  hosts.push({name, host});
+  saveSavedHosts(hosts);
+  document.getElementById("qcName").value = "";
+  document.getElementById("qcHost").value = "";
+  renderQuickConnect();
+};
+document.getElementById("qcList").addEventListener("click", (e) => {
+  const actBtn = e.target.closest("button[data-act]");
+  if (!actBtn) return;
+  const i = parseInt(actBtn.dataset.i, 10);
+  const hosts = loadSavedHosts();
+  const h = hosts[i];
+  const act = actBtn.dataset.act;
+  if (act === "del") { hosts.splice(i, 1); saveSavedHosts(hosts); renderQuickConnect(); return; }
+  if (act === "ping") {
+    document.getElementById("pingInput").value = h.host;
+    switchTab("ping");
+    document.getElementById("pingBtn").click();
+  } else if (act === "portscan") {
+    document.getElementById("ipInput").value = h.host;
+    switchTab("portscan");
+  } else if (act === "ssh" || act === "telnet") {
+    document.getElementById("termProto").value = act;
+    document.getElementById("termHost").value = h.host;
+    switchTab("terminal");
+    document.getElementById("termConnectBtn").click();
+  }
+});
+renderQuickConnect();
+
+const termFrame = document.getElementById("termFrame");
+const termPlaceholder = document.getElementById("termPlaceholder");
+function buildTermUrl(args) {
+  const params = args.map(a => "arg=" + encodeURIComponent(a)).join("&");
+  return `${TTYD_BASE}?${params}`;
+}
+document.getElementById("termConnectBtn").onclick = () => {
+  const proto = document.getElementById("termProto").value;
+  const host = document.getElementById("termHost").value.trim();
+  const port = document.getElementById("termPort").value.trim() || (proto === "ssh" ? "22" : "23");
+  const user = document.getElementById("termUser").value.trim();
+  if (!host || host.startsWith("-")) { alert(t("invalid_host")); return; }
+  termPlaceholder.style.display = "none";
+  termFrame.style.display = "block";
+  termFrame.src = buildTermUrl([proto, host, port, user]);
+};
+document.getElementById("termBlankBtn").onclick = () => {
+  termPlaceholder.style.display = "none";
+  termFrame.style.display = "block";
+  termFrame.src = TTYD_BASE;
+};
+</script>
+</body>
+</html>

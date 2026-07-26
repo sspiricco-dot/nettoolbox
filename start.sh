@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+# Web terminal (ssh/telnet/anything) bound to loopback only.
+ttyd -W -a -i lo -p 7681 /app/connect.sh &
+
+# Dashboard API + UI, also loopback only.
+exec python3 /app/app.py
