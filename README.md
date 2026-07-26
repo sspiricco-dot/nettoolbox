@@ -1,10 +1,27 @@
 # NetToolbox
 
-A portable network & security dashboard for field technicians. Build it once, carry it on your laptop, and spin it up on whatever network you're plugged into — client site, home lab, or your own office.
+**A portable network & security dashboard you carry on your laptop.** One Docker container, one web UI, works on whatever network you plug into — client site, home lab, or your own office.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)
+![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)
 
 ![NetToolbox screenshot](screenshot.png)
 
-Everything runs in a single Docker container with a web UI. No install on the host beyond Docker itself, no data leaves your machine except for the handful of tools that explicitly need the internet (see [Security notes](#security-notes) below).
+## Why
+
+Field/network technicians end up carrying a pile of separate tools — a scanner, a terminal client, a certificate checker, a hash utility, a speed test site — usually a mix of platform-specific apps that don't travel well. NetToolbox puts the ones you actually reach for during a site visit behind one browser tab, in one container you can `docker build` anywhere Docker runs.
+
+## Contents
+
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Security notes](#security-notes)
+- [Requirements](#requirements)
+- [How it compares](#how-it-compares)
+- [Tech stack](#tech-stack)
+- [License](#license)
 
 ## Features
 
@@ -33,7 +50,7 @@ Everything runs in a single Docker container with a web UI. No install on the ho
 - Full SSH/Telnet terminal in the browser (via [ttyd](https://github.com/tsl0922/ttyd))
 - QR code generator for sharing an IP/URL with a phone
 
-Bilingual UI (Persian/English) with light and dark themes.
+Bilingual UI (Persian/English), light and dark themes.
 
 ## Quick start
 
@@ -63,6 +80,19 @@ Because of the above, only run this on hardware you control, and don't publish t
 
 - Docker
 - Linux host recommended (host networking works most predictably there; on Mac/Windows via Docker Desktop, host networking support varies by version)
+
+## How it compares
+
+| | NetToolbox | [NETworkManager](https://github.com/BornToBeRoot/NETworkManager) | Angry IP Scanner | Fing |
+|---|---|---|---|---|
+| Platform | Any (Docker) | Windows only | Cross-platform | Mobile + desktop |
+| Interface | Browser | Native WPF app | Native app | Native app |
+| Install footprint | One container | .NET/WPF install | Java runtime | App install |
+| SSH/Telnet client | ✅ (in-browser) | ✅ | ❌ | ❌ |
+| Cert/header/hash tools | ✅ | ❌ | ❌ | ❌ |
+| Self-hosted, no account | ✅ | ✅ | ✅ | Partial (account for some features) |
+
+NetToolbox trades NETworkManager's much larger native feature set (RDP, VNC, PowerShell remoting, profile encryption) for being cross-platform and running from a single container — it's a narrower, more portable tool, not a replacement for a full Windows network-admin suite.
 
 ## Tech stack
 
