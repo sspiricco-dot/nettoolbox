@@ -55,7 +55,7 @@ Bilingual UI (Persian/English), light and dark themes.
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-username>/nettoolbox.git
+git clone https://github.com/sspiricco-dot/nettoolbox.git
 cd nettoolbox
 docker build -t nettoolbox .
 ./run.sh
