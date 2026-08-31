@@ -27,6 +27,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     python3 \
     python3-flask \
+    python3-websockify \
+    freerdp2-x11 \
+    xvfb \
+    x11vnc \
+    x11-utils \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # ttyd: static binary, provides a browser-based terminal for ssh/telnet
@@ -40,11 +46,17 @@ RUN ARCH=$(dpkg --print-architecture) && \
       "https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${TTYD_ARCH}" && \
     chmod +x /usr/local/bin/ttyd
 
+# Lightweight HTML5 VNC client (avoid Debian novnc → node/numpy stack)
+RUN curl -fsSL https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz \
+    | tar -xz -C /tmp \
+    && mv /tmp/noVNC-1.5.0 /usr/share/novnc
+
 WORKDIR /app
 COPY app.py /app/app.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh
-RUN chmod +x /app/start.sh /app/connect.sh
+COPY rdp-display.sh /app/rdp-display.sh
+RUN chmod +x /app/start.sh /app/connect.sh /app/rdp-display.sh
 
 CMD ["/app/start.sh"]

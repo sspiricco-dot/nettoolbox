@@ -26,10 +26,12 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 ## Features
 
 **Network**
-- Network discovery (ARP/ping sweep) with a graphical topology view
+- Link status at a glance — gateway, DNS, DHCP vs static, public IP
+- Network discovery (ARP/ping sweep) with well-known port checks, topology view, and CSV/JSON export
 - Port scanner (custom port list or full 1–65535 range)
 - Ping with a one-shot check and a live latency monitor
-- Traceroute
+- Traceroute and live MTR (hop loss and latency together)
+- IPv4 subnet calculator (CIDR, usable hosts, typical gateway, split)
 - Neighbor discovery — CDP (Cisco) and LLDP (standard)
 - WiFi analyzer (nearby SSIDs, signal, frequency)
 - Speed test (download/upload/ping via Cloudflare)
@@ -39,6 +41,7 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 
 **Security**
 - Multi-record DNS lookup (A, AAAA, MX, TXT, NS, CNAME, SOA)
+- Whois lookup
 - Public IP / IP geolocation lookup (yours or any IP)
 - Domain recon: main A record + subdomains from public SSL certificate transparency logs (crt.sh) — fully passive
 - SSL/TLS certificate inspector (works on self-signed/internal certs too)
@@ -46,8 +49,9 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 - Hash / Base64 / JWT toolkit — MD5, SHA-1/256/384/512, Base64 encode/decode, JWT decode, all client-side
 
 **Utility**
-- Quick Connect — save frequently-used hosts and ping/scan/SSH/Telnet them in one click
+- Host profiles — save name, protocol, port, username, and site notes (passwords are not stored)
 - Full SSH/Telnet terminal in the browser (via [ttyd](https://github.com/tsl0922/ttyd))
+- In-browser RDP (FreeRDP + noVNC) for Windows desktops on the LAN
 - QR code generator for sharing an IP/URL with a phone
 
 Bilingual UI (Persian/English), light and dark themes.
@@ -70,9 +74,10 @@ Then open **http://127.0.0.1:8642**.
 This tool is intentionally powerful, so it's worth understanding what it does before running it on a machine you care about:
 
 - **Host networking + `NET_ADMIN`/`NET_RAW`**: the container runs with `--net=host` and raw-socket capabilities so tools like `nmap`, `arp-scan`, and CDP/LLDP capture can see the real network your host is on. This is what makes it a useful field tool, but it also means the container has broad visibility into (and can send packets on) whatever network you plug into.
-- **Dashboard and terminal are loopback-only.** The web UI (`:8642`) and the browser terminal (`:7681`, via ttyd) both bind to `127.0.0.1` inside the container — they are **not** exposed to the LAN you're connected to, even though the container itself has host networking. Only processes on your own machine can reach them.
-- **A handful of tools call out to the internet**: Speed Test (Cloudflare), IP Geolocation / "My IP" (ipinfo.io), and Domain recon's subdomain lookup (crt.sh). Everything else (scanning, ARP, CDP/LLDP, SSH/Telnet, hashing) stays local.
+- **Dashboard, terminal, and RDP viewer are loopback-only.** The web UI (`:8642`), the browser terminal (`:7681`, via ttyd), and the noVNC RDP viewer (`:7682`) all bind to `127.0.0.1` inside the container — they are **not** exposed to the LAN you're connected to, even though the container itself has host networking. Only processes on your own machine can reach them.
+- **A handful of tools call out to the internet**: Speed Test (Cloudflare), IP Geolocation / "My IP" (ipinfo.io), Domain recon's subdomain lookup (crt.sh), and Whois. Everything else (scanning, ARP, CDP/LLDP, SSH/Telnet, RDP, hashing) stays local.
 - **The terminal is a real shell** with `ssh`/`telnet` clients and your container's privileges — treat it like any other terminal you carry around.
+- **RDP passwords** are sent to FreeRDP on stdin (not on the command line). Internal/self-signed certificates are ignored, same as you'd do on a field box.
 
 Because of the above, only run this on hardware you control, and don't publish the dashboard port beyond loopback.
 
@@ -89,16 +94,18 @@ Because of the above, only run this on hardware you control, and don't publish t
 | Interface | Browser | Native WPF app | Native app | Native app |
 | Install footprint | One container | .NET/WPF install | Java runtime | App install |
 | SSH/Telnet client | ✅ (in-browser) | ✅ | ❌ | ❌ |
+| RDP client | ✅ (in-browser) | ✅ | ❌ | ❌ |
 | Cert/header/hash tools | ✅ | ❌ | ❌ | ❌ |
 | Self-hosted, no account | ✅ | ✅ | ✅ | Partial (account for some features) |
 
-NetToolbox trades NETworkManager's much larger native feature set (RDP, VNC, PowerShell remoting, profile encryption) for being cross-platform and running from a single container — it's a narrower, more portable tool, not a replacement for a full Windows network-admin suite.
+NetToolbox trades NETworkManager's much larger native feature set (VNC, PowerShell remoting, profile encryption) for being cross-platform and running from a single container — it's a narrower, more portable tool, not a replacement for a full Windows network-admin suite.
 
 ## Tech stack
 
 - Backend: Python/Flask, calling out to `nmap`, `arp-scan`, `tshark`, `dig`, `openssl`, `iw`, `traceroute`, `curl`
 - Frontend: single-file HTML/CSS/JS, no build step, no external CDN dependencies
 - Terminal: [ttyd](https://github.com/tsl0922/ttyd)
+- RDP: [FreeRDP](https://github.com/FreeRDP/FreeRDP) + [noVNC](https://github.com/novnc/noVNC) on a headless X display
 - QR codes: [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) by Kazuhiko Arase (MIT), bundled in `static/qrcode.js`
 
 ## License
