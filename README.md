@@ -1,8 +1,9 @@
 # NetToolbox
 
-**A portable network & security dashboard you carry on your laptop.** One Docker container, one web UI, works on whatever network you plug into — client site, home lab, or your own office.
+**v2** — a portable network & security dashboard you carry on your laptop. One Docker container, one web UI, works on whatever network you plug into — client site, home lab, or your own office.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Version](https://img.shields.io/badge/version-2.0-d4894a)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)
 ![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)
@@ -13,8 +14,32 @@
 
 Field/network technicians end up carrying a pile of separate tools — a scanner, a terminal client, a certificate checker, a hash utility, a speed test site — usually a mix of platform-specific apps that don't travel well. NetToolbox puts the ones you actually reach for during a site visit behind one browser tab, in one container you can `docker build` anywhere Docker runs.
 
+## Versions
+
+| | [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) | **v2.0.0 (current)** |
+|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ |
+| Link status (gateway / DNS / public IP) | ❌ | ✅ |
+| Live MTR | ❌ | ✅ |
+| Subnet calculator | ❌ | ✅ |
+| Whois | ❌ | ✅ |
+| Scan export (CSV / JSON) | ❌ | ✅ |
+| Host profiles (protocol, port, notes) | ❌ | ✅ |
+
+`main` is always **v2**. v1 stays as a git tag so you can still clone and build the original dashboard:
+
+```bash
+git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
+```
+
+Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) · [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0)
+
 ## Contents
 
+- [Versions](#versions)
 - [Features](#features)
 - [Quick start](#quick-start)
 - [Security notes](#security-notes)
@@ -58,6 +83,8 @@ Bilingual UI (Persian/English), light and dark themes.
 
 ## Quick start
 
+**v2 (current)**
+
 ```bash
 git clone https://github.com/sspiricco-dot/nettoolbox.git
 cd nettoolbox
@@ -68,6 +95,16 @@ docker build -t nettoolbox .
 Then open **http://127.0.0.1:8642**.
 
 `run.sh` starts the container with `--restart unless-stopped`, so it comes back automatically after a reboot as long as Docker itself is set to start on boot (`sudo systemctl enable docker` on Linux, or enable "Start Docker Desktop on login" on Mac/Windows).
+
+**v1 (original dashboard)**
+
+```bash
+git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
+cd nettoolbox-v1
+docker build -t nettoolbox:v1 .
+```
+
+Run it the same way with `./run.sh`. Use a different `--name` if v2 is already running.
 
 ## Security notes
 
