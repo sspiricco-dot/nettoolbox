@@ -1,0 +1,108 @@
+[
+  {
+    "id": "win-ntp",
+    "name": "Windows NTP client",
+    "os": "windows",
+    "run": "ssh-cmd",
+    "file": "windows-ntp-client.cmd",
+    "description": "Point Windows Time at your NTP server and resync.",
+    "variables": [{"key": "NTP_SERVER", "label": "NTP server", "default": "192.168.1.1"}]
+  },
+  {
+    "id": "win-smb1",
+    "name": "Disable SMBv1",
+    "os": "windows",
+    "run": "ssh-cmd",
+    "file": "windows-smb1-off.cmd",
+    "description": "Turn off the SMBv1 client/server features (needs reboot).",
+    "variables": []
+  },
+  {
+    "id": "win-rdp-nla",
+    "name": "RDP Network Level Auth",
+    "os": "windows",
+    "run": "ssh-cmd",
+    "file": "windows-rdp-nla.cmd",
+    "description": "Require NLA for Remote Desktop.",
+    "variables": []
+  },
+  {
+    "id": "mt-rfc1918",
+    "name": "MikroTik drop RFC1918 from WAN",
+    "os": "mikrotik",
+    "run": "ssh-routeros",
+    "file": "mikrotik-rfc1918.rsc",
+    "description": "Address-list RFC1918 and drop it on the WAN interface list.",
+    "variables": [
+      {"key": "LIST_NAME", "label": "Address list", "default": "RFC1918"},
+      {"key": "WAN_LIST", "label": "WAN interface list", "default": "Internet"}
+    ]
+  },
+  {
+    "id": "mt-iran",
+    "name": "MikroTik Iran IP list",
+    "os": "mikrotik",
+    "run": "ssh-routeros",
+    "file": "mikrotik-iran-ip.rsc",
+    "description": "Large IRAN address-list for firewall policy. Takes a while to import.",
+    "variables": [{"key": "LIST_NAME", "label": "Address list", "default": "IRAN"}]
+  },
+  {
+    "id": "mt-ntp",
+    "name": "MikroTik NTP client",
+    "os": "mikrotik",
+    "run": "ssh-routeros",
+    "file": "mikrotik-ntp.rsc",
+    "description": "Set RouterOS clock from an NTP server.",
+    "variables": [{"key": "NTP_SERVER", "label": "NTP server", "default": "192.168.1.1"}]
+  },
+  {
+    "id": "mt-identity",
+    "name": "MikroTik identity + services",
+    "os": "mikrotik",
+    "run": "ssh-routeros",
+    "file": "mikrotik-identity.rsc",
+    "description": "Set system identity and disable unused services (keep SSH).",
+    "variables": [{"key": "IDENTITY", "label": "Router name", "default": "edge-gw"}]
+  },
+  {
+    "id": "linux-ssh-harden",
+    "name": "Linux SSH harden",
+    "os": "linux",
+    "run": "ssh-bash",
+    "file": "linux-ssh-harden.sh",
+    "description": "Back up sshd_config, set port, disable root password login. Does not disable password auth unless you say so.",
+    "variables": [
+      {"key": "SSH_PORT", "label": "SSH port", "default": "22"},
+      {"key": "PERMIT_ROOT", "label": "PermitRootLogin", "default": "prohibit-password"},
+      {"key": "PASSWORD_AUTH", "label": "PasswordAuthentication", "default": "yes"}
+    ]
+  },
+  {
+    "id": "linux-ufw",
+    "name": "Linux UFW allow SSH",
+    "os": "linux",
+    "run": "ssh-bash",
+    "file": "linux-ufw-ssh.sh",
+    "description": "Enable UFW with SSH allowed so you do not lock yourself out.",
+    "variables": [{"key": "SSH_PORT", "label": "SSH port", "default": "22"}]
+  },
+  {
+    "id": "linux-ntp",
+    "name": "Linux NTP/chrony",
+    "os": "linux",
+    "run": "ssh-bash",
+    "file": "linux-ntp.sh",
+    "description": "Point chrony or timesyncd at your NTP server.",
+    "variables": [{"key": "NTP_SERVER", "label": "NTP server", "default": "192.168.1.1"}]
+  },
+  {
+    "id": "linux-sysctl",
+    "name": "Linux sysctl baseline",
+    "os": "linux",
+    "run": "ssh-bash",
+    "file": "linux-sysctl.sh",
+    "description": "Common network sysctl: rp_filter, syn cookies, ignore broadcasts.",
+    "variables": []
+  }
+]

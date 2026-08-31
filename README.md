@@ -3,7 +3,7 @@
 **v2** — a portable network & security dashboard you carry on your laptop. One Docker container, one web UI, works on whatever network you plug into — client site, home lab, or your own office.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-2.0-d4894a)
+![Version](https://img.shields.io/badge/version-2.1-d4894a)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)
 ![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)
@@ -16,18 +16,15 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 
 ## Versions
 
-| | [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) | **v2.0.0 (current)** |
-|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ |
-| Link status (gateway / DNS / public IP) | ❌ | ✅ |
-| Live MTR | ❌ | ✅ |
-| Subnet calculator | ❌ | ✅ |
-| Whois | ❌ | ✅ |
-| Scan export (CSV / JSON) | ❌ | ✅ |
-| Host profiles (protocol, port, notes) | ❌ | ✅ |
+| | [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) | [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) | **v2.1.0 (current)** |
+|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ |
 
 `main` is always **v2**. v1 stays as a git tag so you can still clone and build the original dashboard:
 
@@ -35,7 +32,7 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
 ```
 
-Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) · [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0)
+Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) · [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) · [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0)
 
 ## Contents
 
@@ -58,6 +55,8 @@ Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0
 - Traceroute and live MTR (hop loss and latency together)
 - IPv4 subnet calculator (CIDR, usable hosts, typical gateway, split)
 - Neighbor discovery — CDP (Cisco) and LLDP (standard)
+- SNMP get/walk — hostname, uptime, port names, VLANs (switch / printer / UPS / camera / Dahua / Hikvision, community v1/v2c)
+- Site visit report — last discover + neighbors + link status + notes, download Markdown/text for a ticket
 - WiFi analyzer (nearby SSIDs, signal, frequency)
 - Speed test (download/upload/ping via Cloudflare)
 - Wake-on-LAN
@@ -75,8 +74,9 @@ Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0
 
 **Utility**
 - Host profiles — save name, protocol, port, username, and site notes (passwords are not stored)
+- Script library — Windows / Linux / MikroTik templates with `{{VARIABLES}}`, edit in the browser, copy or download, or run over SSH. From the SSH/Telnet or RDP tab you can run the same scripts on the host you are already connected to.
 - Full SSH/Telnet terminal in the browser (via [ttyd](https://github.com/tsl0922/ttyd))
-- In-browser RDP (FreeRDP + noVNC) for Windows desktops on the LAN
+- In-browser RDP (FreeRDP + noVNC) for Windows desktops on the LAN — shared drive for running Windows scripts in the session
 - QR code generator for sharing an IP/URL with a phone
 
 Bilingual UI (Persian/English), light and dark themes.
@@ -95,6 +95,20 @@ docker build -t nettoolbox .
 Then open **http://127.0.0.1:8642**.
 
 `run.sh` starts the container with `--restart unless-stopped`, so it comes back automatically after a reboot as long as Docker itself is set to start on boot (`sudo systemctl enable docker` on Linux, or enable "Start Docker Desktop on login" on Mac/Windows).
+
+**Copy a pre-built image to another laptop (USB, no rebuild)**
+
+```bash
+# this machine
+docker save nettoolbox:v2.1.0 nettoolbox:latest | gzip > nettoolbox-v2.1.0.tar.gz
+
+# the other laptop (Docker installed)
+gzip -dc nettoolbox-v2.1.0.tar.gz | docker load
+docker run -d --restart unless-stopped --net=host \
+  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.1.0
+```
+
+Open **http://127.0.0.1:8642**. If a container named `nettoolbox` already exists, `docker rm -f nettoolbox` first.
 
 **v1 (original dashboard)**
 

@@ -28,10 +28,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-flask \
     python3-websockify \
+    snmp \
+    sshpass \
     freerdp2-x11 \
     xvfb \
     x11vnc \
     x11-utils \
+    xdotool \
     fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
@@ -57,6 +60,7 @@ COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh
 COPY rdp-display.sh /app/rdp-display.sh
+COPY scripts /app/scripts
 RUN chmod +x /app/start.sh /app/connect.sh /app/rdp-display.sh
 
 CMD ["/app/start.sh"]

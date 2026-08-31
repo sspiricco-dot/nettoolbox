@@ -399,6 +399,30 @@
     direction: ltr; text-align: right;
   }
 
+  .table-scroll { overflow-x: auto; }
+  .table-scroll td { overflow-wrap: anywhere; }
+  #snmpCustomRow { display: none; }
+  #snmpCustomRow.show { display: flex; }
+
+  .script-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent); }
+  .script-card .ip { font-size: 14px; }
+  .script-preview {
+    margin: 0; max-height: 280px; overflow: auto; font-size: 12px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap;
+    word-break: break-word; direction: ltr; text-align: left; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  }
+  #scriptEditor { display: none; margin-top: 16px; }
+  #scriptEditor.open { display: block; }
+  #scriptDetail { display: none; }
+  #scriptDetail.open { display: block; }
+  .os-chip {
+    background: var(--surface-solid); border: 1px solid var(--line); color: var(--ink-dim);
+    padding: 7px 12px; border-radius: 999px; font-size: 12px; cursor: pointer;
+  }
+  .os-chip.active { border-color: var(--accent); color: var(--ink); background: color-mix(in srgb, var(--accent) 12%, var(--surface-solid)); }
+  .session-script { margin: 12px 0; }
+
   .sec-check { font-size: 20px; font-weight: 700; }
   .sec-check.yes { color: var(--up); }
   .sec-check.no { color: var(--down); }
@@ -453,6 +477,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
           <span data-i18n="nav_discover">کشف شبکه</span>
         </button>
+        <button class="tab" data-panel="report">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          <span data-i18n="nav_report">گزارش جلسه</span>
+        </button>
         <button class="tab" data-panel="portscan">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <span data-i18n="nav_portscan">اسکن پورت</span>
@@ -476,6 +504,10 @@
         <button class="tab" data-panel="cdp">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           <span data-i18n="nav_neighbors">همسایه‌ها</span>
+        </button>
+        <button class="tab" data-panel="snmp">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg>
+          <span data-i18n="nav_snmp">SNMP</span>
         </button>
         <button class="tab" data-panel="wifi">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
@@ -545,6 +577,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path><path d="M9 21v-4h6v4"></path><path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01"></path></svg>
           <span data-i18n="nav_quickconnect">اتصال سریع</span>
         </button>
+        <button class="tab" data-panel="scripts">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          <span data-i18n="nav_scripts">اسکریپت‌ها</span>
+        </button>
         <button class="tab" data-panel="terminal">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
           <span data-i18n="nav_terminal">SSH/Telnet</span>
@@ -597,6 +633,32 @@
           <div class="bezel-label" data-i18n="nav_discover">کشف شبکه</div>
           <div id="discoverPhase"></div>
           <div id="discoverResult" class="empty" data-i18n="empty_generic">هنوز اسکنی انجام نشده.</div>
+        </div>
+      </section>
+
+      <section id="report" class="panel">
+        <header class="panel-head">
+          <div class="kicker">SITE · TICKET</div>
+          <h2 data-i18n="nav_report">گزارش جلسه</h2>
+          <p class="lede" data-i18n="report_lede">اسکن کشف + همسایه‌ها + لینک + یک پاراگراف یادداشت — برای چسباندن به تیکت.</p>
+        </header>
+        <div class="row">
+          <input id="reportSite" data-i18n-placeholder="report_site_ph" placeholder="سایت / شعبه" style="min-width:160px" />
+          <input id="reportCustomer" data-i18n-placeholder="report_customer_ph" placeholder="مشتری" style="min-width:140px" />
+          <input id="reportTech" data-i18n-placeholder="report_tech_ph" placeholder="تکنسین" style="min-width:140px" />
+        </div>
+        <div class="row">
+          <textarea id="reportNotes" data-i18n-placeholder="report_notes_ph" placeholder="یک پاراگراف: چه دیدی، چه کردی، چه ماند."></textarea>
+        </div>
+        <div class="row">
+          <button class="action" id="reportPreviewBtn" data-i18n="report_preview">پیش‌نمایش</button>
+          <button class="action secondary" id="reportMdBtn" data-i18n="report_md">دانلود Markdown</button>
+          <button class="action secondary" id="reportTxtBtn" data-i18n="report_txt">دانلود متن</button>
+        </div>
+        <div class="hint" data-i18n="report_hint">از آخرین اسکن کشف، شنیدن CDP/LLDP و وضعیت لینک همین جلسه پر می‌شود. رمز ذخیره نمی‌شود.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_report">گزارش جلسه</div>
+          <pre class="rawout" id="reportPreview" data-i18n="empty_generic">هنوز اجرا نشده.</pre>
         </div>
       </section>
 
@@ -703,6 +765,46 @@
         <div class="bezel">
           <div class="bezel-label" data-i18n="nav_neighbors">همسایه‌ها</div>
           <div id="cdpResult" class="empty" data-i18n="empty_generic">هنوز شنیده نشده.</div>
+        </div>
+      </section>
+
+      <section id="snmp" class="panel">
+        <header class="panel-head">
+          <div class="kicker">UDP · 161</div>
+          <h2 data-i18n="nav_snmp">SNMP</h2>
+          <p class="lede" data-i18n="snmp_lede">نام میزبان، آپ‌تایم، پورت، VLAN، دوربین، Dahua و Hikvision — community v1/v2c.</p>
+        </header>
+        <div class="row">
+          <input id="snmpHost" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com" />
+          <input id="snmpCommunity" value="public" style="min-width:140px" />
+          <select id="snmpVersion">
+            <option value="2c">v2c</option>
+            <option value="1">v1</option>
+          </select>
+          <select id="snmpProfile">
+            <option value="system" data-i18n="snmp_prof_system">سیستم (نام، آپ‌تایم)</option>
+            <option value="interfaces" data-i18n="snmp_prof_ifaces">پورت‌ها</option>
+            <option value="vlans" data-i18n="snmp_prof_vlans">VLAN</option>
+            <option value="camera" data-i18n="snmp_prof_camera">دوربین</option>
+            <option value="dahua" data-i18n="snmp_prof_dahua">Dahua</option>
+            <option value="hikvision" data-i18n="snmp_prof_hikvision">Hikvision</option>
+            <option value="printer" data-i18n="snmp_prof_printer">پرینتر</option>
+            <option value="ups" data-i18n="snmp_prof_ups">UPS</option>
+            <option value="custom" data-i18n="snmp_prof_custom">OID سفارشی</option>
+          </select>
+          <button class="action" id="snmpBtn" data-i18n="snmp_btn">Get / Walk</button>
+        </div>
+        <div class="row" id="snmpCustomRow">
+          <input id="snmpOid" placeholder="1&#46;3&#46;6&#46;1&#46;2&#46;1&#46;1&#46;5&#46;0" style="min-width:280px" />
+          <select id="snmpMode">
+            <option value="get">GET</option>
+            <option value="walk">WALK</option>
+          </select>
+        </div>
+        <div class="hint" data-i18n="snmp_hint">Community پیش‌فرض public است. پروفایل دوربین MIB-II است؛ Dahua و Hikvision OID اختصاصی دارند. SNMPv3 در این نسخه نیست.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_snmp">SNMP</div>
+          <div id="snmpResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
         </div>
       </section>
 
@@ -923,6 +1025,87 @@
         </div>
       </section>
 
+      <section id="scripts" class="panel">
+        <header class="panel-head">
+          <div class="kicker">TEMPLATES · SSH</div>
+          <h2 data-i18n="nav_scripts">اسکریپت‌ها</h2>
+          <p class="lede" data-i18n="scripts_lede">اسکریپت آماده با متغیر؛ پیش‌نمایش، کپی، دانلود، یا اجرا روی دستگاهی که SSH دارد — لینوکس، ویندوز، میکروتیک.</p>
+        </header>
+        <div class="row">
+          <button type="button" class="os-chip active" data-os="all" data-i18n="scripts_filter_all">همه</button>
+          <button type="button" class="os-chip" data-os="linux">Linux</button>
+          <button type="button" class="os-chip" data-os="windows">Windows</button>
+          <button type="button" class="os-chip" data-os="mikrotik">MikroTik</button>
+          <button class="action" id="scriptNewBtn" data-i18n="scripts_new">اسکریپت جدید</button>
+        </div>
+        <div class="hint" data-i18n="scripts_hint">متغیرها را عوض کنید، اسکریپت را ویرایش کنید، یا اسکریپت جدید بسازید. رمز SSH ذخیره نمی‌شود. ویرایش‌ها فقط در همین مرورگر می‌مانند.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_scripts">اسکریپت‌ها</div>
+          <div id="scriptList" class="cards"></div>
+        </div>
+        <div class="bezel" id="scriptDetail">
+          <div class="bezel-label" id="scriptDetailTitle">—</div>
+          <p class="lede" id="scriptDetailDesc" style="margin-top:0"></p>
+          <div id="scriptVars" class="row"></div>
+          <div class="row">
+            <button class="action secondary" id="scriptPreviewBtn" data-i18n="scripts_preview">پیش‌نمایش</button>
+            <button class="action secondary" id="scriptCopyBtn" data-i18n="export_copy">کپی</button>
+            <button class="action secondary" id="scriptDlBtn" data-i18n="scripts_download">دانلود</button>
+            <button class="action" id="scriptEditBtn" data-i18n="scripts_edit">ویرایش</button>
+            <button class="action secondary" id="scriptDupBtn" data-i18n="scripts_dup">کپی به سفارشی</button>
+            <button class="action secondary" id="scriptDelBtn" style="display:none" data-i18n="scripts_delete">حذف</button>
+          </div>
+          <pre class="script-preview" id="scriptPreview"></pre>
+          <div id="scriptRunBox">
+            <div class="bezel-label" style="margin-top:16px" data-i18n="scripts_run">اجرا روی دستگاه</div>
+            <div class="hint" data-i18n="scripts_run_hint">رمز ذخیره نمی‌شود. ویندوز باید OpenSSH داشته باشد؛ اگر نداشت فقط کپی/دانلود کنید.</div>
+            <div class="row">
+              <select id="scriptHostPick" style="min-width:200px">
+                <option value="" data-i18n="scripts_pick_host">میزبان ذخیره‌شده…</option>
+              </select>
+            </div>
+            <div class="row">
+              <input id="scriptHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" />
+              <input id="scriptUser" data-i18n-placeholder="qc_user_placeholder" placeholder="یوزرنیم" style="min-width:120px" />
+              <input id="scriptPass" type="password" autocomplete="off" data-i18n-placeholder="rdp_pass_placeholder" placeholder="رمز" />
+              <input id="scriptPort" value="22" style="min-width:80px" />
+              <button class="action" id="scriptRunBtn" data-i18n="scripts_run">اجرا روی دستگاه</button>
+            </div>
+            <pre class="rawout" id="scriptRunOut" style="max-height:240px"></pre>
+          </div>
+        </div>
+        <div class="bezel" id="scriptEditor">
+          <div class="bezel-label" id="edTitle" data-i18n="scripts_new">اسکریپت جدید</div>
+          <div class="row">
+            <input id="edName" data-i18n-placeholder="scripts_name_ph" placeholder="نام اسکریپت" style="min-width:180px" />
+            <select id="edOs">
+              <option value="linux">Linux</option>
+              <option value="windows">Windows</option>
+              <option value="mikrotik">MikroTik</option>
+            </select>
+            <select id="edRun">
+              <option value="ssh-bash">SSH bash</option>
+              <option value="ssh-cmd">SSH cmd (Windows)</option>
+              <option value="ssh-routeros">SSH RouterOS</option>
+              <option value="none" data-i18n="scripts_copyonly">فقط کپی/دانلود</option>
+            </select>
+          </div>
+          <div class="row">
+            <input id="edDesc" data-i18n-placeholder="scripts_desc_ph" placeholder="توضیح کوتاه" style="min-width:280px;flex:1" />
+          </div>
+          <div class="row">
+            <textarea id="edVars" data-i18n-placeholder="scripts_vars_ph" placeholder="هر خط: NTP_SERVER=192.168.1.1" style="min-height:72px"></textarea>
+          </div>
+          <div class="row">
+            <textarea id="edBody" data-i18n-placeholder="scripts_body_ph" placeholder="متن اسکریپت. متغیرها را با {{NTP_SERVER}} بنویسید." style="min-height:180px"></textarea>
+          </div>
+          <div class="row">
+            <button class="action" id="edSaveBtn" data-i18n="scripts_save">ذخیره</button>
+            <button class="action secondary" id="edCancelBtn" data-i18n="scripts_cancel">انصراف</button>
+          </div>
+        </div>
+      </section>
+
       <section id="terminal" class="panel">
         <div class="row">
           <select id="termProto">
@@ -936,6 +1119,19 @@
           <button class="action secondary" id="termBlankBtn" data-i18n="term_blank_btn">ترمینال خالی</button>
         </div>
         <div class="hint" data-i18n="term_hint">پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید.</div>
+        <div class="bezel session-script" id="termScriptBox">
+          <div class="bezel-label" data-i18n="session_scripts">اسکریپت روی همین اتصال</div>
+          <div class="hint" data-i18n="session_hint_term">اول وصل شوید و لاگین کنید. اسکریپت داخل همین ترمینال اجرا می‌شود. اسکریپت بزرگ یا ویندوز رمز SSH می‌خواهد.</div>
+          <div class="row">
+            <select id="termScriptPick" style="min-width:220px">
+              <option value="" data-i18n="session_pick">انتخاب اسکریپت…</option>
+            </select>
+            <input id="termScriptPass" type="password" autocomplete="off" data-i18n-placeholder="session_pass_ph" placeholder="رمز SSH (اسکریپت بزرگ / ویندوز)" />
+            <button class="action" id="termScriptRunBtn" data-i18n="session_run_term">اجرا در همین جلسه</button>
+          </div>
+          <div id="termScriptVars" class="row"></div>
+          <pre class="rawout" id="termScriptOut" style="max-height:140px"></pre>
+        </div>
         <div id="termPlaceholder" class="empty" data-i18n="term_placeholder">فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.</div>
         <iframe class="term" id="termFrame" style="display:none"></iframe>
       </section>
@@ -956,6 +1152,18 @@
           <button class="action secondary" id="rdpDisconnectBtn" data-i18n="rdp_disconnect">قطع</button>
         </div>
         <div class="hint" data-i18n="rdp_hint">برای سرورهای داخلی گواهی نامعتبر نادیده گرفته می‌شود. جلسه قبلی با اتصال جدید جایگزین می‌شود.</div>
+        <div class="bezel session-script" id="rdpScriptBox">
+          <div class="bezel-label" data-i18n="session_scripts">اسکریپت روی همین اتصال</div>
+          <div class="hint" data-i18n="session_hint_rdp">بعد از وصل شدن، اسکریپت ویندوز از درایو \\tsclient\nettoolbox اجرا می‌شود. اگر UAC آمد تأیید کنید. روی دسکتاپ کلیک کنید تا فوکوس داشته باشد.</div>
+          <div class="row">
+            <select id="rdpScriptPick" style="min-width:220px">
+              <option value="" data-i18n="session_pick">انتخاب اسکریپت…</option>
+            </select>
+            <button class="action" id="rdpScriptRunBtn" data-i18n="session_run_rdp">اجرا روی دسکتاپ</button>
+          </div>
+          <div id="rdpScriptVars" class="row"></div>
+          <pre class="rawout" id="rdpScriptOut" style="max-height:140px"></pre>
+        </div>
         <div class="bezel">
           <div class="bezel-label" data-i18n="nav_rdp">RDP</div>
           <div id="rdpStatus" class="empty" data-i18n="rdp_placeholder">میزبان، یوزر و رمز را بزنید و وصل شوید.</div>
@@ -1142,6 +1350,70 @@ const translations = {
     qc_notes_placeholder: "یادداشت (رک، VLAN، تماس...)",
     qc_connect: "اتصال",
     qc_hint: "فقط در همین مرورگر ذخیره می‌شود. رمز را اینجا نگذارید — هنگام اتصال وارد کنید.",
+    nav_snmp: "SNMP",
+    nav_report: "گزارش جلسه",
+    nav_scripts: "اسکریپت‌ها",
+    snmp_lede: "نام میزبان، آپ‌تایم، نام پورت و VLAN از سوئیچ، پرینتر، UPS، دوربین، Dahua و Hikvision — community v1/v2c.",
+    snmp_hint: "Community پیش‌فرض public است. پروفایل دوربین MIB-II است؛ Dahua و Hikvision OID اختصاصی دارند. SNMPv3 در این نسخه نیست.",
+    snmp_btn: "Get / Walk",
+    snmp_prof_system: "سیستم (نام، آپ‌تایم)",
+    snmp_prof_ifaces: "پورت‌ها",
+    snmp_prof_vlans: "VLAN",
+    snmp_prof_camera: "دوربین",
+    snmp_prof_dahua: "Dahua",
+    snmp_prof_hikvision: "Hikvision",
+    snmp_prof_printer: "پرینتر",
+    snmp_prof_ups: "UPS",
+    snmp_prof_custom: "OID سفارشی",
+    th_oid: "OID", th_label: "نام", th_value: "مقدار",
+    report_lede: "اسکن کشف + همسایه‌ها + لینک + یک پاراگراف یادداشت — برای چسباندن به تیکت.",
+    report_site_ph: "سایت / شعبه",
+    report_customer_ph: "مشتری",
+    report_tech_ph: "تکنسین",
+    report_notes_ph: "یک پاراگراف: چه دیدی، چه کردی، چه ماند.",
+    report_preview: "پیش‌نمایش",
+    report_md: "دانلود Markdown",
+    report_txt: "دانلود متن",
+    report_hint: "از آخرین اسکن کشف، شنیدن CDP/LLDP و وضعیت لینک همین جلسه پر می‌شود. رمز ذخیره نمی‌شود.",
+    report_no_scan: "(اسکن کشف هنوز انجام نشده)",
+    report_no_cdp: "(همسایه‌ای شنیده نشده)",
+    report_no_link: "(وضعیت لینک هنوز خوانده نشده)",
+    scripts_lede: "اسکریپت آماده با متغیر؛ پیش‌نمایش، کپی، دانلود، یا اجرا روی دستگاهی که SSH دارد — لینوکس، ویندوز، میکروتیک.",
+    scripts_hint: "متغیرها را عوض کنید، اسکریپت را ویرایش کنید، یا اسکریپت جدید بسازید. رمز SSH ذخیره نمی‌شود. ویرایش‌ها فقط در همین مرورگر می‌مانند.",
+    scripts_filter_all: "همه",
+    scripts_new: "اسکریپت جدید",
+    scripts_edit: "ویرایش",
+    scripts_edited: "ویرایش‌شده",
+    scripts_pick_host: "میزبان ذخیره‌شده…",
+    scripts_preview: "پیش‌نمایش",
+    scripts_download: "دانلود",
+    scripts_dup: "کپی به سفارشی",
+    scripts_delete: "حذف",
+    scripts_run: "اجرا روی دستگاه",
+    scripts_run_hint: "رمز ذخیره نمی‌شود. ویندوز باید OpenSSH داشته باشد؛ اگر نداشت فقط کپی/دانلود کنید.",
+    scripts_copyonly: "فقط کپی/دانلود",
+    scripts_save: "ذخیره",
+    scripts_cancel: "انصراف",
+    scripts_name_ph: "نام اسکریپت",
+    scripts_desc_ph: "توضیح کوتاه",
+    scripts_vars_ph: "هر خط: NTP_SERVER=192.168.1.1",
+    scripts_body_ph: "متن اسکریپت. متغیرها را با {{NTP_SERVER}} بنویسید.",
+    scripts_builtin: "آماده",
+    scripts_custom: "سفارشی",
+    scripts_need_auth: "میزبان، یوزر و رمز لازم است.",
+    scripts_need_name: "نام اسکریپت لازم است.",
+    session_scripts: "اسکریپت روی همین اتصال",
+    session_pick: "انتخاب اسکریپت…",
+    session_run_term: "اجرا در همین جلسه",
+    session_run_rdp: "اجرا روی دسکتاپ",
+    session_hint_term: "اول وصل شوید و لاگین کنید. اسکریپت داخل همین ترمینال اجرا می‌شود. اسکریپت بزرگ یا ویندوز رمز SSH می‌خواهد.",
+    session_hint_rdp: "بعد از وصل شدن، اسکریپت ویندوز از درایو \\\\tsclient\\nettoolbox اجرا می‌شود. اگر UAC آمد تأیید کنید. روی دسکتاپ کلیک کنید تا فوکوس داشته باشد.",
+    session_pass_ph: "رمز SSH (اسکریپت بزرگ / ویندوز)",
+    session_need_term: "اول SSH یا Telnet وصل شوید و لاگین کنید.",
+    session_need_rdp: "اول RDP وصل شوید.",
+    session_sent_term: "به جلسه فرستاده شد — خروجی را در ترمینال ببینید.",
+    session_sent_rdp: "Run زده شد. اگر پنجره نیامد، روی دسکتاپ کلیک کنید و دوباره بزنید.",
+    session_blank: "ترمینال خالی روی خود جعبه است، نه دستگاه راه دور.",
   },
   en: {
     subtitle: "Portable network & security toolkit",
@@ -1304,6 +1576,70 @@ const translations = {
     qc_notes_placeholder: "Notes (rack, VLAN, contact...)",
     qc_connect: "Connect",
     qc_hint: "Stored only in this browser. Do not put a password here — enter it when you connect.",
+    nav_snmp: "SNMP",
+    nav_report: "Site report",
+    nav_scripts: "Scripts",
+    snmp_lede: "Hostname, uptime, port names, VLANs from a switch, printer, UPS, camera, Dahua, or Hikvision — community v1/v2c.",
+    snmp_hint: "Default community is public. Camera is MIB-II; Dahua and Hikvision add vendor OIDs. SNMPv3 is not in this build.",
+    snmp_btn: "Get / Walk",
+    snmp_prof_system: "System (name, uptime)",
+    snmp_prof_ifaces: "Ports",
+    snmp_prof_vlans: "VLANs",
+    snmp_prof_camera: "Camera",
+    snmp_prof_dahua: "Dahua",
+    snmp_prof_hikvision: "Hikvision",
+    snmp_prof_printer: "Printer",
+    snmp_prof_ups: "UPS",
+    snmp_prof_custom: "Custom OID",
+    th_oid: "OID", th_label: "Label", th_value: "Value",
+    report_lede: "Discover scan + neighbors + link status + a notes paragraph — download for the ticket.",
+    report_site_ph: "site / branch",
+    report_customer_ph: "customer",
+    report_tech_ph: "technician",
+    report_notes_ph: "One paragraph: what you saw, what you did, what remains.",
+    report_preview: "Preview",
+    report_md: "Download Markdown",
+    report_txt: "Download text",
+    report_hint: "Filled from this session’s last discover, CDP/LLDP listen, and link dashboard. Passwords are not stored.",
+    report_no_scan: "(no discover scan yet)",
+    report_no_cdp: "(no neighbors heard)",
+    report_no_link: "(link status not loaded yet)",
+    scripts_lede: "Ready scripts with variables — preview, copy, download, or run over SSH on Linux, Windows, or MikroTik.",
+    scripts_hint: "Change variables, edit a script, or create a new one. SSH password is not stored. Edits stay in this browser.",
+    scripts_filter_all: "All",
+    scripts_new: "New script",
+    scripts_edit: "Edit",
+    scripts_edited: "Edited",
+    scripts_pick_host: "Saved host…",
+    scripts_preview: "Preview",
+    scripts_download: "Download",
+    scripts_dup: "Copy to custom",
+    scripts_delete: "Delete",
+    scripts_run: "Run on device",
+    scripts_run_hint: "Password is not stored. Windows needs OpenSSH; otherwise copy/download only.",
+    scripts_copyonly: "Copy/download only",
+    scripts_save: "Save",
+    scripts_cancel: "Cancel",
+    scripts_name_ph: "Script name",
+    scripts_desc_ph: "Short description",
+    scripts_vars_ph: "One per line: NTP_SERVER=192.168.1.1",
+    scripts_body_ph: "Script body. Use {{NTP_SERVER}} for variables.",
+    scripts_builtin: "Built-in",
+    scripts_custom: "Custom",
+    scripts_need_auth: "Host, username, and password are required.",
+    scripts_need_name: "Script name is required.",
+    session_scripts: "Script on this connection",
+    session_pick: "Choose a script…",
+    session_run_term: "Run in this session",
+    session_run_rdp: "Run on desktop",
+    session_hint_term: "Connect and log in first. The script is typed into this terminal. Large or Windows scripts need the SSH password.",
+    session_hint_rdp: "After you connect, the Windows script runs from \\\\tsclient\\nettoolbox. Confirm UAC if it appears. Click the desktop so it has focus.",
+    session_pass_ph: "SSH password (large / Windows scripts)",
+    session_need_term: "Connect SSH or Telnet and log in first.",
+    session_need_rdp: "Connect RDP first.",
+    session_sent_term: "Sent to the session — watch the terminal for output.",
+    session_sent_rdp: "Run dialog sent. If nothing happened, click the desktop and try again.",
+    session_blank: "The blank terminal is this box, not the remote host.",
   }
 };
 
@@ -1348,6 +1684,8 @@ function switchTab(id) {
   tabs.forEach(x => x.classList.toggle("active", x.dataset.panel === id));
   document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === id));
   if (id === "link") loadLinkStatus();
+  if (id === "scripts" || id === "terminal" || id === "rdp") loadScripts();
+  if (id === "report") paintReport();
 }
 tabs.forEach(tb => tb.onclick = () => switchTab(tb.dataset.panel));
 
@@ -1439,6 +1777,10 @@ let lastDiscoverHosts = [];
 let lastDiscoverFilter = "all";
 let lastDiscoverQuery = "";
 let lastDiscoverMeta = {subnet: "", profile: "", at: ""};
+let lastCdpNeighbors = [];
+let lastCdpMeta = {};
+let lastLinkData = null;
+let lastLinkPublic = null;
 let discoverES = null;
 
 function setScanPhase(key) {
@@ -1902,6 +2244,8 @@ document.getElementById("cdpBtn").onclick = async () => {
     });
     const data = await res.json();
     if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
+    lastCdpNeighbors = data.neighbors || [];
+    lastCdpMeta = {protocol, iface, duration, at: new Date().toISOString()};
     if (!data.neighbors.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
     out.className = "cards";
     out.innerHTML = data.neighbors.map(nb => `
@@ -2393,6 +2737,7 @@ function renderQuickConnect() {
       ${h.notes ? `<div class="qc-notes">${esc(h.notes)}</div>` : ""}
       <div class="qc-actions">
         <button data-act="connect" data-i="${i}" title="${esc(t("qc_connect"))}">▶</button>
+        <button data-act="script" data-i="${i}" title="${esc(t("nav_scripts"))}">{ }</button>
         <button data-act="ping" data-i="${i}" title="Ping">↗</button>
         <button data-act="portscan" data-i="${i}" title="Port scan">▤</button>
         <button data-act="del" data-i="${i}" title="Delete" class="qc-del">✕</button>
@@ -2429,6 +2774,9 @@ document.getElementById("qcList").addEventListener("click", (e) => {
   } else if (act === "portscan") {
     document.getElementById("ipInput").value = h.host;
     switchTab("portscan");
+  } else if (act === "script") {
+    fillScriptRunFromHost(h);
+    switchTab("scripts");
   } else if (act === "connect") {
     const port = h.port || defaultPort(h.proto);
     if (h.proto === "rdp") {
@@ -2571,6 +2919,8 @@ document.getElementById("subnetCopyBtn").onclick = async () => {
 };
 
 function paintLink(data, pub) {
+  lastLinkData = data;
+  if (pub != null) lastLinkPublic = pub;
   const out = document.getElementById("linkResult");
   const gw = data.default_route;
   const dns = (data.dns && data.dns.nameservers) || [];
@@ -2733,15 +3083,24 @@ document.getElementById("termConnectBtn").onclick = () => {
   const port = document.getElementById("termPort").value.trim() || (proto === "ssh" ? "22" : "23");
   const user = document.getElementById("termUser").value.trim();
   if (!host || host.startsWith("-")) { alert(t("invalid_host")); return; }
+  lastTermConn = {proto, host, port, user};
+  fillSessionScriptPick("terminal");
   termPlaceholder.style.display = "none";
   termFrame.style.display = "block";
   termFrame.src = buildTermUrl([proto, host, port, user]);
 };
 document.getElementById("termBlankBtn").onclick = () => {
+  lastTermConn = {proto: "local"};
+  fillSessionScriptPick("terminal");
   termPlaceholder.style.display = "none";
   termFrame.style.display = "block";
   termFrame.src = TTYD_BASE;
 };
+document.getElementById("termProto").onchange = () => fillSessionScriptPick("terminal");
+document.getElementById("termScriptPick").onchange = () => onSessionScriptPick("terminal");
+document.getElementById("termScriptRunBtn").onclick = () => runOnSession("terminal");
+document.getElementById("rdpScriptPick").onchange = () => onSessionScriptPick("rdp");
+document.getElementById("rdpScriptRunBtn").onclick = () => runOnSession("rdp");
 
 const NOVNC_URL = "http://127.0.0.1:7682/vnc.html?autoconnect=1&resize=scale&reconnect=1";
 const rdpFrame = document.getElementById("rdpFrame");
@@ -2773,6 +3132,8 @@ document.getElementById("rdpConnectBtn").onclick = async () => {
     const data = await res.json();
     if (data.error) { rdpStatus.textContent = t("error_prefix") + data.error; return; }
     rdpStatus.textContent = `${t("rdp_connected")}: ${data.user}@${data.host}:${data.port}`;
+    rdpConnected = true;
+    fillSessionScriptPick("rdp");
     showRdpFrame(true);
     rdpFrame.src = NOVNC_URL + "&t=" + Date.now();
   } catch (err) {
@@ -2782,9 +3143,562 @@ document.getElementById("rdpConnectBtn").onclick = async () => {
 
 document.getElementById("rdpDisconnectBtn").onclick = async () => {
   await fetch("/api/rdp/stop", {method: "POST"});
+  rdpConnected = false;
   showRdpFrame(false);
   rdpStatus.className = "empty";
   rdpStatus.textContent = t("rdp_placeholder");
+};
+
+document.getElementById("snmpProfile").onchange = () => {
+  document.getElementById("snmpCustomRow").classList.toggle("show", document.getElementById("snmpProfile").value === "custom");
+};
+document.getElementById("snmpBtn").onclick = async () => {
+  const btn = document.getElementById("snmpBtn");
+  const host = document.getElementById("snmpHost").value.trim();
+  const out = document.getElementById("snmpResult");
+  setLoading(btn, true);
+  out.className = "empty";
+  out.textContent = t("running");
+  try {
+    const payload = {
+      host,
+      community: document.getElementById("snmpCommunity").value.trim() || "public",
+      version: document.getElementById("snmpVersion").value,
+      profile: document.getElementById("snmpProfile").value,
+      oid: document.getElementById("snmpOid").value.trim(),
+      mode: document.getElementById("snmpMode").value,
+    };
+    const res = await fetch("/api/snmp", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) { out.textContent = t("error_prefix") + data.error; return; }
+    const rows = data.rows || [];
+    if (!rows.length) { out.textContent = t("none_found"); return; }
+    out.className = "table-scroll";
+    out.innerHTML = `<table>
+      <thead><tr><th>${esc(t("th_label"))}</th><th>${esc(t("th_oid"))}</th><th>${esc(t("th_value"))}</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td>${esc(r.label)}</td>
+        <td>${esc(r.oid)}</td>
+        <td>${esc(r.value)}</td>
+      </tr>`).join("")}</tbody>
+    </table>`;
+  } catch (err) {
+    out.textContent = t("error_prefix") + (err.message || err);
+  } finally { setLoading(btn, false); }
+};
+document.getElementById("snmpHost").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("snmpBtn").click(); });
+
+function buildReportText() {
+  const site = document.getElementById("reportSite").value.trim();
+  const customer = document.getElementById("reportCustomer").value.trim();
+  const tech = document.getElementById("reportTech").value.trim();
+  const notes = document.getElementById("reportNotes").value.trim();
+  const when = new Date().toISOString().replace("T", " ").slice(0, 16);
+  const lines = [];
+  lines.push(`# Site visit${site ? " — " + site : ""}`);
+  lines.push("");
+  lines.push(`- Date: ${when}`);
+  if (customer) lines.push(`- Customer: ${customer}`);
+  if (tech) lines.push(`- Technician: ${tech}`);
+  if (lastDiscoverMeta.subnet) lines.push(`- Subnet: ${lastDiscoverMeta.subnet}`);
+  lines.push("");
+  lines.push("## Notes");
+  lines.push("");
+  lines.push(notes || "—");
+  lines.push("");
+  lines.push("## Link");
+  lines.push("");
+  if (!lastLinkData) {
+    lines.push(t("report_no_link"));
+  } else {
+    const d = lastLinkData;
+    const gw = d.default_route;
+    lines.push(`- Hostname: ${d.hostname || "—"}`);
+    lines.push(`- Gateway: ${(gw && gw.gateway) || "—"}${(gw && gw.iface) ? " (" + gw.iface + ")" : ""}`);
+    const dns = (d.dns && d.dns.nameservers) || [];
+    lines.push(`- DNS: ${dns.join(", ") || "—"}`);
+    if (lastLinkPublic && lastLinkPublic.ip) lines.push(`- Public IP: ${lastLinkPublic.ip}`);
+    (d.interfaces || []).forEach(iface => {
+      const v4 = (iface.ipv4 || []).map(a => `${a.address}/${a.prefix}`).join(", ") || "—";
+      lines.push(`- ${iface.name}: ${v4} [${iface.state || (iface.up ? "UP" : "DOWN")}]`);
+    });
+  }
+  lines.push("");
+  lines.push("## Discover");
+  lines.push("");
+  if (!lastDiscoverHosts.length) {
+    lines.push(t("report_no_scan"));
+  } else {
+    lines.push(`${lastDiscoverHosts.length} live hosts${lastDiscoverMeta.subnet ? " on " + lastDiscoverMeta.subnet : ""}.`);
+    lines.push("");
+    lastDiscoverHosts.forEach(h => {
+      const ports = (h.ports || []).map(p => `${p.port}/${p.protocol || "tcp"}${p.service ? " " + p.service : ""}`).join(", ");
+      lines.push(`- ${h.ip}${h.hostname ? " (" + h.hostname + ")" : ""}${h.mac ? "  MAC " + h.mac : ""}${h.vendor ? "  " + h.vendor : ""}${ports ? "  ports: " + ports : ""}`);
+    });
+  }
+  lines.push("");
+  lines.push("## Neighbors");
+  lines.push("");
+  if (!lastCdpNeighbors.length) {
+    lines.push(t("report_no_cdp"));
+  } else {
+    if (lastCdpMeta.protocol) lines.push(`Protocol: ${lastCdpMeta.protocol} on ${lastCdpMeta.iface || "—"}.`);
+    lines.push("");
+    lastCdpNeighbors.forEach(nb => {
+      lines.push(`- ${nb.device_id || "—"}${nb.platform ? "  " + nb.platform : ""}${nb.port_id ? "  port " + nb.port_id : ""}`);
+    });
+  }
+  lines.push("");
+  return lines.join("\n");
+}
+function paintReport() {
+  const el = document.getElementById("reportPreview");
+  el.removeAttribute("data-i18n");
+  el.textContent = buildReportText();
+}
+function reportFileBase() {
+  const site = (document.getElementById("reportSite").value.trim() || "site").replace(/[^\w.-]+/g, "-");
+  const day = new Date().toISOString().slice(0, 10);
+  return `site-report-${site}-${day}`;
+}
+document.getElementById("reportPreviewBtn").onclick = paintReport;
+document.getElementById("reportMdBtn").onclick = () => {
+  const text = buildReportText();
+  paintReport();
+  downloadText(reportFileBase() + ".md", text, "text/markdown;charset=utf-8");
+};
+document.getElementById("reportTxtBtn").onclick = () => {
+  const text = buildReportText();
+  paintReport();
+  downloadText(reportFileBase() + ".txt", text, "text/plain;charset=utf-8");
+};
+
+const SCRIPT_STORE = "nettoolbox_scripts";
+let catalogScripts = [];
+let customScripts = [];
+let scriptFilter = "all";
+let selectedScript = null;
+let selectedBody = "";
+let editingCustomId = null;
+
+function readCustomScripts() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SCRIPT_STORE) || "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch { return []; }
+}
+function writeCustomScripts(list) {
+  localStorage.setItem(SCRIPT_STORE, JSON.stringify(list));
+  customScripts = list;
+}
+function fillScriptRunFromHost(h) {
+  if (!h || !h.host) return;
+  document.getElementById("scriptHost").value = h.host;
+  if (h.user) document.getElementById("scriptUser").value = h.user;
+  document.getElementById("scriptPort").value = h.port || "22";
+}
+function fillScriptHostPick() {
+  const sel = document.getElementById("scriptHostPick");
+  if (!sel) return;
+  const all = loadSavedHosts();
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">${esc(t("scripts_pick_host"))}</option>`;
+  all.forEach((h, i) => {
+    if ((h.proto || "ssh") !== "ssh") return;
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = `${h.name || h.host} — ${h.host}`;
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
+const SESSION_INJECT_MAX = 12000;
+let lastTermConn = null;
+let rdpConnected = false;
+const sessionBodies = {};
+function sessionOsFilter(kind) {
+  if (kind === "rdp") return s => s.os === "windows" && s.run && s.run !== "none";
+  const proto = (lastTermConn && lastTermConn.proto) || document.getElementById("termProto").value;
+  if (proto === "telnet") return s => s.os === "mikrotik" && s.run && s.run !== "none";
+  if (proto === "local") return () => false;
+  return s => s.run && s.run !== "none";
+}
+function fillSessionScriptPick(kind) {
+  const sel = document.getElementById(kind === "rdp" ? "rdpScriptPick" : "termScriptPick");
+  if (!sel) return;
+  const prev = sel.value;
+  const items = allScripts().filter(sessionOsFilter(kind));
+  sel.innerHTML = `<option value="">${esc(t("session_pick"))}</option>`;
+  items.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.name;
+    sel.appendChild(opt);
+  });
+  if (prev && items.some(s => s.id === prev)) sel.value = prev;
+  onSessionScriptPick(kind);
+}
+function collectVarsFrom(boxId) {
+  const o = {};
+  document.querySelectorAll("#" + boxId + " [data-varkey]").forEach(inp => {
+    o[inp.dataset.varkey] = inp.value;
+  });
+  return o;
+}
+function sessionNeedsPass(item, body) {
+  if (!item) return false;
+  if (item.run === "ssh-cmd") return true;
+  return (body || "").length > SESSION_INJECT_MAX;
+}
+async function onSessionScriptPick(kind) {
+  const prefix = kind === "rdp" ? "rdpScript" : "termScript";
+  const sid = document.getElementById(prefix + "Pick").value;
+  const varsEl = document.getElementById(prefix + "Vars");
+  const passEl = document.getElementById("termScriptPass");
+  varsEl.innerHTML = "";
+  const item = allScripts().find(s => s.id === sid);
+  if (!item) {
+    if (passEl && kind === "terminal") passEl.style.display = "";
+    return;
+  }
+  let body = item.custom ? (item.body || "") : sessionBodies[sid];
+  if (!item.custom && body == null) {
+    try {
+      const res = await fetch("/api/scripts/" + encodeURIComponent(sid));
+      const data = await res.json();
+      body = data.body || "";
+      sessionBodies[sid] = body;
+    } catch { body = ""; }
+  }
+  if (item.custom) sessionBodies[sid] = body;
+  varsEl.innerHTML = (item.variables || []).map(v =>
+    `<label style="display:flex;flex-direction:column;gap:4px;min-width:160px">
+      <span class="bezel-label" style="margin:0">${esc(v.label || v.key)}</span>
+      <input data-varkey="${esc(v.key)}" value="${esc(v.default || "")}" style="min-width:160px" />
+    </label>`
+  ).join("");
+  if (passEl && kind === "terminal") {
+    passEl.style.display = sessionNeedsPass(item, body) ? "" : "none";
+  }
+}
+async function runOnSession(kind) {
+  const prefix = kind === "rdp" ? "rdpScript" : "termScript";
+  const btn = document.getElementById(prefix + "RunBtn");
+  const out = document.getElementById(prefix + "Out");
+  const sid = document.getElementById(prefix + "Pick").value;
+  const item = allScripts().find(s => s.id === sid);
+  if (!item) { out.textContent = t("session_pick"); return; }
+  if (kind === "terminal") {
+    if (!lastTermConn || lastTermConn.proto === "local") {
+      out.textContent = lastTermConn && lastTermConn.proto === "local" ? t("session_blank") : t("session_need_term");
+      return;
+    }
+  } else if (!rdpConnected) {
+    out.textContent = t("session_need_rdp");
+    return;
+  }
+  let body = item.custom ? (item.body || sessionBodies[sid] || "") : sessionBodies[sid];
+  if (!item.custom && body == null) {
+    try {
+      const res = await fetch("/api/scripts/" + encodeURIComponent(sid));
+      const data = await res.json();
+      body = data.body || "";
+      sessionBodies[sid] = body;
+    } catch { body = ""; }
+  }
+  const payload = {
+    session: kind === "rdp" ? "rdp" : "terminal",
+    run: item.run,
+    variables: collectVarsFrom(prefix + "Vars"),
+  };
+  if (item.custom) payload.body = body;
+  else payload.id = item.id;
+  if (kind === "terminal") {
+    payload.host = lastTermConn.host;
+    payload.user = document.getElementById("termUser").value.trim() || lastTermConn.user || "";
+    payload.port = lastTermConn.port || "22";
+    payload.password = document.getElementById("termScriptPass").value;
+    if (sessionNeedsPass(item, body) && !payload.password) {
+      out.textContent = t("scripts_need_auth");
+      return;
+    }
+  }
+  setLoading(btn, true);
+  out.textContent = t("running");
+  try {
+    const res = await fetch("/api/scripts/run-session", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) { out.textContent = t("error_prefix") + data.error; return; }
+    if (data.via === "pty") out.textContent = t("session_sent_term");
+    else if (data.via === "rdp") out.textContent = t("session_sent_rdp");
+    else out.textContent = (data.ok ? "" : "exit " + data.code + "\n") + (data.output || "");
+  } catch (err) {
+    out.textContent = t("error_prefix") + (err.message || err);
+  } finally { setLoading(btn, false); }
+}
+function allScripts() {
+  const catalogIds = new Set(catalogScripts.map(s => s.id));
+  const customById = {};
+  customScripts.forEach(s => { customById[s.id] = s; });
+  const out = catalogScripts.map(s => {
+    const ov = customById[s.id];
+    if (ov) return Object.assign({}, s, ov, {custom: true, overridden: true});
+    return Object.assign({}, s, {custom: false});
+  });
+  customScripts.forEach(s => {
+    if (!catalogIds.has(s.id)) out.push(Object.assign({}, s, {custom: true}));
+  });
+  return out;
+}
+async function loadScripts() {
+  customScripts = readCustomScripts();
+  try {
+    const res = await fetch("/api/scripts");
+    const data = await res.json();
+    catalogScripts = data.scripts || [];
+  } catch {}
+  renderScriptList();
+  fillScriptHostPick();
+  fillSessionScriptPick("terminal");
+  fillSessionScriptPick("rdp");
+}
+function renderScriptList() {
+  const out = document.getElementById("scriptList");
+  const items = allScripts().filter(s => scriptFilter === "all" || s.os === scriptFilter);
+  if (!items.length) {
+    out.className = "empty";
+    out.textContent = t("none_found");
+    return;
+  }
+  out.className = "cards";
+  out.innerHTML = items.map(s => `
+    <div class="card script-card${selectedScript && selectedScript.id === s.id ? " selected" : ""}" data-sid="${esc(s.id)}">
+      <div class="ip">${esc(s.name)}</div>
+      <span class="badge ${s.custom ? "warn" : "up"}">${esc(s.overridden ? t("scripts_edited") : s.custom ? t("scripts_custom") : t("scripts_builtin"))} · ${esc(s.os)}</span>
+      <div class="meta">${esc(s.description || "")}</div>
+    </div>`).join("");
+  out.querySelectorAll(".script-card").forEach(card => {
+    card.onclick = () => openScript(card.dataset.sid);
+  });
+}
+function collectScriptVars() {
+  const o = {};
+  document.querySelectorAll("#scriptVars [data-varkey]").forEach(inp => {
+    o[inp.dataset.varkey] = inp.value;
+  });
+  return o;
+}
+function applyScriptVars(text, vars) {
+  return (text || "").replace(/\{\{([A-Z][A-Z0-9_]{0,31})\}\}/g, (m, k) => (
+    vars[k] != null && vars[k] !== "" ? String(vars[k]) : m
+  ));
+}
+function currentRenderedScript() {
+  return applyScriptVars(selectedBody, collectScriptVars());
+}
+function renderScriptPreview() {
+  const rendered = currentRenderedScript();
+  const el = document.getElementById("scriptPreview");
+  const max = 80000;
+  el.textContent = rendered.length > max ? rendered.slice(0, max) + "\n… (" + rendered.length + " bytes)" : rendered;
+  return rendered;
+}
+function scriptExt(item) {
+  if (!item) return ".txt";
+  if (item.os === "windows") return ".cmd";
+  if (item.os === "mikrotik") return ".rsc";
+  return ".sh";
+}
+async function openScript(sid) {
+  const item = allScripts().find(s => s.id === sid);
+  if (!item) return;
+  selectedScript = item;
+  if (item.custom) {
+    selectedBody = item.body || "";
+  } else {
+    const res = await fetch("/api/scripts/" + encodeURIComponent(sid));
+    const data = await res.json();
+    if (data.error) { selectedBody = ""; } else {
+      selectedBody = data.body || "";
+      selectedScript = Object.assign({}, item, data, {custom: false});
+    }
+  }
+  document.getElementById("scriptDetail").classList.add("open");
+  document.getElementById("scriptEditor").classList.remove("open");
+  document.getElementById("scriptDetailTitle").textContent = selectedScript.name;
+  document.getElementById("scriptDetailDesc").textContent = selectedScript.description || "";
+  const vars = selectedScript.variables || [];
+  document.getElementById("scriptVars").innerHTML = vars.map(v =>
+    `<label style="display:flex;flex-direction:column;gap:4px;min-width:160px">
+      <span class="bezel-label" style="margin:0">${esc(v.label || v.key)}</span>
+      <input data-varkey="${esc(v.key)}" value="${esc(v.default || "")}" style="min-width:160px" />
+    </label>`
+  ).join("");
+  document.getElementById("scriptDelBtn").style.display = item.custom ? "" : "none";
+  const canRun = selectedScript.run && selectedScript.run !== "none";
+  document.getElementById("scriptRunBox").style.display = canRun ? "" : "none";
+  document.getElementById("scriptRunOut").textContent = "";
+  renderScriptPreview();
+  renderScriptList();
+}
+function parseVarLines(text) {
+  const out = [];
+  (text || "").split("\n").forEach(line => {
+    line = line.trim();
+    if (!line || line.startsWith("#")) return;
+    const i = line.indexOf("=");
+    const key = (i === -1 ? line : line.slice(0, i)).trim();
+    const def = i === -1 ? "" : line.slice(i + 1).trim();
+    if (/^[A-Z][A-Z0-9_]{0,31}$/.test(key)) out.push({key: key, label: key, default: def});
+  });
+  return out;
+}
+function varLinesFrom(vars) {
+  return (vars || []).map(v => v.key + (v.default != null && v.default !== "" ? "=" + v.default : "")).join("\n");
+}
+function setEdTitle(key) {
+  const el = document.getElementById("edTitle");
+  el.setAttribute("data-i18n", key);
+  el.textContent = t(key);
+}
+function openEditor(prefill, saveId) {
+  editingCustomId = saveId || null;
+  setEdTitle(saveId ? "scripts_edit" : "scripts_new");
+  document.getElementById("edName").value = (prefill && prefill.name) || "";
+  document.getElementById("edOs").value = (prefill && prefill.os) || "linux";
+  document.getElementById("edRun").value = (prefill && prefill.run) || "ssh-bash";
+  document.getElementById("edDesc").value = (prefill && prefill.description) || "";
+  document.getElementById("edVars").value = varLinesFrom((prefill && prefill.variables) || []);
+  document.getElementById("edBody").value = (prefill && prefill.body) || selectedBody || "";
+  document.getElementById("scriptEditor").classList.add("open");
+  document.getElementById("scriptEditor").scrollIntoView({behavior: "smooth", block: "nearest"});
+  document.getElementById("edName").focus();
+}
+
+document.querySelectorAll("#scripts .os-chip").forEach(btn => {
+  btn.onclick = () => {
+    scriptFilter = btn.dataset.os;
+    document.querySelectorAll("#scripts .os-chip").forEach(b => b.classList.toggle("active", b === btn));
+    renderScriptList();
+  };
+});
+document.getElementById("scriptHostPick").onchange = () => {
+  const i = document.getElementById("scriptHostPick").value;
+  if (i === "") return;
+  fillScriptRunFromHost(loadSavedHosts()[Number(i)]);
+};
+document.getElementById("scriptPreviewBtn").onclick = renderScriptPreview;
+document.getElementById("scriptCopyBtn").onclick = async () => {
+  const text = renderScriptPreview();
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById("scriptCopyBtn");
+    const prev = btn.textContent; btn.textContent = t("copied");
+    setTimeout(() => { btn.textContent = prev; }, 1200);
+  } catch {}
+};
+document.getElementById("scriptDlBtn").onclick = () => {
+  if (!selectedScript) return;
+  const text = renderScriptPreview();
+  const base = (selectedScript.name || "script").replace(/[^\w.-]+/g, "-");
+  downloadText(base + scriptExt(selectedScript), text);
+};
+document.getElementById("scriptEditBtn").onclick = () => {
+  if (!selectedScript) return;
+  openEditor({
+    name: selectedScript.name,
+    os: selectedScript.os,
+    run: selectedScript.run || "none",
+    description: selectedScript.description || "",
+    variables: selectedScript.variables || [],
+    body: selectedBody,
+  }, selectedScript.id);
+};
+document.getElementById("scriptDupBtn").onclick = () => {
+  if (!selectedScript) return;
+  openEditor({
+    name: selectedScript.name + " copy",
+    os: selectedScript.os,
+    run: selectedScript.run || "none",
+    description: selectedScript.description || "",
+    variables: selectedScript.variables || [],
+    body: selectedBody,
+  });
+};
+document.getElementById("scriptDelBtn").onclick = () => {
+  if (!selectedScript || !selectedScript.custom) return;
+  const id = selectedScript.id;
+  const wasOverride = !!selectedScript.overridden;
+  writeCustomScripts(customScripts.filter(s => s.id !== id));
+  if (wasOverride) {
+    openScript(id);
+    return;
+  }
+  selectedScript = null;
+  selectedBody = "";
+  document.getElementById("scriptDetail").classList.remove("open");
+  renderScriptList();
+};
+document.getElementById("scriptNewBtn").onclick = () => openEditor(null);
+document.getElementById("edCancelBtn").onclick = () => {
+  document.getElementById("scriptEditor").classList.remove("open");
+  editingCustomId = null;
+};
+document.getElementById("edSaveBtn").onclick = () => {
+  const name = document.getElementById("edName").value.trim();
+  if (!name) { alert(t("scripts_need_name")); return; }
+  const item = {
+    id: editingCustomId || ("custom-" + Date.now().toString(36)),
+    name,
+    os: document.getElementById("edOs").value,
+    run: document.getElementById("edRun").value,
+    description: document.getElementById("edDesc").value.trim(),
+    variables: parseVarLines(document.getElementById("edVars").value),
+    body: document.getElementById("edBody").value,
+    custom: true,
+  };
+  const rest = customScripts.filter(s => s.id !== item.id);
+  writeCustomScripts(rest.concat([item]));
+  document.getElementById("scriptEditor").classList.remove("open");
+  editingCustomId = null;
+  renderScriptList();
+  openScript(item.id);
+};
+document.getElementById("scriptRunBtn").onclick = async () => {
+  if (!selectedScript) return;
+  const btn = document.getElementById("scriptRunBtn");
+  const host = document.getElementById("scriptHost").value.trim();
+  const user = document.getElementById("scriptUser").value.trim();
+  const password = document.getElementById("scriptPass").value;
+  const port = document.getElementById("scriptPort").value.trim() || "22";
+  const out = document.getElementById("scriptRunOut");
+  if (!host || !user || !password) { out.textContent = t("scripts_need_auth"); return; }
+  setLoading(btn, true);
+  out.textContent = t("running");
+  try {
+    const payload = {
+      host, user, password, port,
+      run: selectedScript.run,
+      variables: collectScriptVars(),
+    };
+    if (selectedScript.custom) payload.body = selectedBody;
+    else payload.id = selectedScript.id;
+    const res = await fetch("/api/scripts/run", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) { out.textContent = t("error_prefix") + data.error; return; }
+    out.textContent = (data.ok ? "" : "exit " + data.code + "\n") + (data.output || "");
+  } catch (err) {
+    out.textContent = t("error_prefix") + (err.message || err);
+  } finally { setLoading(btn, false); }
 };
 </script>
 </body>

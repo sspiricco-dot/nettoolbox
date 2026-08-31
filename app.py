@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import base64
+import secrets
 import signal
 import socket
 import subprocess
@@ -989,8 +991,867 @@ def mtr_stream():
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
+COMMUNITY_RE = re.compile(r"^[A-Za-z0-9._:-]{1,64}$")
+OID_RE = re.compile(r"^[0-9][0-9.]{0,180}$")
+VAR_KEY_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,31}$")
+SCRIPTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts")
+
+def _oid(*parts):
+    return ".".join(str(p) for p in parts)
+
+
+SNMP_PROFILES = {
+    "system": [
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 4, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 6, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 2, 0)),
+    ],
+    "interfaces": [
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 31, 1, 1, 1, 1)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 2)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 8)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 31, 1, 1, 1, 18)),
+    ],
+    "vlans": [
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 17, 7, 1, 4, 3, 1, 1)),
+        ("walk", _oid(1, 3, 6, 1, 4, 1, 9, 9, 46, 1, 3, 1, 1, 4)),
+    ],
+    "printer": [
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 6, 0)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 43, 5, 1, 1, 16)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 43, 11, 1, 1, 6)),
+    ],
+    "ups": [
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 33, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 33, 1, 1, 2, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 33, 1, 2, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 33, 1, 2, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 33, 1, 2, 4, 0)),
+    ],
+    "camera": [
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 6, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 2, 0)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 2)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 6)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 8)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 4, 20, 1, 1)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 47, 1, 1, 1, 1, 11)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 47, 1, 1, 1, 1, 13)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 368, 4, 1, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 50001, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 50001, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 50001, 1, 106, 0)),
+    ],
+    "dahua": [
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 6, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 1, 2, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 2, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 4, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 6, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 7, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 8, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 9, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 4, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 4, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 6, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 2, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 8, 0)),
+    ],
+    "hikvision": [
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 5, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 6, 0)),
+        ("get", _oid(1, 3, 6, 1, 2, 1, 1, 2, 0)),
+        ("walk", _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 6)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 50001, 1, 1, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 50001, 1, 3, 0)),
+        ("get", _oid(1, 3, 6, 1, 4, 1, 50001, 1, 106, 0)),
+    ],
+}
+
+SNMP_LABELS = {
+    _oid(1, 3, 6, 1, 2, 1, 1, 1, 0): "sysDescr",
+    _oid(1, 3, 6, 1, 2, 1, 1, 5, 0): "sysName",
+    _oid(1, 3, 6, 1, 2, 1, 1, 4, 0): "sysContact",
+    _oid(1, 3, 6, 1, 2, 1, 1, 6, 0): "sysLocation",
+    _oid(1, 3, 6, 1, 2, 1, 1, 3, 0): "sysUpTime",
+    _oid(1, 3, 6, 1, 2, 1, 1, 2, 0): "sysObjectID",
+    _oid(1, 3, 6, 1, 2, 1, 31, 1, 1, 1, 1): "ifName",
+    _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 2): "ifDescr",
+    _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 8): "ifOperStatus",
+    _oid(1, 3, 6, 1, 2, 1, 31, 1, 1, 1, 18): "ifAlias",
+    _oid(1, 3, 6, 1, 2, 1, 17, 7, 1, 4, 3, 1, 1): "dot1qVlanStaticName",
+    _oid(1, 3, 6, 1, 4, 1, 9, 9, 46, 1, 3, 1, 1, 4): "vtpVlanName",
+    _oid(1, 3, 6, 1, 2, 1, 43, 5, 1, 1, 16): "prtGeneralPrinterName",
+    _oid(1, 3, 6, 1, 2, 1, 43, 11, 1, 1, 6): "prtMarkerSuppliesDescription",
+    _oid(1, 3, 6, 1, 2, 1, 33, 1, 1, 1, 0): "upsIdentManufacturer",
+    _oid(1, 3, 6, 1, 2, 1, 33, 1, 1, 2, 0): "upsIdentModel",
+    _oid(1, 3, 6, 1, 2, 1, 33, 1, 2, 1, 0): "upsBatteryStatus",
+    _oid(1, 3, 6, 1, 2, 1, 33, 1, 2, 3, 0): "upsMinutesRemaining",
+    _oid(1, 3, 6, 1, 2, 1, 33, 1, 2, 4, 0): "upsChargeRemaining",
+    _oid(1, 3, 6, 1, 2, 1, 2, 2, 1, 6): "ifPhysAddress",
+    _oid(1, 3, 6, 1, 2, 1, 4, 20, 1, 1): "ipAdEntAddr",
+    _oid(1, 3, 6, 1, 2, 1, 47, 1, 1, 1, 1, 11): "entPhysicalSerialNum",
+    _oid(1, 3, 6, 1, 2, 1, 47, 1, 1, 1, 1, 13): "entPhysicalModelName",
+    _oid(1, 3, 6, 1, 4, 1, 368, 4, 1, 1, 1, 1, 0): "axisModelName",
+    _oid(1, 3, 6, 1, 4, 1, 50001, 1, 1, 0): "hikIp",
+    _oid(1, 3, 6, 1, 4, 1, 50001, 1, 3, 0): "hikSerial",
+    _oid(1, 3, 6, 1, 4, 1, 50001, 1, 106, 0): "hikObjectName",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 1, 1, 0): "dhSoftwareRevision",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 1, 2, 0): "dhHardwareRevision",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 1, 0): "dhVideoChannel",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 2, 0): "dhAlarmInput",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 3, 0): "dhAlarmOutput",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 4, 0): "dhSerialNumber",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 5, 0): "dhSystemVersion",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 6, 0): "dhDeviceType",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 7, 0): "dhDeviceClass",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 8, 0): "dhDeviceStatus",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 2, 9, 0): "dhMachineName",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 3, 0): "dhCpuUsage",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 4, 0): "dhLastestEvent",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 1, 5, 0): "dhEncodeNo",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 1, 0): "dhTcpPort",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 3, 0): "dhHttpPort",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 4, 0): "dhRtspPort",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 1, 6, 0): "dhHttpsPort",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 1, 0): "dhIpMode",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 2, 0): "dhMacAddr",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 5, 0): "dhGateway",
+    _oid(1, 3, 6, 1, 4, 1, 1004849, 2, 2, 2, 8, 0): "dhIpAddr",
+}
+
+
+def _snmp_label(oid):
+    if oid in SNMP_LABELS:
+        return SNMP_LABELS[oid]
+    for prefix, name in SNMP_LABELS.items():
+        if oid.startswith(prefix + "."):
+            return name
+    return oid
+
+
+def _ber_len(n):
+    if n < 128:
+        return bytes([n])
+    body = n.to_bytes((n.bit_length() + 7) // 8, "big")
+    return bytes([0x80 | len(body)]) + body
+
+
+def _ber_tlv(tag, val):
+    return bytes([tag]) + _ber_len(len(val)) + val
+
+
+def _ber_int(n):
+    n = int(n)
+    if n == 0:
+        return _ber_tlv(0x02, b"\x00")
+    length = (n.bit_length() + 8) // 8
+    raw = n.to_bytes(length, "big", signed=True)
+    return _ber_tlv(0x02, raw)
+
+
+def _ber_oid(oid):
+    parts = [int(x) for x in oid.strip(".").split(".")]
+    if len(parts) < 2 or parts[0] > 2:
+        raise ValueError("oid")
+    if parts[0] < 2 and parts[1] > 39:
+        raise ValueError("oid")
+    body = bytearray([40 * parts[0] + parts[1]])
+    for p in parts[2:]:
+        if p < 0:
+            raise ValueError("oid")
+        stack = [p & 0x7F]
+        p >>= 7
+        while p:
+            stack.append(0x80 | (p & 0x7F))
+            p >>= 7
+        body.extend(reversed(stack))
+    return _ber_tlv(0x06, bytes(body))
+
+
+def _ber_read(buf, i):
+    if i + 2 > len(buf):
+        raise ValueError("truncated")
+    tag = buf[i]
+    i += 1
+    first = buf[i]
+    i += 1
+    if first & 0x80:
+        nlen = first & 0x7F
+        if nlen == 0 or i + nlen > len(buf):
+            raise ValueError("truncated")
+        ln = int.from_bytes(buf[i:i + nlen], "big")
+        i += nlen
+    else:
+        ln = first
+    if i + ln > len(buf):
+        raise ValueError("truncated")
+    return tag, buf[i:i + ln], i + ln
+
+
+def _decode_oid(val):
+    if not val:
+        return ""
+    parts = [val[0] // 40, val[0] % 40]
+    acc = 0
+    for b in val[1:]:
+        acc = (acc << 7) | (b & 0x7F)
+        if not (b & 0x80):
+            parts.append(acc)
+            acc = 0
+    return ".".join(str(p) for p in parts)
+
+
+def _fmt_snmp(tag, val):
+    if tag == 0x02:
+        return str(int.from_bytes(val, "big", signed=True))
+    if tag == 0x04:
+        if len(val) == 6:
+            return ":".join(f"{c:02x}" for c in val)
+        if not val:
+            return '""'
+        if all(32 <= c < 127 for c in val):
+            return val.decode("ascii")
+        try:
+            text = val.decode("utf-8")
+            if all(ch == "\n" or ch == "\r" or ch == "\t" or ch.isprintable() for ch in text):
+                return text
+        except UnicodeDecodeError:
+            pass
+        return " ".join(f"{c:02x}" for c in val)
+    if tag == 0x05:
+        return "NULL"
+    if tag == 0x06:
+        return _decode_oid(val)
+    if tag == 0x40 and len(val) == 4:
+        return ".".join(str(c) for c in val)
+    if tag in (0x41, 0x42, 0x47):
+        return str(int.from_bytes(val, "big"))
+    if tag == 0x43:
+        n = int.from_bytes(val, "big")
+        cs = n
+        days, cs = divmod(cs, 8640000)
+        hours, cs = divmod(cs, 360000)
+        mins, cs = divmod(cs, 6000)
+        secs, cs = divmod(cs, 100)
+        return f"Timeticks: ({n}) {days}d {hours:02}:{mins:02}:{secs:02}.{cs:02}"
+    if tag == 0x46:
+        return str(int.from_bytes(val, "big"))
+    if tag == 0x80:
+        return "noSuchObject"
+    if tag == 0x81:
+        return "noSuchInstance"
+    if tag == 0x82:
+        return "endOfMibView"
+    return val.hex() or "NULL"
+
+
+def _snmp_packet(version, community, pdu_tag, reqid, oid):
+    varbind = _ber_tlv(0x30, _ber_oid(oid) + _ber_tlv(0x05, b""))
+    pdu = _ber_tlv(
+        pdu_tag,
+        _ber_int(reqid) + _ber_int(0) + _ber_int(0) + _ber_tlv(0x30, varbind),
+    )
+    ver = 0 if version == "1" else 1
+    return _ber_tlv(0x30, _ber_int(ver) + _ber_tlv(0x04, community.encode("ascii")) + pdu)
+
+
+def _parse_snmp(pkt):
+    tag, msg, _ = _ber_read(pkt, 0)
+    if tag != 0x30:
+        raise ValueError("not snmp")
+    i = 0
+    _, _, i = _ber_read(msg, i)
+    _, _, i = _ber_read(msg, i)
+    _, pdu, i = _ber_read(msg, i)
+    j = 0
+    _, _, j = _ber_read(pdu, j)
+    _, err_b, j = _ber_read(pdu, j)
+    _, _, j = _ber_read(pdu, j)
+    _, vblist, j = _ber_read(pdu, j)
+    err = int.from_bytes(err_b, "big", signed=True)
+    rows = []
+    k = 0
+    while k < len(vblist):
+        _, vb, k = _ber_read(vblist, k)
+        m = 0
+        _, oid_b, m = _ber_read(vb, m)
+        vtag, vval, m = _ber_read(vb, m)
+        rows.append((_decode_oid(oid_b), vtag, vval))
+    return err, rows
+
+
+def _snmp_udp(host, community, version, pdu_tag, oid, timeout=3.0):
+    reqid = int(time.time() * 1000) & 0x7FFFFFFF
+    pkt = _snmp_packet(version, community, pdu_tag, reqid, oid)
+    info = socket.getaddrinfo(host, 161, socket.AF_INET, socket.SOCK_DGRAM)
+    addr = info[0][4]
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(timeout)
+    try:
+        sock.sendto(pkt, addr)
+        data, _ = sock.recvfrom(65535)
+    finally:
+        sock.close()
+    return _parse_snmp(data)
+
+
+def _snmp_row(oid_s, tag, val):
+    if tag in (0x80, 0x81, 0x82):
+        return None
+    return {"oid": oid_s, "label": _snmp_label(oid_s), "value": _fmt_snmp(tag, val)}
+
+
+def _run_snmp(version, community, host, mode, oid, timeout=3.0):
+    oid = oid.lstrip(".")
+    rows = []
+    if mode == "get":
+        try:
+            err, bindings = _snmp_udp(host, community, version, 0xA0, oid, timeout=timeout)
+        except (socket.timeout, TimeoutError):
+            return [], "no SNMP response"
+        except (OSError, ValueError) as exc:
+            return [], str(exc)[-200:]
+        for oid_s, tag, val in bindings:
+            row = _snmp_row(oid_s, tag, val)
+            if row:
+                rows.append(row)
+        if err and not rows:
+            return [], f"snmp error {err}"
+        return rows, ""
+
+    cur = oid
+    prefix = oid
+    seen = set()
+    last_err = ""
+    for _ in range(400):
+        try:
+            err, bindings = _snmp_udp(host, community, version, 0xA1, cur, timeout=timeout)
+        except (socket.timeout, TimeoutError):
+            last_err = "no SNMP response"
+            break
+        except (OSError, ValueError) as exc:
+            last_err = str(exc)[-200:]
+            break
+        if err and not bindings:
+            last_err = f"snmp error {err}"
+            break
+        if not bindings:
+            break
+        oid_s, tag, val = bindings[0]
+        if tag == 0x82 or not (oid_s == prefix or oid_s.startswith(prefix + ".")):
+            break
+        if oid_s in seen:
+            break
+        seen.add(oid_s)
+        row = _snmp_row(oid_s, tag, val)
+        if row:
+            rows.append(row)
+        cur = oid_s
+    return rows, ("" if rows else last_err)
+
+
+@app.route("/api/snmp", methods=["POST"])
+def snmp_query():
+    body = request.json or {}
+    host = (body.get("host") or "").strip()
+    community = (body.get("community") or "public").strip()
+    version = (body.get("version") or "2c").strip()
+    profile = (body.get("profile") or "system").strip()
+    if not HOST_RE.match(host):
+        return jsonify({"error": "invalid host"}), 400
+    if not COMMUNITY_RE.match(community):
+        return jsonify({"error": "invalid community"}), 400
+    if version not in ("1", "2c"):
+        return jsonify({"error": "invalid version"}), 400
+    jobs = []
+    if profile == "custom":
+        oid = (body.get("oid") or "").strip().lstrip(".")
+        mode = "walk" if body.get("mode") == "walk" else "get"
+        if not OID_RE.match(oid):
+            return jsonify({"error": "invalid oid"}), 400
+        jobs = [(mode, oid)]
+    elif profile in SNMP_PROFILES:
+        jobs = SNMP_PROFILES[profile]
+    else:
+        return jsonify({"error": "invalid profile"}), 400
+
+    rows = []
+    errors = []
+    for mode, oid in jobs:
+        wait = 1.5 if rows else 3.0
+        try:
+            part, err = _run_snmp(version, community, host, mode, oid, timeout=wait)
+        except Exception:
+            return jsonify({"error": "snmp failed"}), 502
+        rows.extend(part)
+        if err and not part:
+            errors.append(err[-200:])
+            if err == "no SNMP response" and not rows:
+                break
+        if len(rows) > 2500:
+            rows = rows[:2500]
+            break
+    if not rows and errors:
+        return jsonify({"error": errors[0]}), 502
+    return jsonify({"host": host, "profile": profile, "rows": rows})
+
+
+def _load_catalog():
+    path = os.path.join(SCRIPTS_DIR, "catalog.json")
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _catalog_by_id():
+    return {item["id"]: item for item in _load_catalog() if item.get("id")}
+
+
+def _script_body(item):
+    name = item.get("file") or ""
+    if not name or "/" in name or "\\" in name or name.startswith("."):
+        return ""
+    path = os.path.join(SCRIPTS_DIR, "files", name)
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        return fh.read()
+
+
+def _render_vars(text, variables):
+    if not isinstance(variables, dict):
+        return text
+    for key, val in variables.items():
+        if not isinstance(key, str) or not VAR_KEY_RE.match(key):
+            continue
+        text = text.replace("{{" + key + "}}", str(val)[:256])
+    return text
+
+
+@app.route("/api/scripts")
+def scripts_list():
+    out = []
+    for item in _load_catalog():
+        entry = {k: item[k] for k in item if k != "file"}
+        try:
+            body = _script_body(item)
+            entry["bytes"] = len(body.encode("utf-8"))
+        except OSError:
+            entry["bytes"] = 0
+        out.append(entry)
+    return jsonify({"scripts": out})
+
+
+@app.route("/api/scripts/<sid>")
+def scripts_one(sid):
+    item = _catalog_by_id().get(sid)
+    if not item:
+        return jsonify({"error": "unknown script"}), 404
+    try:
+        body = _script_body(item)
+    except OSError:
+        return jsonify({"error": "script file missing"}), 404
+    data = dict(item)
+    data["body"] = body
+    return jsonify(data)
+
+
+@app.route("/api/scripts/run", methods=["POST"])
+def scripts_run():
+    body = request.json or {}
+    host = (body.get("host") or "").strip()
+    user = (body.get("user") or "").strip()
+    password = body.get("password") or ""
+    port = body.get("port", 22)
+    variables = body.get("variables") or {}
+    run = (body.get("run") or "").strip()
+    sid = (body.get("id") or "").strip()
+    script_text = body.get("body")
+
+    if not HOST_RE.match(host):
+        return jsonify({"error": "invalid host"}), 400
+    if not USER_RE.match(user):
+        return jsonify({"error": "invalid username"}), 400
+    if not isinstance(password, str) or not (1 <= len(password) <= 256):
+        return jsonify({"error": "invalid password"}), 400
+    try:
+        port = int(port)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid port"}), 400
+    if not (1 <= port <= 65535):
+        return jsonify({"error": "invalid port"}), 400
+    if run not in ("ssh-bash", "ssh-cmd", "ssh-routeros"):
+        return jsonify({"error": "this script is copy/download only"}), 400
+
+    if sid:
+        item = _catalog_by_id().get(sid)
+        if not item:
+            return jsonify({"error": "unknown script"}), 404
+        if item.get("run") != run:
+            return jsonify({"error": "run type mismatch"}), 400
+        try:
+            script_text = _script_body(item)
+        except OSError:
+            return jsonify({"error": "script file missing"}), 404
+    if not isinstance(script_text, str) or not script_text.strip():
+        return jsonify({"error": "empty script"}), 400
+    if len(script_text) > 400000:
+        return jsonify({"error": "script too large"}), 400
+
+    rendered = _render_vars(script_text, variables)
+    payload = rendered
+    remote = []
+    if run == "ssh-bash":
+        remote = ["bash", "-s"]
+    elif run == "ssh-cmd":
+        b64 = base64.b64encode(rendered.encode("utf-8")).decode("ascii")
+        remote = [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            (
+                "$p = Join-Path $env:TEMP 'nettoolbox.cmd'; "
+                f"[IO.File]::WriteAllText($p, [Text.Encoding]::UTF8.GetString("
+                f"[Convert]::FromBase64String('{b64}'))); cmd /c $p"
+            ),
+        ]
+        payload = ""
+
+    ssh = [
+        "sshpass", "-e",
+        "ssh", "-T",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "UserKnownHostsFile=/tmp/nettoolbox-known-hosts",
+        "-o", "PreferredAuthentications=password",
+        "-o", "PubkeyAuthentication=no",
+        "-o", "ConnectTimeout=8",
+        "-p", str(port),
+        f"{user}@{host}",
+    ] + remote
+    env = os.environ.copy()
+    env["SSHPASS"] = password
+    timeout = 120 if len(rendered) > 20000 else 45
+    try:
+        proc = subprocess.run(
+            ssh,
+            input=payload,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=env,
+        )
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "remote run timed out"}), 504
+    out = ((proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else ""))[-12000:]
+    out = re.sub(r"(?i)password[=:].*", "password=***", out)
+    return jsonify({"ok": proc.returncode == 0, "code": proc.returncode, "output": out.strip() or "(no output)"})
+
+
+RDP_SHARE = "/tmp/nettoolbox-rdp"
+INJECT_MAX = 12000
+
+
+def _proc_cmdline(pid):
+    try:
+        raw = open(f"/proc/{pid}/cmdline", "rb").read()
+    except OSError:
+        return ""
+    return raw.replace(b"\x00", b" ").decode("utf-8", "replace").strip()
+
+
+def _proc_ppid(pid):
+    try:
+        with open(f"/proc/{pid}/stat", encoding="utf-8") as fh:
+            st = fh.read()
+        return int(st[st.rfind(")") + 2:].split()[0])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _ttyd_remote_pid():
+    ttyd_pids = []
+    for ent in os.listdir("/proc"):
+        if not ent.isdigit():
+            continue
+        pid = int(ent)
+        cmd = _proc_cmdline(pid)
+        if not cmd:
+            continue
+        base = cmd.split()[0]
+        if "ttyd" in os.path.basename(base) and ("7681" in cmd or "connect.sh" in cmd):
+            ttyd_pids.append(pid)
+    if not ttyd_pids:
+        return None, "no terminal"
+    children = []
+    for ent in os.listdir("/proc"):
+        if not ent.isdigit():
+            continue
+        pid = int(ent)
+        if _proc_ppid(pid) in ttyd_pids:
+            children.append((pid, _proc_cmdline(pid)))
+    for pid, cmd in children:
+        low = cmd.lower()
+        if "ssh " in low + " " or low.startswith("ssh ") or "/ssh " in low:
+            return pid, "ssh"
+        if "telnet " in low + " " or low.startswith("telnet"):
+            return pid, "telnet"
+    return None, "no remote session"
+
+
+def _pty_inject(pid, text):
+    if not text.endswith("\n"):
+        text += "\n"
+    data = text.encode("utf-8")
+    fd = os.open(f"/proc/{pid}/fd/0", os.O_WRONLY)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+
+
+def _wrap_for_pty(run, rendered):
+    if run == "ssh-bash":
+        token = "NTB" + secrets.token_hex(8)
+        while token in rendered:
+            token = "NTB" + secrets.token_hex(8)
+        return f"\nbash -s <<'{token}'\n{rendered.rstrip()}\n{token}\n"
+    return "\n" + rendered.rstrip() + "\n"
+
+
+def _ssh_exec_script(host, user, password, port, run, rendered):
+    payload = rendered
+    remote = []
+    if run == "ssh-bash":
+        remote = ["bash", "-s"]
+    elif run == "ssh-cmd":
+        b64 = base64.b64encode(rendered.encode("utf-8")).decode("ascii")
+        remote = [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            (
+                "$p = Join-Path $env:TEMP 'nettoolbox.cmd'; "
+                f"[IO.File]::WriteAllText($p, [Text.Encoding]::UTF8.GetString("
+                f"[Convert]::FromBase64String('{b64}'))); cmd /c $p"
+            ),
+        ]
+        payload = ""
+    ssh = [
+        "sshpass", "-e",
+        "ssh", "-T",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "UserKnownHostsFile=/tmp/nettoolbox-known-hosts",
+        "-o", "PreferredAuthentications=password",
+        "-o", "PubkeyAuthentication=no",
+        "-o", "ConnectTimeout=8",
+        "-p", str(port),
+        f"{user}@{host}",
+    ] + remote
+    env = os.environ.copy()
+    env["SSHPASS"] = password
+    timeout = 120 if len(rendered) > 20000 else 45
+    proc = subprocess.run(
+        ssh,
+        input=payload,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env=env,
+    )
+    out = ((proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else ""))[-12000:]
+    out = re.sub(r"(?i)password[=:].*", "password=***", out)
+    return proc.returncode, out.strip() or "(no output)"
+
+
+def _rdp_window_id():
+    env = os.environ.copy()
+    env["DISPLAY"] = ":99"
+    for args in (
+        ["xdotool", "search", "--onlyvisible", "--class", "xfreerdp"],
+        ["xdotool", "search", "--onlyvisible", "--name", "FreeRDP"],
+        ["xdotool", "search", "--onlyvisible", "--name", "xfreerdp"],
+    ):
+        try:
+            proc = subprocess.run(args, capture_output=True, text=True, timeout=5, env=env)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        ids = [x for x in (proc.stdout or "").split() if x.isdigit()]
+        if ids:
+            return ids[-1], env
+    return None, env
+
+
+def _rdp_run_script(rendered):
+    disp_err = _ensure_rdp_display()
+    if disp_err:
+        return False, disp_err
+    os.makedirs(RDP_SHARE, exist_ok=True)
+    path = os.path.join(RDP_SHARE, "run.cmd")
+    body = rendered.replace("\r\n", "\n").replace("\n", "\r\n")
+    if not body.endswith("\r\n"):
+        body += "\r\n"
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        fh.write(body)
+    wid, env = _rdp_window_id()
+    if not wid:
+        return False, "no RDP window — connect first and click the desktop"
+    win = ["--window", wid]
+    try:
+        subprocess.run(["xdotool", "windowactivate", "--sync", wid], env=env, timeout=5, check=False)
+        time.sleep(0.15)
+        subprocess.run(["xdotool", "key", *win, "super+r"], env=env, timeout=5, check=False)
+        time.sleep(0.5)
+        subprocess.run(
+            ["xdotool", "type", *win, "--delay", "12", r"\\tsclient\nettoolbox\run.cmd"],
+            env=env,
+            timeout=20,
+            check=False,
+        )
+        time.sleep(0.12)
+        subprocess.run(["xdotool", "key", *win, "Return"], env=env, timeout=5, check=False)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, str(exc)[-200:]
+    return True, r"started \\tsclient\nettoolbox\run.cmd"
+
+
+def _script_from_request(body):
+    run = (body.get("run") or "").strip()
+    sid = (body.get("id") or "").strip()
+    script_text = body.get("body")
+    variables = body.get("variables") or {}
+    if run not in ("ssh-bash", "ssh-cmd", "ssh-routeros"):
+        return None, None, (jsonify({"error": "this script is copy/download only"}), 400)
+    if sid:
+        item = _catalog_by_id().get(sid)
+        if not item:
+            return None, None, (jsonify({"error": "unknown script"}), 404)
+        if item.get("run") != run:
+            return None, None, (jsonify({"error": "run type mismatch"}), 400)
+        try:
+            script_text = _script_body(item)
+        except OSError:
+            return None, None, (jsonify({"error": "script file missing"}), 404)
+    if not isinstance(script_text, str) or not script_text.strip():
+        return None, None, (jsonify({"error": "empty script"}), 400)
+    if len(script_text) > 400000:
+        return None, None, (jsonify({"error": "script too large"}), 400)
+    return _render_vars(script_text, variables), run, None
+
+
+@app.route("/api/scripts/run-session", methods=["POST"])
+def scripts_run_session():
+    body = request.json or {}
+    session = (body.get("session") or "").strip()
+    if session not in ("terminal", "rdp"):
+        return jsonify({"error": "invalid session"}), 400
+    rendered, run, err = _script_from_request(body)
+    if err:
+        return err
+
+    if session == "rdp":
+        if run != "ssh-cmd":
+            return jsonify({"error": "RDP can only run Windows scripts"}), 400
+        running = _rdp_proc is not None and _rdp_proc.poll() is None
+        if not running:
+            return jsonify({"error": "no RDP session"}), 400
+        ok, msg = _rdp_run_script(rendered)
+        if not ok:
+            return jsonify({"error": msg}), 502
+        return jsonify({"ok": True, "via": "rdp", "output": msg})
+
+    need_ssh = run == "ssh-cmd" or len(rendered) > INJECT_MAX
+    if need_ssh:
+        host = (body.get("host") or "").strip()
+        user = (body.get("user") or "").strip()
+        password = body.get("password") or ""
+        port = body.get("port", 22)
+        if not HOST_RE.match(host):
+            return jsonify({"error": "invalid host"}), 400
+        if not USER_RE.match(user):
+            return jsonify({"error": "invalid username"}), 400
+        if not isinstance(password, str) or not (1 <= len(password) <= 256):
+            return jsonify({"error": "password required for this script"}), 400
+        try:
+            port = int(port)
+        except (TypeError, ValueError):
+            return jsonify({"error": "invalid port"}), 400
+        if not (1 <= port <= 65535):
+            return jsonify({"error": "invalid port"}), 400
+        try:
+            code, out = _ssh_exec_script(host, user, password, port, run, rendered)
+        except subprocess.TimeoutExpired:
+            return jsonify({"error": "remote run timed out"}), 504
+        return jsonify({"ok": code == 0, "code": code, "via": "ssh", "output": out})
+
+    pid, kind = _ttyd_remote_pid()
+    if not pid:
+        return jsonify({"error": kind}), 400
+    if run == "ssh-bash" and kind != "ssh":
+        return jsonify({"error": "Linux scripts need an SSH session"}), 400
+    try:
+        _pty_inject(pid, _wrap_for_pty(run, rendered))
+    except OSError as exc:
+        return jsonify({"error": str(exc)[-200:]}), 502
+    return jsonify({"ok": True, "via": "pty", "output": "sent to terminal"})
+
+
 _rdp_proc = None
 _rdp_meta = {}
+
+
+def _display_up():
+    try:
+        proc = subprocess.run(
+            ["xdpyinfo", "-display", ":99"],
+            capture_output=True,
+            timeout=3,
+        )
+        return proc.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def _ensure_rdp_display():
+    if _display_up():
+        return None
+    try:
+        proc = subprocess.run(
+            ["/app/rdp-display.sh"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return str(exc)[-200:]
+    if _display_up():
+        return None
+    err = ((proc.stderr or "") + "\n" + (proc.stdout or "")).strip()
+    return (err or "display :99 is not available")[-400:]
 
 
 def _stop_rdp():
@@ -1050,6 +1911,10 @@ def rdp_start():
         return jsonify({"error": "invalid port"}), 400
 
     _stop_rdp()
+    disp_err = _ensure_rdp_display()
+    if disp_err:
+        return jsonify({"error": disp_err}), 502
+    os.makedirs(RDP_SHARE, exist_ok=True)
 
     cmd = [
         "xfreerdp",
@@ -1064,6 +1929,7 @@ def rdp_start():
         "/audio-mode:2",
         "+auto-reconnect",
         "/from-stdin",
+        f"/drive:nettoolbox,{RDP_SHARE}",
     ]
     if domain:
         cmd.append(f"/d:{domain}")
