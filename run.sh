@@ -3,11 +3,16 @@
 # Uses host networking so scans/CDP/bandwidth monitoring see the real interfaces.
 # The dashboard and terminal only bind to 127.0.0.1 inside the container
 # (see start.sh / app.py), so this does not expose anything to the LAN.
+docker_nm=""
+if [ -d /etc/NetworkManager/system-connections ]; then
+  docker_nm="-v /etc/NetworkManager/system-connections:/host/nm-connections:ro"
+fi
 docker run -d \
   --restart unless-stopped \
   --net=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
+  $docker_nm \
   --name nettoolbox \
   nettoolbox
 

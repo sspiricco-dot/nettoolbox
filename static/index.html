@@ -401,8 +401,10 @@
 
   .table-scroll { overflow-x: auto; }
   .table-scroll td { overflow-wrap: anywhere; }
-  #snmpCustomRow { display: none; }
-  #snmpCustomRow.show { display: flex; }
+  #qrWifiRow { display: none; }
+  #qrWifiRow.show { display: flex; }
+  #qrTextRow { display: flex; }
+  #qrResult svg { width: 240px; height: 240px; }
 
   .script-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent); }
   .script-card .ip { font-size: 14px; }
@@ -985,11 +987,40 @@
       </section>
 
       <section id="qrcode" class="panel">
+        <header class="panel-head">
+          <div class="kicker">CLIENT · PNG</div>
+          <h2 data-i18n="nav_qrcode">QR Code</h2>
+          <p class="lede" data-i18n="qr_lede">متن، لینک، یا وای‌فای برای اسکن با موبایل. کپی و دانلود PNG.</p>
+        </header>
         <div class="row">
-          <input id="qrInput" data-i18n-placeholder="qr_input_placeholder" placeholder="IP، URL یا هر متنی..." style="min-width:320px" />
-          <button class="action" id="qrBtn" data-i18n="qr_btn">ساخت QR</button>
+          <button type="button" class="os-chip active" data-qrmode="text" id="qrModeText" data-i18n="qr_mode_text">متن / لینک</button>
+          <button type="button" class="os-chip" data-qrmode="wifi" id="qrModeWifi" data-i18n="qr_mode_wifi">وای‌فای</button>
         </div>
-        <div class="hint" data-i18n="qr_hint">برای اشتراک سریع IP، آدرس داشبورد یا هر متنی با موبایل — کاملاً client-side.</div>
+        <div class="row" id="qrTextRow">
+          <input id="qrInput" data-i18n-placeholder="qr_input_placeholder" placeholder="IP، URL یا هر متنی..." style="min-width:320px" />
+        </div>
+        <div class="row" id="qrWifiRow">
+          <input id="qrWifiSsid" data-i18n-placeholder="qr_wifi_ssid" placeholder="نام شبکه (SSID)" style="min-width:180px" />
+          <input id="qrWifiPass" type="password" autocomplete="off" data-i18n-placeholder="qr_wifi_pass" placeholder="رمز" style="min-width:160px" />
+          <select id="qrWifiSec">
+            <option value="WPA">WPA/WPA2/WPA3</option>
+            <option value="WEP">WEP</option>
+            <option value="nopass" data-i18n="qr_wifi_open">باز (بدون رمز)</option>
+          </select>
+          <label class="os-chip" style="cursor:pointer">
+            <input type="checkbox" id="qrWifiHidden" />
+            <span data-i18n="qr_wifi_hidden">مخفی</span>
+          </label>
+          <button class="action secondary" id="qrWifiFromSysBtn" data-i18n="qr_wifi_from_sys">از وای‌فای این سیستم</button>
+        </div>
+        <div class="row">
+          <button class="action" id="qrBtn" data-i18n="qr_btn">ساخت QR</button>
+          <button class="action secondary" id="qrCopyImgBtn" data-i18n="qr_copy_img">کپی تصویر</button>
+          <button class="action secondary" id="qrCopyTextBtn" data-i18n="qr_copy_text">کپی متن</button>
+          <button class="action secondary" id="qrDlBtn" data-i18n="qr_download">دانلود PNG</button>
+        </div>
+        <p class="hint" id="qrStatus" aria-live="polite"></p>
+        <div class="hint" data-i18n="qr_hint">متن کاملاً در مرورگر ساخته می‌شود. رمز وای‌فای ذخیره نمی‌شود. «از سیستم» SSID را از iw می‌خواند؛ رمز اگر در NetworkManager باشد پر می‌شود.</div>
         <div class="bezel">
           <div class="bezel-label" data-i18n="nav_qrcode">QR Code</div>
           <div id="qrResult" class="empty" data-i18n="empty_generic">هنوز ساخته نشده.</div>
@@ -1282,7 +1313,23 @@ const translations = {
     bw_peak: "اوج",
     geoip_btn: "پیدا کردن موقعیت",
     qr_btn: "ساخت QR", qr_input_placeholder: "IP، URL یا هر متنی...",
-    qr_hint: "برای اشتراک سریع IP، آدرس داشبورد یا هر متنی با موبایل — کاملاً client-side.",
+    qr_hint: "متن در همین مرورگر ساخته می‌شود. رمز وای‌فای ذخیره نمی‌شود. از سیستم SSID را می‌خواند؛ رمز فقط اگر در NetworkManager باشد.",
+    qr_lede: "متن، لینک، یا وای‌فای برای اسکن با موبایل. کپی و دانلود PNG.",
+    qr_mode_text: "متن / لینک",
+    qr_mode_wifi: "وای‌فای",
+    qr_wifi_ssid: "نام شبکه (SSID)",
+    qr_wifi_pass: "رمز",
+    qr_wifi_open: "باز (بدون رمز)",
+    qr_wifi_hidden: "مخفی",
+    qr_wifi_from_sys: "از وای‌فای این سیستم",
+    qr_copy_img: "کپی تصویر",
+    qr_copy_text: "کپی متن",
+    qr_download: "دانلود PNG",
+    qr_need_ssid: "SSID لازم است.",
+    qr_need_payload: "اول QR بساز.",
+    qr_copied_img: "تصویر کپی شد",
+    qr_no_wifi: "به وای‌فای وصل نیست، یا اینترفیس پیدا نشد.",
+    qr_pass_manual: "SSID پر شد — رمز را دستی بگذار.",
     tls_btn: "بررسی گواهی",
     tls_hint: "اطلاعات گواهی SSL/TLS رو حتی اگه نامعتبر/self-signed باشه نشون می‌ده — برای چک‌کردن سرورهای داخلی هم کار می‌کنه.",
     tls_trusted: "معتبر ✓", tls_untrusted: "نامعتبر ✗",
@@ -1508,7 +1555,23 @@ const translations = {
     bw_peak: "peak",
     geoip_btn: "Locate IP",
     qr_btn: "Generate QR", qr_input_placeholder: "IP, URL, or any text...",
-    qr_hint: "Quickly share an IP, the dashboard address, or any text with a phone — fully client-side.",
+    qr_hint: "Built in this browser. WiFi password is not stored. “From this system” fills the SSID; the password is filled only if NetworkManager secrets are readable.",
+    qr_lede: "Text, URL, or a WiFi join code for a phone. Copy or download PNG.",
+    qr_mode_text: "Text / URL",
+    qr_mode_wifi: "WiFi",
+    qr_wifi_ssid: "Network name (SSID)",
+    qr_wifi_pass: "Password",
+    qr_wifi_open: "Open (no password)",
+    qr_wifi_hidden: "Hidden",
+    qr_wifi_from_sys: "From this system’s WiFi",
+    qr_copy_img: "Copy image",
+    qr_copy_text: "Copy text",
+    qr_download: "Download PNG",
+    qr_need_ssid: "SSID is required.",
+    qr_need_payload: "Generate a QR first.",
+    qr_copied_img: "Image copied",
+    qr_no_wifi: "Not connected to WiFi, or no wireless interface.",
+    qr_pass_manual: "SSID filled — enter the password yourself.",
     tls_btn: "Check certificate",
     tls_hint: "Shows SSL/TLS certificate info even if invalid/self-signed — works for checking internal servers too.",
     tls_trusted: "Trusted ✓", tls_untrusted: "Untrusted ✗",
@@ -2341,11 +2404,24 @@ document.getElementById("wifiScanBtn").onclick = async () => {
     if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
     if (!data.networks.length) { out.innerHTML = `<div class="empty">${esc(t("none_found"))}</div>`; return; }
     out.innerHTML = `<table>
-      <tr><th>SSID</th><th>${esc(t("th_signal"))}</th><th>${esc(t("th_freq"))}</th><th>BSSID</th></tr>
-      ${data.networks.map(n => `<tr>
+      <tr><th>SSID</th><th>${esc(t("th_signal"))}</th><th>${esc(t("th_freq"))}</th><th>BSSID</th><th></th></tr>
+      ${data.networks.map((n, i) => `<tr>
         <td>${esc(n.ssid) || "—"}</td><td>${esc(n.signal) || "—"}</td><td>${esc(n.freq) || "—"}</td><td>${esc(n.bssid)}</td>
+        <td>${n.ssid ? `<button type="button" class="action secondary wifi-qr-btn" data-i="${i}" data-i18n="qr_mode_wifi">${esc(t("qr_mode_wifi"))}</button>` : ""}</td>
       </tr>`).join("")}
     </table>`;
+    out.querySelectorAll(".wifi-qr-btn").forEach(btn => {
+      btn.onclick = () => {
+        const n = data.networks[Number(btn.dataset.i)];
+        if (!n || !n.ssid) return;
+        setQrMode("wifi");
+        document.getElementById("qrWifiSsid").value = n.ssid;
+        document.getElementById("qrWifiSec").value = n.security === "WEP" ? "WEP" : n.security === "nopass" ? "nopass" : "WPA";
+        if (n.security === "nopass") document.getElementById("qrWifiPass").value = "";
+        switchTab("qrcode");
+        document.getElementById("qrWifiPass").focus();
+      };
+    });
   } finally { setLoading(btn, false); }
 };
 
@@ -2537,35 +2613,176 @@ document.getElementById("geoipBtn").onclick = async () => {
   } finally { setLoading(btn, false); }
 };
 
-document.getElementById("qrBtn").onclick = () => {
-  const text = document.getElementById("qrInput").value.trim();
+let qrMode = "text";
+let lastQrPayload = "";
+let lastQrSvg = "";
+
+function wifiQrEscape(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/"/g, '\\"').replace(/:/g, "\\:");
+}
+function wifiQrPayload() {
+  const ssid = document.getElementById("qrWifiSsid").value.trim();
+  const pass = document.getElementById("qrWifiPass").value;
+  const sec = document.getElementById("qrWifiSec").value;
+  const hidden = document.getElementById("qrWifiHidden").checked ? "true" : "false";
+  if (!ssid) return "";
+  const p = sec === "nopass" ? "" : pass;
+  return `WIFI:T:${sec};S:${wifiQrEscape(ssid)};P:${wifiQrEscape(p)};H:${hidden};;`;
+}
+function setQrMode(mode) {
+  qrMode = mode === "wifi" ? "wifi" : "text";
+  document.getElementById("qrModeText").classList.toggle("active", qrMode === "text");
+  document.getElementById("qrModeWifi").classList.toggle("active", qrMode === "wifi");
+  document.getElementById("qrTextRow").style.display = qrMode === "text" ? "flex" : "none";
+  document.getElementById("qrWifiRow").classList.toggle("show", qrMode === "wifi");
+}
+function setQrStatus(msg) {
+  const el = document.getElementById("qrStatus");
+  if (el) el.textContent = msg || "";
+}
+function renderQrPayload(text) {
   const out = document.getElementById("qrResult");
-  if (!text) { out.innerHTML = `<div class="empty">${esc(t("invalid_host"))}</div>`; return; }
-  try {
-    const qr = qrcode(0, "M");
-    qr.addData(text);
-    qr.make();
-    const n = qr.getModuleCount();
-    const scale = 7, quiet = 3;
-    const size = (n + quiet * 2) * scale;
-    let rects = "";
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
-        if (qr.isDark(r, c)) {
-          rects += `<rect x="${(c+quiet)*scale}" y="${(r+quiet)*scale}" width="${scale}" height="${scale}"/>`;
-        }
+  setQrStatus("");
+  if (!text) { out.className = "empty"; out.textContent = t("qr_need_payload"); return false; }
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount();
+  const scale = 7, quiet = 3;
+  const size = (n + quiet * 2) * scale;
+  let rects = "";
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (qr.isDark(r, c)) {
+        rects += `<rect x="${(c+quiet)*scale}" y="${(r+quiet)*scale}" width="${scale}" height="${scale}"/>`;
       }
     }
-    out.className = "";
-    out.innerHTML = `<div style="background:white;border-radius:14px;padding:16px;display:inline-block">
-      <svg width="240" height="240" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">
+  }
+  lastQrPayload = text;
+  lastQrSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">
         <rect width="${size}" height="${size}" fill="white"/>
         <g fill="black">${rects}</g>
-      </svg>
-    </div>`;
+      </svg>`;
+  out.className = "";
+  out.innerHTML = `<div style="background:white;border-radius:14px;padding:16px;display:inline-block">${lastQrSvg}</div>`;
+  return true;
+}
+function qrPngBlob(px) {
+  return new Promise((resolve, reject) => {
+    if (!lastQrSvg) { reject(new Error(t("qr_need_payload"))); return; }
+    const img = new Image();
+    const blob = new Blob([lastQrSvg], {type: "image/svg+xml;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      const w = px || 768;
+      c.width = w;
+      c.height = w;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, w, w);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0, w, w);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? resolve(b) : reject(new Error("png")), "image/png");
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("svg")); };
+    img.src = url;
+  });
+}
+function flashQrBtn(id, key) {
+  const btn = document.getElementById(id);
+  const prev = btn.textContent;
+  btn.textContent = t(key);
+  setTimeout(() => { btn.textContent = prev; }, 1200);
+}
+
+document.getElementById("qrModeText").onclick = () => setQrMode("text");
+document.getElementById("qrModeWifi").onclick = () => setQrMode("wifi");
+document.getElementById("qrWifiSec").onchange = () => {
+  document.getElementById("qrWifiPass").disabled = document.getElementById("qrWifiSec").value === "nopass";
+};
+
+document.getElementById("qrBtn").onclick = () => {
+  try {
+    if (qrMode === "wifi") {
+      const payload = wifiQrPayload();
+      if (!payload) { setQrStatus(t("qr_need_ssid")); return; }
+      renderQrPayload(payload);
+    } else {
+      const text = document.getElementById("qrInput").value.trim();
+      if (!text) { setQrStatus(t("invalid_host")); return; }
+      renderQrPayload(text);
+    }
   } catch (e) {
-    out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(e.message)}</div>`;
+    setQrStatus(t("error_prefix") + (e.message || e));
   }
+};
+document.getElementById("qrCopyTextBtn").onclick = async () => {
+  if (!lastQrPayload) { setQrStatus(t("qr_need_payload")); return; }
+  try {
+    await navigator.clipboard.writeText(lastQrPayload);
+    setQrStatus("");
+    flashQrBtn("qrCopyTextBtn", "copied");
+  } catch (e) {
+    setQrStatus(t("error_prefix") + (e.message || e));
+  }
+};
+document.getElementById("qrCopyImgBtn").onclick = async () => {
+  if (!lastQrSvg) { setQrStatus(t("qr_need_payload")); return; }
+  try {
+    const blob = await qrPngBlob(768);
+    await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+    setQrStatus("");
+    flashQrBtn("qrCopyImgBtn", "qr_copied_img");
+  } catch (e) {
+    try {
+      await navigator.clipboard.writeText(lastQrPayload);
+      flashQrBtn("qrCopyTextBtn", "copied");
+      setQrStatus("");
+    } catch (err) {
+      setQrStatus(t("error_prefix") + (e.message || e));
+    }
+  }
+};
+document.getElementById("qrDlBtn").onclick = async () => {
+  if (!lastQrSvg) { setQrStatus(t("qr_need_payload")); return; }
+  try {
+    const blob = await qrPngBlob(768);
+    const a = document.createElement("a");
+    const ssid = (document.getElementById("qrWifiSsid").value || "").trim().replace(/[^\w.-]+/g, "-").slice(0, 32);
+    a.href = URL.createObjectURL(blob);
+    a.download = qrMode === "wifi" && ssid ? "wifi-" + ssid + ".png" : "qrcode.png";
+    a.click();
+    setQrStatus("");
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  } catch (e) {
+    setQrStatus(t("error_prefix") + (e.message || e));
+  }
+};
+document.getElementById("qrWifiFromSysBtn").onclick = async () => {
+  const btn = document.getElementById("qrWifiFromSysBtn");
+  setQrMode("wifi");
+  setLoading(btn, true);
+  try {
+    const res = await fetch("/api/wifi/current");
+    const data = await res.json();
+    if (data.error) { setQrStatus(t("qr_no_wifi")); return; }
+    document.getElementById("qrWifiSsid").value = data.ssid || "";
+    document.getElementById("qrWifiSec").value = data.security || "WPA";
+    document.getElementById("qrWifiHidden").checked = !!data.hidden;
+    document.getElementById("qrWifiPass").disabled = (data.security || "WPA") === "nopass";
+    if (data.password) document.getElementById("qrWifiPass").value = data.password;
+    else {
+      document.getElementById("qrWifiPass").value = "";
+      setQrStatus(t("qr_pass_manual"));
+    }
+    if (data.ssid && (data.password || data.security === "nopass")) {
+      renderQrPayload(wifiQrPayload());
+    }
+  } catch (e) {
+    setQrStatus(t("error_prefix") + (e.message || e));
+  } finally { setLoading(btn, false); }
 };
 
 document.getElementById("tlsBtn").onclick = async () => {

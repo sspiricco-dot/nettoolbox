@@ -514,7 +514,7 @@ def wifi_scan():
         if line.startswith("BSS "):
             if current:
                 networks.append(current)
-            current = {"bssid": line.split()[1].split("(")[0], "ssid": None, "signal": None, "freq": None}
+            current = {"bssid": line.split()[1].split("(")[0], "ssid": None, "signal": None, "freq": None, "security": None}
         elif current is None:
             continue
         elif line.startswith("freq:"):
@@ -523,11 +523,116 @@ def wifi_scan():
             current["signal"] = line.split(":", 1)[1].strip()
         elif line.startswith("SSID:"):
             current["ssid"] = line.split(":", 1)[1].strip()
+        elif line.startswith("RSN:") or line.startswith("WPA:"):
+            current["security"] = "WPA"
+        elif line.startswith("capability:") and "Privacy" in line and not current.get("security"):
+            current["security"] = "WEP"
     if current:
         networks.append(current)
 
+    for n in networks:
+        if not n.get("security"):
+            n["security"] = "nopass"
+
     networks.sort(key=lambda n: float(n["signal"].split()[0]) if n["signal"] else -999, reverse=True)
     return jsonify({"networks": networks})
+
+
+def _nm_wifi_secrets(ssid):
+    roots = (
+        "/host/nm-connections",
+        "/etc/NetworkManager/system-connections",
+    )
+    want = (ssid or "").strip()
+    if not want:
+        return None
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        try:
+            names = os.listdir(root)
+        except OSError:
+            continue
+        for name in names:
+            path = os.path.join(root, name)
+            if not os.path.isfile(path):
+                continue
+            try:
+                text = open(path, encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            found_ssid = ""
+            psk = ""
+            key_mgmt = ""
+            hidden = False
+            for raw in text.splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#") or line.startswith("["):
+                    continue
+                if "=" not in line:
+                    continue
+                key, val = line.split("=", 1)
+                key = key.strip().lower()
+                val = val.strip().strip('"')
+                if key == "ssid":
+                    found_ssid = val
+                elif key == "psk":
+                    psk = val
+                elif key in ("key-mgmt", "key_mgmt"):
+                    key_mgmt = val
+                elif key == "hidden" and val.lower() in ("true", "yes", "1"):
+                    hidden = True
+            if found_ssid == want:
+                sec = "nopass"
+                km = key_mgmt.lower()
+                if "wep" in km:
+                    sec = "WEP"
+                elif km and km not in ("none", "owe"):
+                    sec = "WPA"
+                elif psk:
+                    sec = "WPA"
+                return {"password": psk, "security": sec, "hidden": hidden}
+    return None
+
+
+@app.route("/api/wifi/current")
+def wifi_current():
+    proc = subprocess.run(["iw", "dev"], capture_output=True, text=True, timeout=8)
+    ifaces = re.findall(r"Interface\s+(\S+)", proc.stdout)
+    for iface in ifaces:
+        if not IFACE_RE.match(iface):
+            continue
+        link = subprocess.run(
+            ["iw", "dev", iface, "link"],
+            capture_output=True, text=True, timeout=8,
+        )
+        if "Connected to" not in (link.stdout or "") and "SSID:" not in (link.stdout or ""):
+            continue
+        ssid = ""
+        for raw in (link.stdout or "").splitlines():
+            line = raw.strip()
+            if line.startswith("SSID:"):
+                ssid = line.split(":", 1)[1].strip()
+        if not ssid:
+            continue
+        out = {
+            "iface": iface,
+            "ssid": ssid[:64],
+            "security": "WPA",
+            "password": "",
+            "hidden": False,
+            "password_from_system": False,
+        }
+        secrets = _nm_wifi_secrets(ssid)
+        if secrets:
+            out["security"] = secrets["security"]
+            out["hidden"] = secrets["hidden"]
+            psk = secrets.get("password") or ""
+            if 1 <= len(psk) <= 64:
+                out["password"] = psk
+                out["password_from_system"] = True
+        return jsonify(out)
+    return jsonify({"error": "not connected to wifi"}), 404
 
 
 @app.route("/api/speedtest", methods=["POST"])

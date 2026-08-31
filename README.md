@@ -3,7 +3,7 @@
 **v2** — a portable network & security dashboard you carry on your laptop. One Docker container, one web UI, works on whatever network you plug into — client site, home lab, or your own office.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-2.1-d4894a)
+![Version](https://img.shields.io/badge/version-2.2-d4894a)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)
 ![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)
@@ -16,15 +16,16 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 
 ## Versions
 
-| | [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) | [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) | **v2.1.0 (current)** |
-|---|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ | ✅ |
-| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ |
-| Host profiles | ❌ | ✅ | ✅ |
-| SNMP, site report, script library | ❌ | ❌ | ✅ |
+| | [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) | [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) | [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0) | **v2.2.0 (current)** |
+|---|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ |
+| WiFi QR, copy / download PNG | ❌ | ❌ | ❌ | ✅ |
 
 `main` is always **v2**. v1 stays as a git tag so you can still clone and build the original dashboard:
 
@@ -32,7 +33,7 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
 ```
 
-Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) · [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) · [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0)
+Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) · [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) · [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0) · [v2.2.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.2.0)
 
 ## Contents
 
@@ -77,7 +78,7 @@ Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0
 - Script library — Windows / Linux / MikroTik templates with `{{VARIABLES}}`, edit in the browser, copy or download, or run over SSH. From the SSH/Telnet or RDP tab you can run the same scripts on the host you are already connected to.
 - Full SSH/Telnet terminal in the browser (via [ttyd](https://github.com/tsl0922/ttyd))
 - In-browser RDP (FreeRDP + noVNC) for Windows desktops on the LAN — shared drive for running Windows scripts in the session
-- QR code generator for sharing an IP/URL with a phone
+- QR code — text/URL, copy or download PNG, or a WiFi join QR from this laptop’s network or typed by hand
 
 Bilingual UI (Persian/English), light and dark themes.
 
@@ -100,12 +101,12 @@ Then open **http://127.0.0.1:8642**.
 
 ```bash
 # this machine
-docker save nettoolbox:v2.1.0 nettoolbox:latest | gzip > nettoolbox-v2.1.0.tar.gz
+docker save nettoolbox:v2.2.0 nettoolbox:latest | gzip > nettoolbox-v2.2.0.tar.gz
 
 # the other laptop (Docker installed)
-gzip -dc nettoolbox-v2.1.0.tar.gz | docker load
+gzip -dc nettoolbox-v2.2.0.tar.gz | docker load
 docker run -d --restart unless-stopped --net=host \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.1.0
+  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.2.0
 ```
 
 Open **http://127.0.0.1:8642**. If a container named `nettoolbox` already exists, `docker rm -f nettoolbox` first.
