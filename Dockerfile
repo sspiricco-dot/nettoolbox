@@ -36,6 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     x11-utils \
     xdotool \
     fonts-dejavu-core \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # ttyd: static binary, provides a browser-based terminal for ssh/telnet
@@ -54,8 +55,20 @@ RUN curl -fsSL https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz \
     | tar -xz -C /tmp \
     && mv /tmp/noVNC-1.5.0 /usr/share/novnc
 
+# Self-hosted OpenSpeedTest (LAN speed test). Static HTML/JS + 30MB download blob.
+RUN curl -fsSL https://github.com/openspeedtest/Speed-Test/archive/refs/heads/main.tar.gz \
+    | tar -xz -C /tmp \
+    && mkdir -p /usr/share/openspeedtest \
+    && mv /tmp/Speed-Test-main/* /usr/share/openspeedtest/ \
+    && rm -rf /tmp/Speed-Test-main \
+    && rm -f /etc/nginx/sites-enabled/default \
+    && mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /run/nginx
+
+COPY openspeedtest.conf /etc/nginx/conf.d/openspeedtest.conf
+
 WORKDIR /app
 COPY app.py /app/app.py
+COPY netmap.py /app/netmap.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh

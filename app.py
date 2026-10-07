@@ -12,6 +12,8 @@ import xml.etree.ElementTree as ET
 
 from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 
+from netmap import topology_from_payload, topology_xlsx
+
 app = Flask(__name__, static_folder="static", static_url_path="")
 
 IFACE_RE = re.compile(r"^[a-zA-Z0-9_.@-]{1,15}$")
@@ -31,6 +33,302 @@ COMMON_PORTS = (
     "6379,8000,8080,8443,8888,9100,9200,27017"
 )
 DISCOVER_PROFILES = {"none", "common", "top100"}
+
+
+def _valid_ipv4(text):
+    if not IP_RE.match(text or ""):
+        return False
+    try:
+        return all(0 <= int(part) <= 255 for part in text.split("."))
+    except ValueError:
+        return False
+
+
+def _valid_host(text):
+    text = (text or "").strip()
+    if not text or len(text) > 253:
+        return False
+    if _valid_ipv4(text):
+        return True
+    if re.fullmatch(r"[0-9.]+", text):
+        return False
+    return bool(HOST_RE.match(text))
+
+
+def _http_get(url, timeout=8, headers=None):
+    cmd = [
+        "curl", "-fsS", "-L", "--max-redirs", "3",
+        "--max-time", str(int(timeout)),
+        "-A", "NetToolbox/1.0",
+    ]
+    for key, val in (headers or {}).items():
+        cmd += ["-H", f"{key}: {val}"]
+    cmd.append(url)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout + 4)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    body = (proc.stdout or "").strip()
+    return body or None
+
+
+def _http_json(url, timeout=8, headers=None):
+    body = _http_get(url, timeout=timeout, headers=headers)
+    if not body:
+        return None
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _public_ip_record(raw, source):
+    data = raw
+    if isinstance(raw, str):
+        first = raw.split()[0].strip()
+        if _valid_ipv4(first):
+            return {
+                "ip": first,
+                "hostname": "",
+                "city": "",
+                "region": "",
+                "country": "",
+                "org": "",
+                "loc": "",
+                "source": source,
+            }
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(data, dict):
+        return None
+    ip = data.get("ip") or data.get("query") or data.get("origin")
+    if isinstance(ip, str) and "," in ip:
+        ip = ip.split(",", 1)[0].strip()
+    if not ip or not _valid_ipv4(str(ip).strip()):
+        return None
+    conn = data.get("connection") if isinstance(data.get("connection"), dict) else {}
+    org = (
+        data.get("org")
+        or data.get("org_name")
+        or data.get("isp")
+        or data.get("asn_org")
+        or conn.get("isp")
+        or conn.get("org")
+        or ""
+    )
+    return {
+        "ip": str(ip).strip(),
+        "hostname": data.get("hostname") or data.get("host") or "",
+        "city": data.get("city") or "",
+        "region": data.get("region") or data.get("regionName") or data.get("region_name") or "",
+        "country": data.get("country")
+        or data.get("country_code")
+        or data.get("countryCode")
+        or data.get("country_iso")
+        or "",
+        "org": org,
+        "loc": data.get("loc") or "",
+        "source": source,
+    }
+
+
+def _lookup_public_ip():
+    providers = (
+        ("ipinfo.io", lambda: _public_ip_record(_http_json("https://ipinfo.io/json", 8), "ipinfo.io")),
+        ("ifconfig.co", lambda: _public_ip_record(_http_json("https://ifconfig.co/json", 8), "ifconfig.co")),
+        ("ipapi.co", lambda: _public_ip_record(_http_json("https://ipapi.co/json/", 8), "ipapi.co")),
+        ("ipwho.is", lambda: _public_ip_record(_http_json("https://ipwho.is/", 8), "ipwho.is")),
+        ("ipify.org", lambda: _public_ip_record(_http_json("https://api.ipify.org?format=json", 8), "ipify.org")),
+        ("icanhazip.com", lambda: _public_ip_record(_http_get("https://icanhazip.com", 6), "icanhazip.com")),
+        ("ifconfig.me", lambda: _public_ip_record(_http_get("https://ifconfig.me/ip", 6), "ifconfig.me")),
+        ("ident.me", lambda: _public_ip_record(_http_get("https://ident.me", 6), "ident.me")),
+    )
+    for _name, fetch in providers:
+        try:
+            rec = fetch()
+        except Exception:
+            rec = None
+        if rec:
+            return rec
+    return None
+
+
+def _lookup_geoip(ip):
+    providers = (
+        ("ipinfo.io", lambda: _public_ip_record(_http_json(f"https://ipinfo.io/{ip}/json", 8), "ipinfo.io")),
+        ("ip-api.com", lambda: _public_ip_record(
+            _http_json(f"http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,regionName,city,isp,org,query", 8),
+            "ip-api.com",
+        )),
+        ("ipapi.co", lambda: _public_ip_record(_http_json(f"https://ipapi.co/{ip}/json/", 8), "ipapi.co")),
+        ("ipwho.is", lambda: _public_ip_record(_http_json(f"https://ipwho.is/{ip}", 8), "ipwho.is")),
+    )
+    for _name, fetch in providers:
+        try:
+            rec = fetch()
+        except Exception:
+            rec = None
+        if rec:
+            rec["ip"] = ip
+            return rec
+    return None
+
+
+def _lookup_subdomains(domain):
+    found = set()
+    errors = []
+
+    query = urllib.parse.quote(f"%.{domain}")
+    crt_body = _http_get(f"https://crt.sh/?q={query}&output=json", 15)
+    if crt_body:
+        try:
+            entries = json.loads(crt_body)
+            if isinstance(entries, list):
+                for entry in entries:
+                    for name in str(entry.get("name_value") or "").split("\n"):
+                        name = name.strip().lower()
+                        if name.endswith(domain) and "*" not in name:
+                            found.add(name)
+        except json.JSONDecodeError:
+            errors.append("crt.sh")
+    else:
+        errors.append("crt.sh")
+
+    if not found:
+        body = _http_get(f"https://api.hackertarget.com/hostsearch/?q={urllib.parse.quote(domain)}", 12)
+        if body and "error" not in body.lower()[:40]:
+            for line in body.splitlines():
+                host = line.split(",")[0].strip().lower()
+                if host.endswith(domain) and "*" not in host:
+                    found.add(host)
+        elif not found:
+            errors.append("hackertarget")
+
+    crt_error = None
+    if not found and errors:
+        crt_error = "subdomain lookups unreachable (" + ", ".join(errors) + ")"
+    return sorted(found)[:300], crt_error
+
+
+def _curl_speed(url, timeout=25, upload_file=None):
+    cmd = [
+        "curl", "-sS", "-L", "--max-redirs", "3",
+        "-o", "/dev/null",
+        "-w", "%{http_code} %{speed_download} %{speed_upload} %{size_download} %{size_upload}",
+        "--max-time", str(int(timeout)),
+        "-A", "NetToolbox/1.0",
+    ]
+    if upload_file:
+        cmd += ["-X", "POST", "--data-binary", f"@{upload_file}"]
+    cmd.append(url)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout + 6)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    parts = (proc.stdout or "").strip().split()
+    if len(parts) < 5:
+        return None
+    try:
+        code = int(parts[0])
+        dl = float(parts[1])
+        ul = float(parts[2])
+        dsz = float(parts[3])
+        usz = float(parts[4])
+    except ValueError:
+        return None
+    if code < 200 or code >= 400:
+        return None
+    return {"http": code, "dl": dl, "ul": ul, "dsz": dsz, "usz": usz}
+
+
+def _ping_avg_ms(host):
+    try:
+        proc = subprocess.run(
+            ["ping", "-c", "4", "-W", "1", host],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    avg_match = re.search(r"= [\d.]+/([\d.]+)/", proc.stdout or "")
+    if not avg_match:
+        return None
+    try:
+        return float(avg_match.group(1))
+    except ValueError:
+        return None
+
+
+def _run_speedtest():
+    downloads = (
+        ("Cloudflare", "https://speed.cloudflare.com/__down?bytes=10000000"),
+        ("Hetzner", "https://speed.hetzner.de/10MB.bin"),
+        ("OVH", "https://proof.ovh.net/files/10Mb.dat"),
+        ("ThinkBroadband", "http://ipv4.download.thinkbroadband.com/10MB.zip"),
+        ("Cachefly", "http://cachefly.cachefly.net/10mb.test"),
+    )
+    download_mbps = None
+    download_src = None
+    for name, url in downloads:
+        stats = _curl_speed(url, timeout=25)
+        if not stats or stats["dsz"] < 400_000:
+            continue
+        download_mbps = round(stats["dl"] * 8 / 1_000_000, 2)
+        download_src = name
+        break
+
+    upload_mbps = None
+    upload_src = None
+    bin_path = "/tmp/speedtest_upload.bin"
+    try:
+        subprocess.run(
+            ["dd", "if=/dev/urandom", "of=" + bin_path, "bs=1M", "count=5"],
+            capture_output=True, timeout=15, check=False,
+        )
+        uploads = (
+            ("Cloudflare", "https://speed.cloudflare.com/__up"),
+            ("httpbin", "https://httpbin.org/post"),
+        )
+        for name, url in uploads:
+            stats = _curl_speed(url, timeout=25, upload_file=bin_path)
+            if not stats or stats["usz"] < 100_000:
+                continue
+            upload_mbps = round(stats["ul"] * 8 / 1_000_000, 2)
+            upload_src = name
+            break
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    finally:
+        try:
+            os.remove(bin_path)
+        except OSError:
+            pass
+
+    ping_ms = None
+    ping_src = None
+    for host in ("1.1.1.1", "8.8.8.8", "9.9.9.9"):
+        ping_ms = _ping_avg_ms(host)
+        if ping_ms is not None:
+            ping_src = host
+            break
+
+    if download_mbps is None and upload_mbps is None and ping_ms is None:
+        return None
+    sources = [x for x in (download_src, upload_src) if x]
+    source = " / ".join(dict.fromkeys(sources)) if sources else (ping_src or "")
+    return {
+        "download_mbps": download_mbps,
+        "upload_mbps": upload_mbps,
+        "ping_ms": ping_ms,
+        "source": source,
+        "download_source": download_src,
+        "upload_source": upload_src,
+        "ping_source": ping_src,
+    }
 
 
 def _parse_nmap_hosts(xml_text, include_ports=True):
@@ -122,6 +420,11 @@ def _discover_hosts(subnet):
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory("static", "favicon.svg", mimetype="image/svg+xml")
 
 
 @app.route("/api/interfaces")
@@ -237,7 +540,7 @@ def portscan():
     ports = body.get("ports", "")
     scan_all = bool(body.get("all", False))
 
-    if not IP_RE.match(ip):
+    if not _valid_ipv4(ip):
         return jsonify({"error": "invalid ip"}), 400
     if ports and not PORTS_RE.match(ports):
         return jsonify({"error": "invalid ports, use e.g. 22,80,443 or 1-1000"}), 400
@@ -323,7 +626,7 @@ def neighbors():
 @app.route("/api/ping", methods=["POST"])
 def ping():
     target = (request.json or {}).get("ip", "").strip()
-    if not HOST_RE.match(target):
+    if not _valid_host(target):
         return jsonify({"error": "invalid target"}), 400
 
     proc = subprocess.run(
@@ -352,7 +655,7 @@ def ping():
 @app.route("/api/traceroute", methods=["POST"])
 def traceroute():
     target = (request.json or {}).get("target", "").strip()
-    if not HOST_RE.match(target):
+    if not _valid_host(target):
         return jsonify({"error": "invalid target"}), 400
 
     proc = subprocess.run(
@@ -384,54 +687,30 @@ def traceroute():
 
 @app.route("/api/whatismyip")
 def whatismyip():
-    try:
-        proc = subprocess.run(
-            ["curl", "-s", "--max-time", "8", "https://ipinfo.io/json"],
-            capture_output=True,
-            text=True,
-            timeout=12,
-        )
-        data = json.loads(proc.stdout)
-    except Exception:
-        return jsonify({"error": "could not reach ipinfo.io (check internet connection)"}), 502
+    data = _lookup_public_ip()
+    if not data:
+        return jsonify({"error": "could not reach any public-IP service"}), 502
     return jsonify(data)
 
 
 @app.route("/api/domain", methods=["POST"])
 def domain_recon():
     domain = (request.json or {}).get("domain", "").strip().lower()
-    if not HOST_RE.match(domain) or "." not in domain:
+    if not _valid_host(domain) or "." not in domain:
         return jsonify({"error": "invalid domain"}), 400
 
     dig_proc = subprocess.run(
         ["dig", "+short", "A", domain], capture_output=True, text=True, timeout=10
     )
-    ips = [line.strip() for line in dig_proc.stdout.splitlines() if IP_RE.match(line.strip())]
+    ips = [line.strip() for line in dig_proc.stdout.splitlines() if _valid_ipv4(line.strip())]
 
-    subdomains = set()
-    crt_error = None
-    try:
-        query = urllib.parse.quote(f"%.{domain}")
-        proc = subprocess.run(
-            ["curl", "-s", "--max-time", "15", f"https://crt.sh/?q={query}&output=json"],
-            capture_output=True,
-            text=True,
-            timeout=20,
-        )
-        entries = json.loads(proc.stdout)
-        for entry in entries:
-            for name in entry.get("name_value", "").split("\n"):
-                name = name.strip().lower()
-                if name.endswith(domain) and "*" not in name:
-                    subdomains.add(name)
-    except Exception:
-        crt_error = "crt.sh unreachable or no internet connection"
+    subdomains, crt_error = _lookup_subdomains(domain)
 
     return jsonify(
         {
             "domain": domain,
             "ips": ips,
-            "subdomains": sorted(subdomains)[:300],
+            "subdomains": subdomains,
             "crt_error": crt_error,
         }
     )
@@ -443,7 +722,7 @@ DNS_RECORD_TYPES = ["A", "AAAA", "MX", "TXT", "NS", "CNAME", "SOA"]
 @app.route("/api/dns", methods=["POST"])
 def dns_lookup():
     domain = (request.json or {}).get("domain", "").strip().lower()
-    if not HOST_RE.match(domain):
+    if not _valid_host(domain):
         return jsonify({"error": "invalid domain"}), 400
 
     records = {}
@@ -461,7 +740,7 @@ def dns_lookup():
 @app.route("/api/ping/stream")
 def ping_stream():
     target = request.args.get("target", "").strip()
-    if not HOST_RE.match(target):
+    if not _valid_host(target):
         return jsonify({"error": "invalid target"}), 400
 
     def generate():
@@ -637,35 +916,91 @@ def wifi_current():
 
 @app.route("/api/speedtest", methods=["POST"])
 def speedtest():
+    data = _run_speedtest()
+    if not data:
+        return jsonify({"error": "speed test failed on all providers"}), 502
+    return jsonify(data)
+
+
+OST_PORT = 3000
+
+
+def _tcp_up(host, port):
     try:
-        dl = subprocess.run(
-            ["curl", "-s", "-o", "/dev/null", "-w", "%{speed_download}",
-             "https://speed.cloudflare.com/__down?bytes=25000000"],
-            capture_output=True, text=True, timeout=30,
-        )
-        download_mbps = round(float(dl.stdout.strip() or 0) * 8 / 1_000_000, 2)
+        with socket.create_connection((host, port), 0.4) as sock:
+            sock.close()
+        return True
+    except OSError:
+        return False
 
-        subprocess.run(
-            ["dd", "if=/dev/urandom", "of=/tmp/speedtest_upload.bin", "bs=1M", "count=5"],
-            capture_output=True, timeout=15,
-        )
-        ul = subprocess.run(
-            ["curl", "-s", "-o", "/dev/null", "-w", "%{speed_upload}",
-             "-X", "POST", "--data-binary", "@/tmp/speedtest_upload.bin",
-             "https://speed.cloudflare.com/__up"],
-            capture_output=True, text=True, timeout=30,
-        )
-        upload_mbps = round(float(ul.stdout.strip() or 0) * 8 / 1_000_000, 2)
 
-        pg = subprocess.run(
-            ["ping", "-c", "4", "-W", "1", "1.1.1.1"], capture_output=True, text=True, timeout=10
-        )
-        avg_match = re.search(r"= [\d.]+/([\d.]+)/", pg.stdout)
-        ping_ms = float(avg_match.group(1)) if avg_match else None
-    except Exception:
-        return jsonify({"error": "speed test failed (check internet connection)"}), 502
+def _ost_payload():
+    urls = []
+    seen = set()
+    out = subprocess.run(
+        ["ip", "-brief", "addr"], capture_output=True, text=True, check=False
+    ).stdout
+    for line in out.splitlines():
+        parts = line.split()
+        if not parts or parts[0].startswith(EXCLUDED_IFACE_PREFIXES):
+            continue
+        for token in parts[2:]:
+            ip = token.split("/")[0]
+            if not IP_RE.match(ip) or ip.startswith("127."):
+                continue
+            url = f"http://{ip}:{OST_PORT}"
+            if url not in seen:
+                seen.add(url)
+                urls.append({"iface": parts[0], "ip": ip, "url": url})
+    return {
+        "up": _tcp_up("127.0.0.1", OST_PORT),
+        "port": OST_PORT,
+        "local": f"http://127.0.0.1:{OST_PORT}",
+        "urls": urls,
+    }
 
-    return jsonify({"download_mbps": download_mbps, "upload_mbps": upload_mbps, "ping_ms": ping_ms})
+
+def _nginx_stop():
+    subprocess.run(["nginx", "-s", "quit"], capture_output=True, timeout=8, check=False)
+    for _ in range(20):
+        if not _tcp_up("127.0.0.1", OST_PORT):
+            return
+        time.sleep(0.15)
+    subprocess.run(["nginx", "-s", "stop"], capture_output=True, timeout=8, check=False)
+    for _ in range(10):
+        if not _tcp_up("127.0.0.1", OST_PORT):
+            return
+        time.sleep(0.1)
+
+
+@app.route("/api/openspeedtest")
+def openspeedtest_info():
+    return jsonify(_ost_payload())
+
+
+@app.route("/api/openspeedtest/start", methods=["POST"])
+def openspeedtest_start():
+    if _tcp_up("127.0.0.1", OST_PORT):
+        return jsonify(_ost_payload())
+    chk = subprocess.run(["nginx", "-t"], capture_output=True, text=True, timeout=8)
+    if chk.returncode != 0:
+        err = ((chk.stderr or "") + "\n" + (chk.stdout or "")).strip()
+        return jsonify({"error": err[-400:] or "nginx config failed"}), 502
+    proc = subprocess.run(["nginx"], capture_output=True, text=True, timeout=8)
+    if proc.returncode != 0:
+        err = ((proc.stderr or "") + "\n" + (proc.stdout or "")).strip()
+        return jsonify({"error": err[-400:] or "could not start OpenSpeedTest"}), 502
+    for _ in range(25):
+        if _tcp_up("127.0.0.1", OST_PORT):
+            return jsonify(_ost_payload())
+        time.sleep(0.1)
+    return jsonify({"error": "OpenSpeedTest started but port 3000 is not listening"}), 502
+
+
+@app.route("/api/openspeedtest/stop", methods=["POST"])
+def openspeedtest_stop():
+    _nginx_stop()
+    return jsonify(_ost_payload())
 
 
 @app.route("/api/tls", methods=["POST"])
@@ -674,7 +1009,7 @@ def tls_check():
     domain = body.get("domain", "").strip().lower()
     port = body.get("port", 443)
 
-    if not HOST_RE.match(domain):
+    if not _valid_host(domain):
         return jsonify({"error": "invalid domain"}), 400
     try:
         port = int(port)
@@ -753,7 +1088,7 @@ def http_headers():
         url = "https://" + url
 
     host_part = url.split("://", 1)[1].split("/")[0].split(":")[0]
-    if not HOST_RE.match(host_part):
+    if not _valid_host(host_part):
         return jsonify({"error": "invalid url"}), 400
 
     proc = subprocess.run(
@@ -789,7 +1124,7 @@ def wake_on_lan():
     mac_clean = re.sub(r"[^0-9A-Fa-f]", "", mac)
     if len(mac_clean) != 12:
         return jsonify({"error": "invalid MAC address"}), 400
-    if not IP_RE.match(broadcast):
+    if not _valid_ipv4(broadcast):
         return jsonify({"error": "invalid broadcast address"}), 400
 
     mac_bytes = bytes.fromhex(mac_clean)
@@ -860,16 +1195,11 @@ def bandwidth_stream():
 @app.route("/api/geoip", methods=["POST"])
 def geoip():
     ip = (request.json or {}).get("ip", "").strip()
-    if not IP_RE.match(ip):
+    if not _valid_ipv4(ip):
         return jsonify({"error": "invalid ip"}), 400
-    try:
-        proc = subprocess.run(
-            ["curl", "-s", "--max-time", "8", f"https://ipinfo.io/{ip}/json"],
-            capture_output=True, text=True, timeout=12,
-        )
-        data = json.loads(proc.stdout)
-    except Exception:
-        return jsonify({"error": "could not reach ipinfo.io (check internet connection)"}), 502
+    data = _lookup_geoip(ip)
+    if not data:
+        return jsonify({"error": "could not reach any geolocation service"}), 502
     return jsonify(data)
 
 
@@ -991,7 +1321,7 @@ def whois_lookup():
         if domain.startswith(prefix):
             domain = domain[len(prefix):]
     domain = domain.split("/")[0].split(":")[0]
-    if not HOST_RE.match(domain) or "." not in domain:
+    if not _valid_host(domain) or "." not in domain:
         return jsonify({"error": "invalid domain"}), 400
     try:
         proc = subprocess.run(
@@ -1036,7 +1366,7 @@ def _mtr_snapshot(target, hops):
 @app.route("/api/mtr/stream")
 def mtr_stream():
     target = request.args.get("target", "").strip()
-    if not HOST_RE.match(target):
+    if not _valid_host(target):
         return jsonify({"error": "invalid target"}), 400
 
     def generate():
@@ -1490,7 +1820,7 @@ def snmp_query():
     community = (body.get("community") or "public").strip()
     version = (body.get("version") or "2c").strip()
     profile = (body.get("profile") or "system").strip()
-    if not HOST_RE.match(host):
+    if not _valid_host(host):
         return jsonify({"error": "invalid host"}), 400
     if not COMMUNITY_RE.match(community):
         return jsonify({"error": "invalid community"}), 400
@@ -1598,7 +1928,7 @@ def scripts_run():
     sid = (body.get("id") or "").strip()
     script_text = body.get("body")
 
-    if not HOST_RE.match(host):
+    if not _valid_host(host):
         return jsonify({"error": "invalid host"}), 400
     if not USER_RE.match(user):
         return jsonify({"error": "invalid username"}), 400
@@ -1798,8 +2128,10 @@ def _rdp_window_id():
     env["DISPLAY"] = ":99"
     for args in (
         ["xdotool", "search", "--onlyvisible", "--class", "xfreerdp"],
+        ["xdotool", "search", "--class", "xfreerdp"],
         ["xdotool", "search", "--onlyvisible", "--name", "FreeRDP"],
         ["xdotool", "search", "--onlyvisible", "--name", "xfreerdp"],
+        ["xdotool", "search", "--name", "FreeRDP"],
     ):
         try:
             proc = subprocess.run(args, capture_output=True, text=True, timeout=5, env=env)
@@ -1809,6 +2141,28 @@ def _rdp_window_id():
         if ids:
             return ids[-1], env
     return None, env
+
+
+def _rdp_log_tail(path, n=500):
+    try:
+        with open(path, "r", errors="replace") as fh:
+            text = fh.read()[-n:]
+    except OSError:
+        return ""
+    return re.sub(r"(?i)password[=:].*", "password=***", text).strip()
+
+
+def _map_rdp_window():
+    wid, env = _rdp_window_id()
+    if not wid:
+        return
+    for args in (
+        ["xdotool", "windowmap", wid],
+        ["xdotool", "windowmove", wid, "0", "0"],
+        ["xdotool", "windowraise", wid],
+        ["xdotool", "windowactivate", wid],
+    ):
+        subprocess.run(args, capture_output=True, timeout=5, env=env, check=False)
 
 
 def _rdp_run_script(rendered):
@@ -1895,7 +2249,7 @@ def scripts_run_session():
         user = (body.get("user") or "").strip()
         password = body.get("password") or ""
         port = body.get("port", 22)
-        if not HOST_RE.match(host):
+        if not _valid_host(host):
             return jsonify({"error": "invalid host"}), 400
         if not USER_RE.match(user):
             return jsonify({"error": "invalid username"}), 400
@@ -1927,6 +2281,7 @@ def scripts_run_session():
 
 _rdp_proc = None
 _rdp_meta = {}
+_rdp_logf = None
 
 
 def _display_up():
@@ -1941,8 +2296,17 @@ def _display_up():
         return False
 
 
+def _vnc_up():
+    try:
+        with socket.create_connection(("127.0.0.1", 5901), 0.4) as sock:
+            sock.close()
+        return True
+    except OSError:
+        return False
+
+
 def _ensure_rdp_display():
-    if _display_up():
+    if _display_up() and _vnc_up():
         return None
     try:
         proc = subprocess.run(
@@ -1953,14 +2317,14 @@ def _ensure_rdp_display():
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return str(exc)[-200:]
-    if _display_up():
+    if _display_up() and _vnc_up():
         return None
     err = ((proc.stderr or "") + "\n" + (proc.stdout or "")).strip()
-    return (err or "display :99 is not available")[-400:]
+    return (err or "RDP display/VNC is not available")[-400:]
 
 
 def _stop_rdp():
-    global _rdp_proc, _rdp_meta
+    global _rdp_proc, _rdp_meta, _rdp_logf
     if _rdp_proc is not None and _rdp_proc.poll() is None:
         _rdp_proc.send_signal(signal.SIGTERM)
         try:
@@ -1970,6 +2334,12 @@ def _stop_rdp():
             _rdp_proc.wait(timeout=2)
     _rdp_proc = None
     _rdp_meta = {}
+    if _rdp_logf is not None:
+        try:
+            _rdp_logf.close()
+        except OSError:
+            pass
+        _rdp_logf = None
 
 
 @app.route("/api/rdp/status")
@@ -1992,7 +2362,7 @@ def rdp_stop():
 
 @app.route("/api/rdp/start", methods=["POST"])
 def rdp_start():
-    global _rdp_proc, _rdp_meta
+    global _rdp_proc, _rdp_meta, _rdp_logf
     body = request.json or {}
     host = (body.get("host") or "").strip()
     user = (body.get("user") or "").strip()
@@ -2000,7 +2370,7 @@ def rdp_start():
     password = body.get("password") or ""
     port = body.get("port", 3389)
 
-    if not HOST_RE.match(host):
+    if not _valid_host(host):
         return jsonify({"error": "invalid host"}), 400
     if not USER_RE.match(user):
         return jsonify({"error": "invalid username"}), 400
@@ -2021,6 +2391,8 @@ def rdp_start():
         return jsonify({"error": disp_err}), 502
     os.makedirs(RDP_SHARE, exist_ok=True)
 
+    # Software GDI, no GFX/H264: hardware GFX on Xvfb is a black frame.
+    # Skip /f — fullscreen without a window manager often never maps a window.
     cmd = [
         "xfreerdp",
         f"/v:{host}:{port}",
@@ -2028,9 +2400,9 @@ def rdp_start():
         "/cert:ignore",
         "/tls-seclevel:0",
         "/network:auto",
+        "/gdi:sw",
         "/bpp:16",
-        "/size:1600x900",
-        "/f",
+        "/size:1920x1080",
         "/audio-mode:2",
         "+auto-reconnect",
         "/from-stdin",
@@ -2042,30 +2414,67 @@ def rdp_start():
     env = os.environ.copy()
     env["DISPLAY"] = ":99"
     env["LIBGL_ALWAYS_SOFTWARE"] = "1"
+    env["FREERDP_LOG_LEVEL"] = "WARN"
 
+    log_path = "/tmp/xfreerdp.log"
+    logf = open(log_path, "wb")
     proc = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
+        stdout=logf,
+        stderr=logf,
         env=env,
     )
     try:
         proc.stdin.write((password + "\n").encode("utf-8", errors="replace"))
         proc.stdin.close()
     except BrokenPipeError:
-        err = (proc.stderr.read() or b"").decode("utf-8", errors="replace")[-400:]
-        return jsonify({"error": err.strip() or "RDP client failed to start"}), 502
+        logf.close()
+        err = _rdp_log_tail(log_path)
+        return jsonify({"error": err or "RDP client failed to start"}), 502
 
-    time.sleep(1.2)
+    time.sleep(2.0)
     if proc.poll() is not None:
-        err = (proc.stderr.read() or b"").decode("utf-8", errors="replace")[-400:]
-        cleaned = re.sub(r"(?i)password[=:].*", "password=***", err).strip()
-        return jsonify({"error": cleaned or "RDP connection failed"}), 502
+        logf.close()
+        err = _rdp_log_tail(log_path)
+        return jsonify({"error": err or "RDP connection failed"}), 502
 
+    _map_rdp_window()
+    _rdp_logf = logf
     _rdp_proc = proc
     _rdp_meta = {"host": host, "user": user}
     return jsonify({"started": True, "host": host, "user": user, "port": port})
+
+
+@app.route("/api/netmap", methods=["POST"])
+def netmap_build():
+    body = request.json or {}
+    try:
+        topo = topology_from_payload(body)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        return jsonify({"error": "could not parse dumps"}), 400
+    return jsonify(topo)
+
+
+@app.route("/api/netmap/xlsx", methods=["POST"])
+def netmap_xlsx():
+    body = request.json or {}
+    try:
+        topo = topology_from_payload(body)
+        data = topology_xlsx(topo)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        return jsonify({"error": "could not build workbook"}), 400
+    site = re.sub(r"[^a-zA-Z0-9._-]+", "-", (body.get("site") or "site").strip())[:40] or "site"
+    filename = f"network-map-{site}.xlsx"
+    return Response(
+        data,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 if __name__ == "__main__":

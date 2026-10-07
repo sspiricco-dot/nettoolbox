@@ -16,7 +16,7 @@ if ! display_up; then
   rm -f /tmp/.X99-lock /tmp/.X11-unix/X99
   mkdir -p /tmp/.X11-unix
   chmod 1777 /tmp/.X11-unix
-  Xvfb :99 -screen 0 1600x900x24 -ac +extension RANDR >/tmp/xvfb.log 2>&1 &
+  Xvfb :99 -screen 0 1920x1080x24 -ac +extension RANDR >/tmp/xvfb.log 2>&1 &
   ok=0
   for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25; do
     if display_up; then
@@ -34,7 +34,7 @@ fi
 
 if ! port_up 5901; then
   x11vnc -display :99 -localhost -nopw -forever -shared -rfbport 5901 \
-    -ncache 0 -quiet >/tmp/x11vnc.log 2>&1 &
+    -ncache 0 -wait 10 -defer 10 -noxdamage -quiet >/tmp/x11vnc.log 2>&1 &
   sleep 0.3
 fi
 

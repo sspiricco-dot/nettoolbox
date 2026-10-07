@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <title>NetToolbox</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico">
 <style>
   :root {
     --bg: #0b1220; --surface: rgba(20, 30, 46, 0.72); --surface-solid: #141e2e; --surface-2: #1b283c;
@@ -227,7 +229,44 @@
 
   .empty { color: var(--ink-dim); font-size: 13.5px; padding: 4px 2px; }
   .hint { color: var(--ink-dim); font-size: 12.5px; margin-top: -8px; margin-bottom: 14px; }
-  iframe.term { width: 100%; height: 65vh; border: 1px solid var(--line); border-radius: 8px; background: #000; }
+  iframe.ost-frame {
+    width: 100%; height: min(78vh, 820px); min-height: 560px; border: 0;
+    display: block; background: #0b1220; border-radius: 8px;
+  }
+  .ost-urls { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 14px; }
+  .ost-url {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 10px; font-family: ui-monospace, Menlo, monospace; font-size: 13px;
+  }
+  .ost-url a { color: var(--accent2); overflow-wrap: anywhere; }
+  .ost-url button { flex-shrink: 0; }
+  #ostQr { margin-top: 8px; }
+  body:has(#rdp.panel.active) main { max-width: min(1680px, calc(100vw - 48px)); }
+  #rdpStage {
+    position: relative; margin-top: 10px; background: #0a0e14; border: 1px solid var(--line);
+    border-radius: 8px; overflow: hidden; display: none;
+  }
+  #rdpStage.show { display: block; }
+  iframe.rdp-view {
+    width: 100%; height: calc(100vh - 250px); min-height: 640px; max-height: 1080px;
+    border: 0; display: block; background: #000; border-radius: 0;
+  }
+  #rdpFsBtn {
+    position: absolute; top: 8px; inset-inline-end: 8px; z-index: 3;
+    background: color-mix(in srgb, var(--surface-solid) 88%, transparent);
+    border: 1px solid var(--line); color: var(--ink); padding: 7px 12px;
+    border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer;
+    backdrop-filter: blur(8px);
+  }
+  #rdpFsBtn:hover { border-color: var(--accent); }
+  #rdpStage:fullscreen, #rdpStage:-webkit-full-screen {
+    width: 100%; height: 100%; border: 0; border-radius: 0; background: #000;
+  }
+  #rdpStage:fullscreen iframe.rdp-view,
+  #rdpStage:-webkit-full-screen iframe.rdp-view {
+    height: 100vh; min-height: 0; max-height: none;
+  }
 
   .spin { display:inline-block; width:14px; height:14px; border:2px solid color-mix(in srgb, var(--on-accent) 40%, transparent); border-top-color: var(--on-accent); border-radius:50%; animation: sp 0.7s linear infinite; }
   @keyframes sp { to { transform: rotate(360deg); } }
@@ -269,6 +308,43 @@
   .graph-wrap { display: flex; justify-content: center; padding: 4px 0 18px; }
   .net-graph { width: 100%; max-width: 380px; height: auto; }
   .net-graph .node-dot { animation: nodepulse 2.4s ease-in-out infinite; }
+
+  .netmap-drop {
+    border: 1.5px dashed var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+    text-align: center; color: var(--ink-dim); cursor: pointer; background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+    font-size: 13px; line-height: 1.45; transition: border-color .15s, background .15s, color .15s;
+  }
+  .netmap-drop:hover, .netmap-drop.drop-hover, .dump-card.drop-hover, #netmap.drop-hover .netmap-drop {
+    border-color: var(--accent2); color: var(--ink);
+    background: color-mix(in srgb, var(--accent2) 10%, var(--surface-solid));
+  }
+  .netmap-drop b { color: var(--ink); font-weight: 650; }
+  .netmap-drop-status { margin-top: 8px; font-size: 12px; font-family: ui-monospace, monospace; color: var(--up); }
+  .netmap-drop-status.is-err { color: var(--down); }
+  .dump-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+  .dump-card {
+    background: var(--surface-solid); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+  }
+  .dump-card .dump-head { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .dump-card .dump-head input, .dump-card .dump-head select { min-width: 0; }
+  .dump-card .dump-head input[type="text"] { flex: 1; min-width: 140px; }
+  .dump-card textarea { min-height: 120px; margin-top: 8px; font-size: 12px; }
+  .dump-card .dump-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 820px) { .dump-card .dump-grid { grid-template-columns: 1fr; } }
+  .dump-lab { color: var(--ink-dim); font-size: 11px; font-family: ui-monospace, monospace; margin-bottom: 4px; }
+  button.dump-del {
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-dim);
+    padding: 8px 12px; border-radius: 7px; cursor: pointer; font-size: 12px;
+  }
+  button.dump-del:hover { color: var(--down); border-color: var(--down); }
+  #netmapSvgWrap { overflow: auto; direction: ltr; background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--accent2) 8%, transparent), transparent 70%),
+    var(--surface-solid); border-radius: 10px; min-height: 280px; }
+  #netmapSvgWrap svg { width: 100%; height: auto; min-width: 720px; display: block; touch-action: none; user-select: none; }
+  #netmapSvgWrap .nm-node { cursor: grab; }
+  #netmapSvgWrap .nm-node.is-drag { cursor: grabbing; filter: drop-shadow(0 8px 16px rgba(0,0,0,.28)); }
+  .netmap-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 0; font-size: 11.5px; color: var(--ink-dim); font-family: ui-monospace, monospace; }
+  .netmap-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-inline-end: 6px; vertical-align: middle; }
   @keyframes nodepulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 
   .mini-stats { display: flex; gap: 20px; margin-bottom: 10px; font-size: 13px; color: var(--ink-dim); font-family: ui-monospace, monospace; flex-wrap: wrap; }
@@ -506,6 +582,10 @@
         <button class="tab" data-panel="cdp">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           <span data-i18n="nav_neighbors">همسایه‌ها</span>
+        </button>
+        <button class="tab" data-panel="netmap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><path d="M10 6.5h4.5A3.5 3.5 0 0 1 18 10v4"></path></svg>
+          <span data-i18n="nav_netmap">نقشه شبکه</span>
         </button>
         <button class="tab" data-panel="snmp">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg>
@@ -770,6 +850,42 @@
         </div>
       </section>
 
+      <section id="netmap" class="panel">
+        <header class="panel-head">
+          <div class="kicker">L2 / L3 · VISIO</div>
+          <h2 data-i18n="nav_netmap">نقشه شبکه</h2>
+          <p class="lede" data-i18n="netmap_lede">رانینگ‌کانفیگ و CDP/neighbor را بچسبان؛ نقشه فنی و فایل اکسل برای ارائه به مشتری ساخته می‌شود.</p>
+        </header>
+        <div class="row">
+          <input id="netmapSite" data-i18n-placeholder="report_site_ph" placeholder="سایت / شعبه" style="min-width:160px" />
+          <input id="netmapCustomer" data-i18n-placeholder="report_customer_ph" placeholder="مشتری" style="min-width:140px" />
+        </div>
+        <div id="netmapDrop" class="netmap-drop" tabindex="0">
+          <b data-i18n="netmap_drop_title">فایل را اینجا بکشید</b>
+          <div data-i18n="netmap_drop">کانفیگ، CDP، export میکروتیک — نوع و جعبه خودش تشخیص داده می‌شود. چند فایل با هم هم می‌شود.</div>
+          <div id="netmapDropStatus" class="netmap-drop-status" hidden></div>
+        </div>
+        <input type="file" id="netmapFile" multiple hidden accept=".txt,.log,.cfg,.conf,.rsc,.export,.text,.md" />
+        <div id="netmapDumps" class="dump-list"></div>
+        <div class="row">
+          <button class="action secondary" id="netmapAddBtn" data-i18n="netmap_add">+ دستگاه</button>
+          <button class="action secondary" id="netmapSampleBtn" data-i18n="netmap_sample">نمونه</button>
+          <button class="action" id="netmapDrawBtn" data-i18n="netmap_draw">کشیدن نقشه</button>
+          <button class="action secondary" id="netmapXlsxBtn" data-i18n="netmap_xlsx">دانلود Excel</button>
+          <button class="action secondary" id="netmapSvgBtn" data-i18n="netmap_svg">دانلود SVG</button>
+          <button class="action secondary" id="netmapPngBtn" data-i18n="netmap_png">دانلود PNG</button>
+          <button class="action" id="netmapHtmlBtn" data-i18n="netmap_html">برگه HTML مشتری</button>
+        </div>
+        <div class="hint" data-i18n="netmap_hint">سیسکو: running-config + CDP (detail یا جدول خلاصه). میکروتیک: /export و /ip neighbor print. Port-channel یک لینک می‌شود. رمز در خروجی نیست.</div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="nav_netmap">نقشه شبکه</div>
+          <div id="netmapStats"></div>
+          <div id="netmapSvgWrap"><div class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div></div>
+          <div id="netmapLegend" class="netmap-legend" hidden></div>
+          <div id="netmapTables"></div>
+        </div>
+      </section>
+
       <section id="snmp" class="panel">
         <header class="panel-head">
           <div class="kicker">UDP · 161</div>
@@ -823,13 +939,32 @@
       </section>
 
       <section id="speedtest" class="panel">
-        <div class="row">
-          <button class="action" id="speedtestBtn" data-i18n="speedtest_btn">شروع تست سرعت</button>
-        </div>
-        <div class="hint" data-i18n="speedtest_hint">حدود ۲۰-۳۰ ثانیه طول می‌کشه (دانلود/آپلود واقعی از سرورهای Cloudflare).</div>
-        <div class="bezel">
-          <div class="bezel-label" data-i18n="nav_speedtest">Speed Test</div>
+        <header class="panel-head">
+          <div class="kicker">WAN · LAN</div>
+          <h2 data-i18n="nav_speedtest">Speed Test</h2>
+          <p class="lede" data-i18n="speedtest_lede">اینترنت از چند CDN (Cloudflare، Hetzner، OVH، …)؛ اگر یکی قطع بود بقیه امتحان می‌شود. سرعت LAN با OpenSpeedTest روی همین لپ‌تاپ.</p>
+        </header>
+        <div class="bezel" style="margin-bottom:16px">
+          <div class="bezel-label" data-i18n="speedtest_wan">اینترنت</div>
+          <div class="row">
+            <button class="action" id="speedtestBtn" data-i18n="speedtest_btn">شروع تست سرعت</button>
+          </div>
+          <div class="hint" data-i18n="speedtest_hint">حدود ۲۰–۳۰ ثانیه. اگر Cloudflare در دسترس نباشد از سرورهای دیگر استفاده می‌شود.</div>
           <div id="speedtestResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="speedtest_lan">شبکه داخلی (OpenSpeedTest)</div>
+          <p class="lede" style="margin:0 0 12px;font-size:13.5px" data-i18n="ost_lede">سرور روی همین دستگاه است. موبایل یا لپ‌تاپ دیگر در همین LAN لینک را باز کند تا سرعت تا این جعبه سنجیده شود.</p>
+          <div class="row">
+            <button class="action" id="ostStartBtn" data-i18n="ost_start">روشن کردن سرور</button>
+            <button class="action secondary" id="ostStopBtn" data-i18n="ost_stop">خاموش کردن</button>
+            <button class="action secondary" id="ostOpenBtn" data-i18n="ost_open">باز کردن در تب جدید</button>
+          </div>
+          <div class="hint" data-i18n="ost_hint">تا وقتی خاموش است پورت ۳۰۰۰ روی شبکه باز نیست. بعد از تست خاموش کنید.</div>
+          <div id="ostStatus" class="empty" data-i18n="ost_down">خاموش است. برای تست روشن کنید.</div>
+          <div id="ostUrls" class="ost-urls"></div>
+          <div id="ostQr"></div>
+          <iframe class="ost-frame" id="ostFrame" title="OpenSpeedTest" hidden></iframe>
         </div>
       </section>
 
@@ -1181,6 +1316,7 @@
           <input id="rdpPass" type="password" autocomplete="off" data-i18n-placeholder="rdp_pass_placeholder" placeholder="رمز" />
           <button class="action" id="rdpConnectBtn" data-i18n="term_connect_btn">اتصال</button>
           <button class="action secondary" id="rdpDisconnectBtn" data-i18n="rdp_disconnect">قطع</button>
+          <button class="action secondary" id="rdpFsBarBtn" data-i18n="rdp_fullscreen">تمام‌صفحه</button>
         </div>
         <div class="hint" data-i18n="rdp_hint">برای سرورهای داخلی گواهی نامعتبر نادیده گرفته می‌شود. جلسه قبلی با اتصال جدید جایگزین می‌شود.</div>
         <div class="bezel session-script" id="rdpScriptBox">
@@ -1198,7 +1334,10 @@
         <div class="bezel">
           <div class="bezel-label" data-i18n="nav_rdp">RDP</div>
           <div id="rdpStatus" class="empty" data-i18n="rdp_placeholder">میزبان، یوزر و رمز را بزنید و وصل شوید.</div>
-          <iframe class="term" id="rdpFrame" title="RDP session" style="display:none"></iframe>
+          <div id="rdpStage">
+            <button type="button" id="rdpFsBtn" data-i18n="rdp_fullscreen">تمام‌صفحه</button>
+            <iframe class="rdp-view" id="rdpFrame" title="RDP session" allow="fullscreen; clipboard-read; clipboard-write" allowfullscreen></iframe>
+          </div>
         </div>
       </section>
 
@@ -1224,7 +1363,7 @@ const translations = {
     subtitle: "ابزار شبکه و امنیت پرتابل",
     cat_network: "شبکه", cat_security: "امنیت", cat_utility: "ابزار",
     nav_discover: "کشف شبکه", nav_portscan: "اسکن پورت", nav_ping: "پینگ",
-    nav_traceroute: "Traceroute", nav_neighbors: "همسایه‌ها", nav_wifi: "WiFi",
+    nav_traceroute: "Traceroute", nav_neighbors: "همسایه‌ها", nav_netmap: "نقشه شبکه", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "پهنای‌باند",
     nav_link: "این لینک", nav_mtr: "MTR", nav_subnet: "سابنت",
@@ -1287,7 +1426,7 @@ const translations = {
     dns_btn: "جستجوی DNS",
     dns_hint: "رکوردهای A، AAAA، MX، TXT، NS، CNAME و SOA رو یکجا نشون می‌ده.",
     whatismyip_btn: "دریافت IP عمومی من",
-    info_ip: "IP", info_city: "شهر", info_region: "منطقه", info_country: "کشور", info_isp: "ISP/Org",
+    info_ip: "IP", info_city: "شهر", info_region: "منطقه", info_country: "کشور", info_isp: "ISP/Org", info_source: "منبع",
     domain_btn: "بررسی دامنه",
     domain_hint: "آی‌پی اصلی دامنه (DNS A record) + زیردامنه‌های شناخته‌شده از روی گواهی‌های SSL عمومی (crt.sh) — کاملاً passive، چیزی مستقیم به هدف ارسال نمی‌شه.",
     domain_checking: "در حال بررسی...",
@@ -1298,8 +1437,20 @@ const translations = {
     no_wifi_iface: "اینترفیس بی‌سیمی پیدا نشد",
     th_signal: "سیگنال", th_freq: "فرکانس",
     speedtest_btn: "شروع تست سرعت",
-    speedtest_hint: "حدود ۲۰-۳۰ ثانیه طول می‌کشه (دانلود/آپلود واقعی از سرورهای Cloudflare).",
+    speedtest_lede: "اینترنت از چند CDN (Cloudflare، Hetzner، OVH، …)؛ اگر یکی قطع بود بقیه امتحان می‌شود. سرعت LAN با OpenSpeedTest روی همین لپ‌تاپ.",
+    speedtest_wan: "اینترنت",
+    speedtest_lan: "شبکه داخلی (OpenSpeedTest)",
+    speedtest_hint: "حدود ۲۰–۳۰ ثانیه. اگر Cloudflare در دسترس نباشد از سرورهای دیگر استفاده می‌شود.",
     speedtest_running: "در حال تست...",
+    ost_lede: "سرور روی همین دستگاه است. وقتی روشن کنید، موبایل یا لپ‌تاپ دیگر در همین LAN لینک را باز کند.",
+    ost_hint: "تا وقتی خاموش است پورت ۳۰۰۰ روی شبکه باز نیست. بعد از تست خاموش کنید.",
+    ost_start: "روشن کردن سرور",
+    ost_stop: "خاموش کردن",
+    ost_open: "باز کردن در تب جدید",
+    ost_down: "خاموش است. برای تست روشن کنید.",
+    ost_on: "روشن — پورت ۳۰۰۰ روی LAN باز است.",
+    ost_copy: "کپی لینک",
+    ost_no_lan: "آدرس LAN پیدا نشد — کابل یا وای‌فای را چک کنید. از این لپ‌تاپ هنوز می‌توانید تست کنید.",
     download_label: "دانلود", upload_label: "آپلود",
     wol_btn: "فرستادن Magic Packet",
     wol_hint: "دستگاه مقصد باید Wake-on-LAN رو توی BIOS/تنظیمات شبکه فعال داشته باشه و به همون شبکه‌ی فیزیکی وصل باشه.",
@@ -1349,7 +1500,7 @@ const translations = {
     term_hint: "پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید.",
     term_placeholder: "فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.",
     rdp_lede: "دسکتاپ ویندوز را داخل همین مرورگر باز می‌کند — مثل SSH، فقط روی localhost.",
-    rdp_hint: "برای سرورهای داخلی گواهی نامعتبر نادیده گرفته می‌شود. جلسه قبلی با اتصال جدید جایگزین می‌شود.",
+    rdp_hint: "برای سرورهای داخلی گواهی نامعتبر نادیده گرفته می‌شود. جلسه قبلی با اتصال جدید جایگزین می‌شود. تمام‌صفحه تصویر را بزرگ می‌کند.",
     rdp_user_placeholder: "یوزرنیم",
     rdp_domain_placeholder: "دامین (اختیاری)",
     rdp_pass_placeholder: "رمز",
@@ -1358,6 +1509,8 @@ const translations = {
     rdp_connecting: "در حال اتصال RDP...",
     rdp_connected: "متصل",
     rdp_need_auth: "یوزرنیم و رمز لازم است.",
+    rdp_fullscreen: "تمام‌صفحه",
+    rdp_exit_fs: "خروج از تمام‌صفحه",
     invalid_host: "Host نامعتبر",
     you_node: "شما",
     export_csv: "CSV", export_json: "JSON", export_copy: "کپی",
@@ -1370,7 +1523,7 @@ const translations = {
     link_mtu: "MTU", link_speed: "سرعت", link_mac: "MAC",
     link_dhcp: "DHCP", link_static: "استاتیک",
     link_no_gw: "گیت‌وی پیش‌فرض پیدا نشد",
-    link_public_offline: "بدون اینترنت یا ipinfo در دسترس نیست",
+    link_public_offline: "بدون اینترنت یا هیچ سرویس IP عمومی در دسترس نیست",
     link_docker_dns: "DNS این جعبه (احتمالاً overlay داکر)",
     mtr_lede: "پینگ و تریس با هم، زنده — افت لینک روی کدام هاپ است مشخص می‌شود.",
     mtr_loss: "از دست‌رفته", mtr_best: "بهترین", mtr_worst: "بدترین", mtr_last: "آخرین",
@@ -1425,6 +1578,33 @@ const translations = {
     report_no_scan: "(اسکن کشف هنوز انجام نشده)",
     report_no_cdp: "(همسایه‌ای شنیده نشده)",
     report_no_link: "(وضعیت لینک هنوز خوانده نشده)",
+    netmap_lede: "رانینگ‌کانفیگ و CDP/neighbor را بچسبان؛ نقشه فنی و فایل اکسل برای ارائه به مشتری ساخته می‌شود.",
+    netmap_hint: "سیسکو: running-config + CDP. میکروتیک: /export و neighbor. فایل را بکشید. روی نقشه شکل‌ها را جابه‌جا کنید تا نوشته‌ها روی هم نیفتند.",
+    netmap_drop_title: "فایل را اینجا بکشید",
+    netmap_drop: "کانفیگ، CDP، export میکروتیک — نوع و جعبه خودش تشخیص داده می‌شود. چند فایل با هم هم می‌شود.",
+    netmap_drop_ok: "اضافه شد.",
+    netmap_drop_skip: "این فایل متن کانفیگ نبود.",
+    netmap_add: "+ دستگاه",
+    netmap_sample: "نمونه",
+    netmap_draw: "کشیدن نقشه",
+    netmap_xlsx: "دانلود Excel",
+    netmap_svg: "دانلود SVG",
+    netmap_png: "دانلود PNG",
+    netmap_html: "برگه HTML مشتری",
+    netmap_label_ph: "نام دستگاه (اختیاری)",
+    netmap_vendor_auto: "تشخیص خودکار",
+    netmap_cfg: "Running-config / export",
+    netmap_nb: "CDP / LLDP / ip neighbor",
+    netmap_need: "حداقل یک dump بچسبان.",
+    netmap_stat_dev: "دستگاه",
+    netmap_stat_link: "لینک",
+    netmap_stat_dump: "کانفیگ",
+    netmap_leg_trunk: "Trunk",
+    netmap_leg_access: "Access",
+    netmap_leg_routed: "Routed",
+    netmap_leg_bundle: "Port-channel",
+    netmap_tbl_if: "اینترفیس‌های آپ‌لینک",
+    netmap_drag: "جعبه‌ها را بکشید و جابه‌جا کنید",
     scripts_lede: "اسکریپت آماده با متغیر؛ پیش‌نمایش، کپی، دانلود، یا اجرا روی دستگاهی که SSH دارد — لینوکس، ویندوز، میکروتیک.",
     scripts_hint: "متغیرها را عوض کنید، اسکریپت را ویرایش کنید، یا اسکریپت جدید بسازید. رمز SSH ذخیره نمی‌شود. ویرایش‌ها فقط در همین مرورگر می‌مانند.",
     scripts_filter_all: "همه",
@@ -1466,7 +1646,7 @@ const translations = {
     subtitle: "Portable network & security toolkit",
     cat_network: "Network", cat_security: "Security", cat_utility: "Utility",
     nav_discover: "Discover", nav_portscan: "Port Scan", nav_ping: "Ping",
-    nav_traceroute: "Traceroute", nav_neighbors: "Neighbors", nav_wifi: "WiFi",
+    nav_traceroute: "Traceroute", nav_neighbors: "Neighbors", nav_netmap: "Network map", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "Bandwidth",
     nav_link: "This link", nav_mtr: "MTR", nav_subnet: "Subnet",
@@ -1529,7 +1709,7 @@ const translations = {
     dns_btn: "DNS lookup",
     dns_hint: "Shows A, AAAA, MX, TXT, NS, CNAME and SOA records at once.",
     whatismyip_btn: "Get my public IP",
-    info_ip: "IP", info_city: "City", info_region: "Region", info_country: "Country", info_isp: "ISP/Org",
+    info_ip: "IP", info_city: "City", info_region: "Region", info_country: "Country", info_isp: "ISP/Org", info_source: "Source",
     domain_btn: "Check domain",
     domain_hint: "Main DNS A record + known subdomains from public SSL certificates (crt.sh) — fully passive, nothing is sent to the target.",
     domain_checking: "Checking...",
@@ -1540,8 +1720,20 @@ const translations = {
     no_wifi_iface: "No wireless interface found",
     th_signal: "Signal", th_freq: "Frequency",
     speedtest_btn: "Start speed test",
-    speedtest_hint: "Takes about 20-30s (real download/upload against Cloudflare servers).",
+    speedtest_lede: "Internet via several CDNs (Cloudflare, Hetzner, OVH, …); if one is down the next is used. LAN speed via OpenSpeedTest on this laptop.",
+    speedtest_wan: "Internet",
+    speedtest_lan: "LAN (OpenSpeedTest)",
+    speedtest_hint: "Takes about 20–30s. If Cloudflare is blocked, other servers are tried.",
     speedtest_running: "Testing...",
+    ost_lede: "This box is the server. Turn it on, then other phones or laptops on the same LAN open the link.",
+    ost_hint: "Port 3000 stays closed until you start the server. Turn it off when you are done.",
+    ost_start: "Start server",
+    ost_stop: "Stop server",
+    ost_open: "Open in new tab",
+    ost_down: "Off. Start it when you want to test.",
+    ost_on: "On — port 3000 is open on the LAN.",
+    ost_copy: "Copy link",
+    ost_no_lan: "No LAN address yet — check cable or Wi‑Fi. You can still run the test from this laptop.",
     download_label: "Download", upload_label: "Upload",
     wol_btn: "Send Magic Packet",
     wol_hint: "The target device must have Wake-on-LAN enabled in BIOS/network settings and be on the same physical network.",
@@ -1591,7 +1783,7 @@ const translations = {
     term_hint: "Type your password inside the terminal after connecting.",
     term_placeholder: "Fill the form above and hit \"Connect\", or \"Blank shell\" for a plain shell.",
     rdp_lede: "Opens a Windows desktop in this browser — same as SSH, loopback only.",
-    rdp_hint: "Internal/self-signed certificates are ignored. A new connect replaces the previous session.",
+    rdp_hint: "Internal/self-signed certificates are ignored. A new connect replaces the previous session. Use fullscreen for a larger desktop.",
     rdp_user_placeholder: "username",
     rdp_domain_placeholder: "domain (optional)",
     rdp_pass_placeholder: "password",
@@ -1600,6 +1792,8 @@ const translations = {
     rdp_connecting: "Connecting RDP...",
     rdp_connected: "Connected",
     rdp_need_auth: "Username and password are required.",
+    rdp_fullscreen: "Fullscreen",
+    rdp_exit_fs: "Exit fullscreen",
     invalid_host: "Invalid host",
     you_node: "YOU",
     export_csv: "CSV", export_json: "JSON", export_copy: "Copy",
@@ -1612,7 +1806,7 @@ const translations = {
     link_mtu: "MTU", link_speed: "Speed", link_mac: "MAC",
     link_dhcp: "DHCP", link_static: "Static",
     link_no_gw: "No default gateway found",
-    link_public_offline: "No internet, or ipinfo is unreachable",
+    link_public_offline: "No internet, or no public-IP service is reachable",
     link_docker_dns: "DNS for this box (likely Docker overlay)",
     mtr_lede: "Ping and traceroute together, live — shows which hop is dropping the link.",
     mtr_loss: "loss", mtr_best: "best", mtr_worst: "worst", mtr_last: "last",
@@ -1667,6 +1861,33 @@ const translations = {
     report_no_scan: "(no discover scan yet)",
     report_no_cdp: "(no neighbors heard)",
     report_no_link: "(link status not loaded yet)",
+    netmap_lede: "Paste running-config and CDP/neighbor tables. You get a technical map plus an Excel pack for the customer.",
+    netmap_hint: "Cisco: running-config plus CDP. MikroTik: /export and neighbor. Drop files. Drag boxes on the map so labels do not sit on top of each other.",
+    netmap_drop_title: "Drop files here",
+    netmap_drop: "Config, CDP, or MikroTik export — vendor and box are detected. Several files at once is fine.",
+    netmap_drop_ok: "Added.",
+    netmap_drop_skip: "That file was not a text dump.",
+    netmap_add: "+ Device",
+    netmap_sample: "Sample",
+    netmap_draw: "Draw map",
+    netmap_xlsx: "Download Excel",
+    netmap_svg: "Download SVG",
+    netmap_png: "Download PNG",
+    netmap_html: "Customer HTML brief",
+    netmap_label_ph: "Device name (optional)",
+    netmap_vendor_auto: "Auto-detect",
+    netmap_cfg: "Running-config / export",
+    netmap_nb: "CDP / LLDP / ip neighbor",
+    netmap_need: "Paste at least one dump.",
+    netmap_stat_dev: "Devices",
+    netmap_stat_link: "Links",
+    netmap_stat_dump: "Configs",
+    netmap_leg_trunk: "Trunk",
+    netmap_leg_access: "Access",
+    netmap_leg_routed: "Routed",
+    netmap_leg_bundle: "Port-channel",
+    netmap_tbl_if: "Uplink interfaces",
+    netmap_drag: "Drag boxes to rearrange",
     scripts_lede: "Ready scripts with variables — preview, copy, download, or run over SSH on Linux, Windows, or MikroTik.",
     scripts_hint: "Change variables, edit a script, or create a new one. SSH password is not stored. Edits stay in this browser.",
     scripts_filter_all: "All",
@@ -1746,9 +1967,11 @@ const tabs = document.querySelectorAll("nav.side-nav .tab");
 function switchTab(id) {
   tabs.forEach(x => x.classList.toggle("active", x.dataset.panel === id));
   document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === id));
+  if (id !== "rdp") exitRdpFullscreen();
   if (id === "link") loadLinkStatus();
   if (id === "scripts" || id === "terminal" || id === "rdp") loadScripts();
   if (id === "report") paintReport();
+  if (id === "speedtest") loadOpenSpeedTest();
 }
 tabs.forEach(tb => tb.onclick = () => switchTab(tb.dataset.panel));
 
@@ -2361,6 +2584,7 @@ document.getElementById("whatismyipBtn").onclick = async () => {
       <div class="k">${esc(t("info_region"))}</div><div class="v">${esc(data.region) || "—"}</div>
       <div class="k">${esc(t("info_country"))}</div><div class="v">${esc(data.country) || "—"}</div>
       <div class="k">${esc(t("info_isp"))}</div><div class="v">${esc(data.org) || "—"}</div>
+      <div class="k">${esc(t("info_source"))}</div><div class="v">${esc(data.source) || "—"}</div>
     </div>`;
   } finally { setLoading(btn, false); }
 };
@@ -2436,12 +2660,109 @@ document.getElementById("speedtestBtn").onclick = async () => {
     if (data.error) { out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(data.error)}</div>`; return; }
     out.className = "cards";
     out.innerHTML = `
-      <div class="card"><div class="meta">${esc(t("download_label"))}</div><div class="ip">${esc(data.download_mbps)} Mbps</div></div>
-      <div class="card"><div class="meta">${esc(t("upload_label"))}</div><div class="ip">${esc(data.upload_mbps)} Mbps</div></div>
-      <div class="card"><div class="meta">Ping</div><div class="ip">${data.ping_ms ?? "—"} ms</div></div>
+      <div class="card"><div class="meta">${esc(t("download_label"))}${data.download_source ? " · " + esc(data.download_source) : ""}</div><div class="ip">${data.download_mbps != null ? esc(data.download_mbps) + " Mbps" : "—"}</div></div>
+      <div class="card"><div class="meta">${esc(t("upload_label"))}${data.upload_source ? " · " + esc(data.upload_source) : ""}</div><div class="ip">${data.upload_mbps != null ? esc(data.upload_mbps) + " Mbps" : "—"}</div></div>
+      <div class="card"><div class="meta">Ping${data.ping_source ? " · " + esc(data.ping_source) : ""}</div><div class="ip">${data.ping_ms != null ? data.ping_ms + " ms" : "—"}</div></div>
     `;
   } finally { setLoading(btn, false); }
 };
+
+function paintOpenSpeedTest(data) {
+  const status = document.getElementById("ostStatus");
+  const list = document.getElementById("ostUrls");
+  const frame = document.getElementById("ostFrame");
+  const startBtn = document.getElementById("ostStartBtn");
+  const stopBtn = document.getElementById("ostStopBtn");
+  const openBtn = document.getElementById("ostOpenBtn");
+  const up = !!data.up;
+  startBtn.disabled = up;
+  stopBtn.disabled = !up;
+  openBtn.disabled = !up;
+  if (!up) {
+    status.className = "empty";
+    status.textContent = t("ost_down");
+    list.innerHTML = "";
+    document.getElementById("ostQr").innerHTML = "";
+    frame.hidden = true;
+    frame.src = "about:blank";
+    return;
+  }
+  status.className = "empty";
+  status.textContent = t("ost_on");
+  const rows = (data.urls || []).map(u => `
+    <div class="ost-url">
+      <span>${esc(u.iface)}</span>
+      <a href="${esc(u.url)}" target="_blank" rel="noopener">${esc(u.url)}</a>
+      <button type="button" class="action secondary ost-copy" data-url="${esc(u.url)}">${esc(t("ost_copy"))}</button>
+    </div>`).join("");
+  list.innerHTML = rows || `<div class="empty">${esc(t("ost_no_lan"))}</div>`;
+  list.querySelectorAll(".ost-copy").forEach(btn => {
+    btn.onclick = async () => {
+      try { await navigator.clipboard.writeText(btn.dataset.url); btn.textContent = t("copied"); }
+      catch (_) { btn.textContent = t("error_prefix"); }
+      setTimeout(() => { btn.textContent = t("ost_copy"); }, 1200);
+    };
+  });
+  const share = (data.urls && data.urls[0] && data.urls[0].url) || data.local;
+  ostMakeQr(share);
+  frame.hidden = false;
+  if (data.local && frame.src.indexOf(data.local) !== 0) {
+    frame.src = data.local;
+  }
+  openBtn.onclick = () => { window.open(data.local, "_blank", "noopener"); };
+}
+async function loadOpenSpeedTest() {
+  const status = document.getElementById("ostStatus");
+  try {
+    const res = await fetch("/api/openspeedtest");
+    const data = await res.json();
+    paintOpenSpeedTest(data);
+  } catch (err) {
+    status.className = "empty";
+    status.textContent = t("error_prefix") + (err.message || err);
+  }
+}
+async function ostToggle(on) {
+  const btn = document.getElementById(on ? "ostStartBtn" : "ostStopBtn");
+  setLoading(btn, true);
+  try {
+    const res = await fetch(on ? "/api/openspeedtest/start" : "/api/openspeedtest/stop", {method: "POST"});
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById("ostStatus").textContent = t("error_prefix") + data.error;
+      return;
+    }
+    paintOpenSpeedTest(data);
+  } catch (err) {
+    document.getElementById("ostStatus").textContent = t("error_prefix") + (err.message || err);
+  } finally { setLoading(btn, false); }
+}
+document.getElementById("ostStartBtn").onclick = () => ostToggle(true);
+document.getElementById("ostStopBtn").onclick = () => ostToggle(false);
+document.getElementById("ostOpenBtn").disabled = true;
+document.getElementById("ostStopBtn").disabled = true;
+
+function ostMakeQr(text) {
+  const el = document.getElementById("ostQr");
+  if (!text || typeof qrcode !== "function") { el.innerHTML = ""; return; }
+  try {
+    const qr = qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+    const n = qr.getModuleCount();
+    const cell = 4, size = n * cell;
+    let rects = "";
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (qr.isDark(r, c)) rects += `<rect x="${c * cell}" y="${r * cell}" width="${cell}" height="${cell}"/>`;
+      }
+    }
+    el.innerHTML = `<div style="background:#fff;border-radius:12px;padding:10px;display:inline-block">
+      <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">
+        <rect width="${size}" height="${size}" fill="white"/><g fill="black">${rects}</g>
+      </svg></div>`;
+  } catch (_) { el.innerHTML = ""; }
+}
 
 document.getElementById("wolBtn").onclick = async () => {
   const btn = document.getElementById("wolBtn");
@@ -2609,6 +2930,7 @@ document.getElementById("geoipBtn").onclick = async () => {
       <div class="k">${esc(t("info_region"))}</div><div class="v">${esc(data.region) || "—"}</div>
       <div class="k">${esc(t("info_country"))}</div><div class="v">${esc(data.country) || "—"}</div>
       <div class="k">${esc(t("info_isp"))}</div><div class="v">${esc(data.org) || "—"}</div>
+      <div class="k">${esc(t("info_source"))}</div><div class="v">${esc(data.source) || "—"}</div>
     </div>`;
   } finally { setLoading(btn, false); }
 };
@@ -3319,14 +3641,58 @@ document.getElementById("termScriptRunBtn").onclick = () => runOnSession("termin
 document.getElementById("rdpScriptPick").onchange = () => onSessionScriptPick("rdp");
 document.getElementById("rdpScriptRunBtn").onclick = () => runOnSession("rdp");
 
-const NOVNC_URL = "http://127.0.0.1:7682/vnc.html?autoconnect=1&resize=scale&reconnect=1";
+const NOVNC_URL = "http://127.0.0.1:7682/vnc.html?autoconnect=1&resize=scale&reconnect=1&quality=9&compression=0";
 const rdpFrame = document.getElementById("rdpFrame");
 const rdpStatus = document.getElementById("rdpStatus");
+const rdpStage = document.getElementById("rdpStage");
+
+function rdpFsElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement;
+}
+function syncRdpFsLabel() {
+  const on = rdpFsElement() === rdpStage;
+  const label = t(on ? "rdp_exit_fs" : "rdp_fullscreen");
+  ["rdpFsBtn", "rdpFsBarBtn"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+}
+function exitRdpFullscreen() {
+  const el = rdpFsElement();
+  if (!el) return;
+  const fn = document.exitFullscreen || document.webkitExitFullscreen;
+  if (fn) fn.call(document);
+}
+async function toggleRdpFullscreen() {
+  if (!rdpStage.classList.contains("show")) return;
+  try {
+    if (rdpFsElement() === rdpStage) {
+      exitRdpFullscreen();
+      return;
+    }
+    const req = rdpStage.requestFullscreen || rdpStage.webkitRequestFullscreen;
+    if (req) await req.call(rdpStage);
+  } catch (_) { /* browser blocked fullscreen */ }
+}
+document.addEventListener("fullscreenchange", syncRdpFsLabel);
+document.addEventListener("webkitfullscreenchange", syncRdpFsLabel);
+document.addEventListener("keydown", ev => {
+  if (ev.key === "F11" && document.getElementById("rdp").classList.contains("active") && rdpStage.classList.contains("show")) {
+    ev.preventDefault();
+    toggleRdpFullscreen();
+  }
+});
 
 function showRdpFrame(on) {
-  rdpFrame.style.display = on ? "block" : "none";
-  if (!on) rdpFrame.src = "about:blank";
+  rdpStage.classList.toggle("show", on);
+  if (!on) {
+    exitRdpFullscreen();
+    rdpFrame.src = "about:blank";
+  }
 }
+
+document.getElementById("rdpFsBtn").onclick = () => toggleRdpFullscreen();
+document.getElementById("rdpFsBarBtn").onclick = () => toggleRdpFullscreen();
 
 document.getElementById("rdpConnectBtn").onclick = async () => {
   const btn = document.getElementById("rdpConnectBtn");
@@ -3916,6 +4282,1101 @@ document.getElementById("scriptRunBtn").onclick = async () => {
   } catch (err) {
     out.textContent = t("error_prefix") + (err.message || err);
   } finally { setLoading(btn, false); }
+};
+
+let lastNetmapTopo = null;
+let lastNetmapSvg = "";
+let netmapPos = {};
+let netmapDrag = null;
+
+function collectNetmapDevices() {
+  return [...document.querySelectorAll("#netmapDumps .dump-card")].map(card => ({
+    vendor: card.querySelector(".dump-vendor").value,
+    label: card.querySelector(".dump-label").value.trim(),
+    config: card.querySelector(".dump-cfg").value,
+    neighbors: card.querySelector(".dump-nb").value,
+  }));
+}
+
+function _looksCiscoCfg(s) {
+  return /^(hostname\s+\S+|Current configuration|Building configuration|version \d+\.\d+|ip default-gateway\s|interface\s+(GigabitEthernet|FastEthernet|TenGigabitEthernet|Port-channel|Vlan|Loopback|Ethernet))/im.test(s);
+}
+function _looksCiscoNb(s) {
+  return /Device ID\s*:|Local Intrfce|Capability Codes|Port ID \(outgoing port\)|(?:show\s+)?cdp\s+neighbors/i.test(s);
+}
+function _looksMtCfg(s) {
+  return /^\/(system|interface|ip|ppp|user|bridge|routing)\b/m.test(s) || /routeros/i.test(s);
+}
+function _looksMtNb(s) {
+  return (/identity\s*=/.test(s) && /interface\s*=/.test(s)) || /\/ip neighbor print/i.test(s);
+}
+function _extractCiscoConfig(s) {
+  const start = s.search(/^(?:Building configuration\.\.\.|Current configuration\s*:)/im);
+  if (start >= 0) {
+    const chunk = s.slice(start);
+    const endm = chunk.match(/\nend\s*(?:\n|$)/i);
+    return (endm ? chunk.slice(0, endm.index + endm[0].length) : chunk).trim();
+  }
+  if (/^(hostname\s+\S+)/im.test(s) && /^interface\s+/im.test(s)) {
+    const h = s.search(/^(hostname\s+\S+)/im);
+    const chunk = s.slice(h);
+    const endm = chunk.match(/\nend\s*(?:\n|$)/i);
+    return (endm ? chunk.slice(0, endm.index + endm[0].length) : chunk).trim();
+  }
+  return "";
+}
+function _extractCiscoNeighbors(s) {
+  const start = s.search(/^(?:\S+[#>]\s*)?(?:show\s+)?cdp\s+neighbors|^Capability Codes:|^Device ID(?:\s*:|\s{2,})/im);
+  if (start < 0) return "";
+  let chunk = s.slice(start);
+  const stop = chunk.search(/\n(?:\S+[#>]\s*)?show\s+run(?:ning-config)?\b|\nBuilding configuration|\nCurrent configuration\s*:/i);
+  if (stop > 8) chunk = chunk.slice(0, stop);
+  return chunk.split("\n").filter(ln => {
+    if (/^%/.test(ln)) return false;
+    if (/^\S+[#>]\s?/.test(ln) && !/cdp neighbors|Device ID|Capability/i.test(ln)) return false;
+    return true;
+  }).join("\n").trim();
+}
+function _hostFromDump(s, filename) {
+  let m = s.match(/^\s*hostname\s+(\S+)/im);
+  if (m) return m[1].replace(/["']/g, "");
+  m = s.match(/\/system identity[\s\S]{0,120}?set name=(?:"([^"]+)"|(\S+))/i);
+  if (m) return m[1] || m[2];
+  m = s.match(/\bset name=(?:"([^"]+)"|(\S+))/i);
+  if (m && _looksMtCfg(s)) return m[1] || m[2];
+  const stem = (filename || "").replace(/^.*[\\/]/, "").replace(/\.[^.]+$/, "");
+  const cleaned = stem.replace(/[-_]?(running-?config|show-?run|config|export|cdp|lldp|neighbors?|detail|brief)$/i, "").trim();
+  return cleaned && !/^(dump|config|cdp|export|untitled)$/i.test(cleaned) ? cleaned : "";
+}
+function _vendorFromDump(s, filename) {
+  const n = (filename || "").toLowerCase();
+  if (_looksMtCfg(s) || _looksMtNb(s) || /\b(rsc|mikrotik|routeros)\b/.test(n)) return "mikrotik";
+  if (_looksCiscoCfg(s) || _looksCiscoNb(s) || /\b(cisco|ios|nxos|cdp)\b/.test(n)) return "cisco";
+  return "auto";
+}
+function classifyNetmapText(text, filename) {
+  const s = String(text || "").replace(/\0/g, "").replace(/\r\n/g, "\n").trim();
+  if (_looksMtCfg(s) || _looksMtNb(s)) {
+    let config = "", neighbors = "";
+    const mtNbAt = s.search(/\/ip neighbor/i);
+    const mtTblAt = s.search(/^\s*\d+\s+[A-Z]?\s+interface=/m);
+    if (_looksMtCfg(s) && (_looksMtNb(s) || mtTblAt > 12)) {
+      const cut = mtNbAt > 12 ? mtNbAt : mtTblAt;
+      if (cut > 12) {
+        config = s.slice(0, cut).trim();
+        neighbors = s.slice(cut).trim();
+      } else config = s;
+    } else if (_looksMtNb(s) && !_looksMtCfg(s)) neighbors = s;
+    else config = s;
+    return { vendor: "mikrotik", label: _hostFromDump(config || s, filename), config, neighbors };
+  }
+  const config = _extractCiscoConfig(s);
+  let neighbors = _extractCiscoNeighbors(s);
+  if (config && neighbors && neighbors.length > 40 && config.includes(neighbors.slice(0, 40))) neighbors = "";
+  if (config || neighbors) {
+    return {
+      vendor: "cisco",
+      label: _hostFromDump(config || s, filename),
+      config: config || (!_looksCiscoNb(s) ? s : ""),
+      neighbors,
+    };
+  }
+  if (/(cdp|lldp|neighbor)/i.test(filename || "") && !_looksCiscoCfg(s)) {
+    return { vendor: "cisco", label: _hostFromDump(s, filename), config: "", neighbors: s };
+  }
+  return { vendor: _vendorFromDump(s, filename), label: _hostFromDump(s, filename), config: s, neighbors: "" };
+}
+function mergeDumpPresets(a, b) {
+  const join = (x, y) => {
+    x = (x || "").trim(); y = (y || "").trim();
+    if (!x) return y; if (!y || x.includes(y)) return x;
+    return x + "\n\n" + y;
+  };
+  return {
+    vendor: a.vendor && a.vendor !== "auto" ? a.vendor : (b.vendor || "auto"),
+    label: a.label || b.label || "",
+    config: join(a.config, b.config),
+    neighbors: join(a.neighbors, b.neighbors),
+  };
+}
+function groupDumpPresets(items) {
+  const keyed = [];
+  const unlabeledCfg = [];
+  const unlabeledNb = [];
+  items.forEach(it => {
+    if (!it.config && !it.neighbors) return;
+    const key = (it.label || "").toLowerCase();
+    if (key) {
+      const i = keyed.findIndex(x => (x.label || "").toLowerCase() === key);
+      if (i >= 0) keyed[i] = mergeDumpPresets(keyed[i], it);
+      else keyed.push({ ...it });
+    } else if (it.config && !it.neighbors) unlabeledCfg.push(it);
+    else if (it.neighbors && !it.config) unlabeledNb.push(it);
+    else keyed.push({ ...it });
+  });
+  unlabeledCfg.forEach(cfg => {
+    const nb = unlabeledNb.find(n => n.vendor === cfg.vendor || n.vendor === "auto" || cfg.vendor === "auto");
+    if (nb) {
+      keyed.push(mergeDumpPresets(cfg, nb));
+      unlabeledNb.splice(unlabeledNb.indexOf(nb), 1);
+    } else keyed.push(cfg);
+  });
+  unlabeledNb.forEach(nb => {
+    const cisco = keyed.filter(k => k.vendor === "cisco" || k.vendor === "auto");
+    if (cisco.length === 1 && !cisco[0].neighbors) {
+      const i = keyed.indexOf(cisco[0]);
+      keyed[i] = mergeDumpPresets(cisco[0], nb);
+    } else keyed.push(nb);
+  });
+  return keyed;
+}
+function dumpCardEmpty(card) {
+  return !(card.querySelector(".dump-cfg").value.trim() || card.querySelector(".dump-nb").value.trim() || card.querySelector(".dump-label").value.trim());
+}
+function setNetmapDropStatus(msg, err) {
+  const el = document.getElementById("netmapDropStatus");
+  if (!el) return;
+  el.hidden = !msg;
+  el.textContent = msg || "";
+  el.classList.toggle("is-err", !!err);
+}
+function applyDumpPresets(presets, ontoCard) {
+  if (!presets.length) return;
+  if (ontoCard && presets.length === 1) {
+    const p = presets[0];
+    const v = ontoCard.querySelector(".dump-vendor");
+    if (p.vendor && p.vendor !== "auto") v.value = p.vendor;
+    if (p.label && !ontoCard.querySelector(".dump-label").value.trim()) ontoCard.querySelector(".dump-label").value = p.label;
+    if (p.config) ontoCard.querySelector(".dump-cfg").value = p.config;
+    if (p.neighbors) ontoCard.querySelector(".dump-nb").value = p.neighbors;
+    return;
+  }
+  const wrap = document.getElementById("netmapDumps");
+  [...wrap.querySelectorAll(".dump-card")].filter(dumpCardEmpty).forEach(c => c.remove());
+  presets.forEach(p => addDumpCard(p));
+  if (!wrap.children.length) addDumpCard();
+}
+async function ingestNetmapFiles(fileList, ontoCard) {
+  const files = [...(fileList || [])].filter(Boolean);
+  if (!files.length) return;
+  const parsed = [];
+  let skipped = 0;
+  for (const f of files.slice(0, 24)) {
+    if (f.size > 4 * 1024 * 1024) { skipped++; continue; }
+    const name = f.name || "";
+    if (/\.(xlsx|xls|png|jpe?g|gif|webp|pdf|zip|docx?)$/i.test(name)) { skipped++; continue; }
+    let text = "";
+    try { text = await f.text(); } catch { skipped++; continue; }
+    if (!String(text).trim()) { skipped++; continue; }
+    const item = classifyNetmapText(text, name);
+    if (!item.config && !item.neighbors) { skipped++; continue; }
+    parsed.push(item);
+  }
+  const grouped = groupDumpPresets(parsed);
+  if (!grouped.length) {
+    setNetmapDropStatus(t("netmap_drop_skip"), true);
+    return;
+  }
+  applyDumpPresets(grouped, ontoCard);
+  const bits = grouped.map(p => [p.label || "?", p.vendor !== "auto" ? p.vendor : "", p.config ? "cfg" : "", p.neighbors ? "cdp" : ""].filter(Boolean).join(" ")).join(" · ");
+  setNetmapDropStatus(`${t("netmap_drop_ok")} ${bits}`, false);
+}
+
+function addDumpCard(preset) {
+  const wrap = document.getElementById("netmapDumps");
+  const card = document.createElement("div");
+  card.className = "dump-card";
+  card.innerHTML = `
+    <div class="dump-head">
+      <select class="dump-vendor">
+        <option value="auto">${esc(t("netmap_vendor_auto"))}</option>
+        <option value="cisco">Cisco IOS</option>
+        <option value="mikrotik">MikroTik</option>
+      </select>
+      <input type="text" class="dump-label" data-i18n-placeholder="netmap_label_ph" placeholder="${esc(t("netmap_label_ph"))}" />
+      <button type="button" class="dump-del">×</button>
+    </div>
+    <div class="dump-grid">
+      <div>
+        <div class="dump-lab" data-i18n="netmap_cfg">${esc(t("netmap_cfg"))}</div>
+        <textarea class="dump-cfg" spellcheck="false"></textarea>
+      </div>
+      <div>
+        <div class="dump-lab" data-i18n="netmap_nb">${esc(t("netmap_nb"))}</div>
+        <textarea class="dump-nb" spellcheck="false"></textarea>
+      </div>
+    </div>`;
+  wrap.appendChild(card);
+  card.querySelector(".dump-del").onclick = () => {
+    if (wrap.children.length <= 1) {
+      card.querySelector(".dump-cfg").value = "";
+      card.querySelector(".dump-nb").value = "";
+      card.querySelector(".dump-label").value = "";
+      return;
+    }
+    card.remove();
+  };
+  if (preset) {
+    card.querySelector(".dump-vendor").value = preset.vendor || "auto";
+    card.querySelector(".dump-label").value = preset.label || "";
+    card.querySelector(".dump-cfg").value = preset.config || "";
+    card.querySelector(".dump-nb").value = preset.neighbors || "";
+  }
+  bindDumpCardDrop(card);
+}
+
+function bindDumpCardDrop(card) {
+  ["dragenter", "dragover"].forEach(ev => card.addEventListener(ev, e => {
+    if (![...e.dataTransfer.types].includes("Files") && !e.dataTransfer.types.includes("text/plain")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    card.classList.add("drop-hover");
+  }));
+  card.addEventListener("dragleave", e => {
+    if (!card.contains(e.relatedTarget)) card.classList.remove("drop-hover");
+  });
+  card.addEventListener("drop", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    card.classList.remove("drop-hover");
+    const files = e.dataTransfer.files;
+    if (files && files.length) {
+      ingestNetmapFiles(files, card);
+      return;
+    }
+    const text = e.dataTransfer.getData("text/plain");
+    if (text && text.trim()) applyDumpPresets(groupDumpPresets([classifyNetmapText(text, "paste.txt")]), card);
+  });
+}
+
+function wireNetmapDropzone() {
+  const zone = document.getElementById("netmapDrop");
+  const input = document.getElementById("netmapFile");
+  const panel = document.getElementById("netmap");
+  zone.addEventListener("click", () => input.click());
+  zone.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+  input.addEventListener("change", () => {
+    ingestNetmapFiles(input.files);
+    input.value = "";
+  });
+  const over = e => {
+    if (!e.dataTransfer) return;
+    const types = [...e.dataTransfer.types];
+    if (!types.includes("Files") && !types.includes("text/plain")) return;
+    e.preventDefault();
+    zone.classList.add("drop-hover");
+  };
+  panel.addEventListener("dragenter", over);
+  panel.addEventListener("dragover", over);
+  panel.addEventListener("dragleave", e => {
+    if (!panel.contains(e.relatedTarget)) zone.classList.remove("drop-hover");
+  });
+  panel.addEventListener("drop", e => {
+    const types = [...(e.dataTransfer?.types || [])];
+    if (!types.includes("Files") && !types.includes("text/plain")) return;
+    e.preventDefault();
+    zone.classList.remove("drop-hover");
+    if (e.target.closest(".dump-card")) return;
+    const files = e.dataTransfer.files;
+    if (files && files.length) {
+      ingestNetmapFiles(files);
+      return;
+    }
+    const text = e.dataTransfer.getData("text/plain");
+    if (text && text.trim()) {
+      applyDumpPresets(groupDumpPresets([classifyNetmapText(text, "paste.txt")]));
+      setNetmapDropStatus(t("netmap_drop_ok"), false);
+    }
+  });
+  panel.addEventListener("paste", e => {
+    if (e.target.closest("textarea, input, select")) return;
+    const files = e.clipboardData?.files;
+    if (files && files.length) {
+      e.preventDefault();
+      ingestNetmapFiles(files);
+    }
+  });
+}
+
+addDumpCard();
+wireNetmapDropzone();
+document.getElementById("netmapAddBtn").onclick = () => addDumpCard();
+
+document.getElementById("netmapSampleBtn").onclick = () => {
+  document.getElementById("netmapSite").value = document.getElementById("netmapSite").value || "HQ";
+  document.getElementById("netmapCustomer").value = document.getElementById("netmapCustomer").value || "Acme";
+  document.getElementById("netmapDumps").innerHTML = "";
+  addDumpCard({
+    vendor: "mikrotik",
+    label: "edge-gw",
+    config: `/system identity
+set name=edge-gw
+/interface ethernet
+set [ find default-name=ether1 ] name=WAN comment="ISP"
+set [ find default-name=ether2 ] name=LAN-SW comment="Cisco core"
+/ip address
+add address=10.0.0.1/30 interface=WAN
+add address=192.168.1.1/24 interface=LAN-SW comment="mgmt"
+`,
+    neighbors: ` 0 D interface=LAN-SW address=192.168.1.2 mac-address=AA:BB:CC:DD:EE:01 identity="SW-CORE" platform="cisco WS-C2960X" version="15.2"
+`,
+  });
+  addDumpCard({
+    vendor: "cisco",
+    label: "SW-CORE",
+    config: `hostname SW-CORE
+version 15.2
+ip default-gateway 192.168.1.1
+vlan 10
+ name DATA
+vlan 20
+ name VOICE
+interface GigabitEthernet1/0/1
+ description Uplink to edge-gw
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+interface GigabitEthernet1/0/2
+ description Access SW-ACC-1
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+interface GigabitEthernet1/0/3
+ description LACP to SW-ACC-2
+ switchport mode trunk
+ channel-group 1 mode active
+interface GigabitEthernet1/0/4
+ description LACP to SW-ACC-2
+ switchport mode trunk
+ channel-group 1 mode active
+interface Port-channel1
+ description SW-ACC-2
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+interface Vlan10
+ ip address 192.168.1.2 255.255.255.0
+`,
+    neighbors: `-------------------------
+Device ID: edge-gw
+Entry address(es):
+  IP address: 192.168.1.1
+Platform: MikroTik,  Capabilities: Router Switch
+Interface: GigabitEthernet1/0/1,  Port ID (outgoing port): LAN-SW
+-------------------------
+Device ID: SW-ACC-1
+Entry address(es):
+  IP address: 192.168.1.3
+Platform: cisco WS-C2960,  Capabilities: Switch IGMP
+Interface: GigabitEthernet1/0/2,  Port ID (outgoing port): GigabitEthernet1/0/48
+-------------------------
+Device ID: SW-ACC-2
+Entry address(es):
+  IP address: 192.168.1.4
+Platform: cisco WS-C2960,  Capabilities: Switch IGMP
+Interface: GigabitEthernet1/0/3,  Port ID (outgoing port): GigabitEthernet1/0/47
+-------------------------
+Device ID: SW-ACC-2
+Entry address(es):
+  IP address: 192.168.1.4
+Platform: cisco WS-C2960,  Capabilities: Switch IGMP
+Interface: GigabitEthernet1/0/4,  Port ID (outgoing port): GigabitEthernet1/0/48
+`,
+  });
+};
+
+function netmapPayload() {
+  return {
+    site: document.getElementById("netmapSite").value.trim(),
+    customer: document.getElementById("netmapCustomer").value.trim(),
+    devices: collectNetmapDevices().filter(d => (d.config || "").trim() || (d.neighbors || "").trim()),
+  };
+}
+
+function clipTxt(s, n) {
+  s = String(s || "");
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+function netmapPalette(forPrint) {
+  return {
+    ink: forPrint ? "#152033" : cssVar("--ink"),
+    dim: forPrint ? "#5b6b80" : cssVar("--ink-dim"),
+    copper: forPrint ? "#c56a2d" : cssVar("--accent"),
+    cyan: forPrint ? "#1f8aa0" : cssVar("--accent2"),
+    up: forPrint ? "#1a8a58" : cssVar("--up"),
+    bg: forPrint ? "#ffffff" : cssVar("--surface-solid"),
+    bg2: forPrint ? "#f3f6fa" : cssVar("--surface-2"),
+  };
+}
+function layoutNetmap(topo, keep) {
+  const layers = ["wan", "router", "core", "access", "endpoint"];
+  const grouped = {};
+  layers.forEach(l => grouped[l] = []);
+  (topo.devices || []).forEach(d => {
+    const l = layers.includes(d.layer) ? d.layer : "endpoint";
+    grouped[l].push(d);
+  });
+  layers.forEach(l => grouped[l].sort((a, b) => String(a.hostname || a.id).localeCompare(String(b.hostname || b.id))));
+  const used = layers.filter(l => grouped[l].length);
+  const boxW = 158, boxH = 70, gapX = 72, gapY = 150, pad = 72;
+  const maxCols = Math.max(1, ...used.map(l => grouped[l].length));
+  const width = Math.max(980, pad * 2 + maxCols * (boxW + gapX) - gapX);
+  const height = pad * 2 + used.length * (boxH + gapY) - gapY + 36;
+  const pos = {};
+  used.forEach((l, row) => {
+    const items = grouped[l];
+    const rowW = items.length * boxW + (items.length - 1) * gapX;
+    const startX = Math.max(pad, (width - rowW) / 2);
+    items.forEach((d, i) => {
+      const saved = keep && keep[d.id];
+      const x = saved ? saved.x : startX + i * (boxW + gapX);
+      const y = saved ? saved.y : pad + row * (boxH + gapY);
+      pos[d.id] = { x, y, w: boxW, h: boxH, cx: x + boxW / 2, cy: y + boxH / 2 };
+    });
+  });
+  return { pos, width, height, pad, boxW, boxH };
+}
+function netmapKindColor(kind, pal) {
+  return kind === "trunk" ? pal.copper : kind === "access" ? pal.cyan : kind === "routed" ? pal.up : pal.dim;
+}
+function netmapWireLinks(topo) {
+  const raw = (topo.links || []).filter(lk => lk.proto !== "logical" && lk.a && lk.b && lk.a !== lk.b);
+  const rank = lk => (lk.bundle ? 4 : 0) + (lk.kind === "trunk" ? 3 : lk.kind === "access" ? 2 : lk.kind === "routed" ? 1 : 0);
+  const best = new Map();
+  raw.forEach(lk => {
+    const k = [lk.a, lk.b].sort().join("\0");
+    const prev = best.get(k);
+    if (!prev || rank(lk) > rank(prev)) best.set(k, lk);
+  });
+  return [...best.values()];
+}
+function bezPt(a, b, t) {
+  const my = (a.cy + b.cy) / 2;
+  const u = 1 - t;
+  return {
+    x: u*u*u*a.cx + 3*u*u*t*a.cx + 3*u*t*t*b.cx + t*t*t*b.cx,
+    y: u*u*u*a.cy + 3*u*u*t*my + 3*u*t*t*my + t*t*t*b.cy,
+  };
+}
+function netmapPill(x, y, text, fill, bg) {
+  const raw = String(text || "").trim();
+  if (!raw) return "";
+  const t = clipTxt(raw, 14);
+  const w = Math.max(36, Math.min(88, 10 + t.length * 6.1));
+  return `<g>
+    <rect x="${(x - w / 2).toFixed(1)}" y="${(y - 8).toFixed(1)}" width="${w.toFixed(1)}" height="15" rx="4" fill="${bg}" stroke="${fill}" stroke-opacity=".25"/>
+    <text x="${x.toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="middle" fill="${fill}" font-size="9" font-family="ui-monospace, Menlo, monospace">${esc(t)}</text>
+  </g>`;
+}
+function netmapLinksMarkup(topo, pos, pal) {
+  const links = netmapWireLinks(topo);
+  const atNode = {};
+  links.forEach((lk, i) => {
+    (atNode[lk.a] ||= []).push(i);
+    (atNode[lk.b] ||= []).push(i);
+  });
+  return links.map((lk, i) => {
+    const a = pos[lk.a], b = pos[lk.b];
+    if (!a || !b) return "";
+    const c = netmapKindColor(lk.kind, pal);
+    const ia = atNode[lk.a].indexOf(i), na = atNode[lk.a].length;
+    const ib = atNode[lk.b].indexOf(i), nb = atNode[lk.b].length;
+    const oxA = (ia - (na - 1) / 2) * 14;
+    const oxB = (ib - (nb - 1) / 2) * 14;
+    const my = (a.cy + b.cy) / 2;
+    const d = `M ${a.cx} ${a.cy} C ${a.cx + oxA} ${my}, ${b.cx + oxB} ${my}, ${b.cx} ${b.cy}`;
+    const sw = lk.bundle ? 5.2 : (lk.kind === "trunk" ? 2.8 : 1.8);
+    const inner = lk.bundle ? `<path d="${d}" fill="none" stroke="${pal.bg}" stroke-width="1.7" stroke-linecap="round"/>` : "";
+    const labApos = {
+      x: a.cx + (ia - (na - 1) / 2) * 48,
+      y: b.cy >= a.cy ? a.y + a.h + 12 : a.y - 10,
+    };
+    const labBpos = {
+      x: b.cx + (ib - (nb - 1) / 2) * 48,
+      y: a.cy >= b.cy ? b.y + b.h + 12 : b.y - 10,
+    };
+    const labA = lk.a_port || "";
+    const labB = lk.b_port || "";
+    return `<g class="nm-link" data-i="${i}">
+      <path class="nm-wire" d="${d}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" opacity=".88"/>
+      ${inner}
+      ${netmapPill(labApos.x, labApos.y, labA, c, pal.bg)}
+      ${netmapPill(labBpos.x, labBpos.y, labB, c, pal.bg)}
+    </g>`;
+  }).join("");
+}
+function netmapNodesMarkup(topo, pos, pal) {
+  return (topo.devices || []).map(d => {
+    const p = pos[d.id];
+    if (!p) return "";
+    const accent = d.role === "router" || d.role === "wan" ? pal.copper : (d.role === "switch" ? pal.cyan : pal.up);
+    const title = d.hostname || d.id;
+    const sub = [d.vendor, d.role].filter(Boolean).join(" · ");
+    const ip = d.mgmt_ip || "";
+    const src = d.source === "inferred" ? "CDP" : (d.source === "virtual" ? "" : "CFG");
+    const inner = d.role === "wan"
+      ? `<ellipse cx="${p.w / 2}" cy="${p.h / 2}" rx="${p.w / 2 - 6}" ry="${p.h / 2 - 8}" fill="${pal.bg2}" stroke="${pal.copper}" stroke-width="2" stroke-dasharray="5 4"/>
+         <text x="${p.w / 2}" y="${p.h / 2 + 4}" text-anchor="middle" fill="${pal.ink}" font-size="12" font-weight="700">${esc(clipTxt(title, 16))}</text>`
+      : `<rect x="0" y="0" width="${p.w}" height="${p.h}" rx="10" fill="${pal.bg}" stroke="${accent}" stroke-width="1.6"/>
+         <rect x="0" y="0" width="5" height="${p.h}" rx="3" fill="${accent}"/>
+         <text x="14" y="22" fill="${pal.ink}" font-size="12.5" font-weight="700" font-family="ui-monospace, Menlo, monospace">${esc(clipTxt(title, 16))}</text>
+         <text x="14" y="40" fill="${pal.dim}" font-size="10" font-family="ui-monospace, Menlo, monospace">${esc(clipTxt(sub, 22))}</text>
+         <text x="14" y="56" fill="${accent}" font-size="10" font-family="ui-monospace, Menlo, monospace">${esc(clipTxt(ip, 18))}</text>
+         ${src ? `<text x="${p.w - 8}" y="16" text-anchor="end" fill="${pal.dim}" font-size="8" font-family="ui-monospace, monospace">${src}</text>` : ""}`;
+    return `<g class="nm-node" data-id="${esc(d.id)}" transform="translate(${p.x},${p.y})">
+      <title>${esc(title)}${ip ? " · " + esc(ip) : ""}</title>
+      ${inner}
+    </g>`;
+  }).join("");
+}
+function drawNetmapSvg(topo, forPrint, posMap) {
+  const pal = netmapPalette(!!forPrint);
+  const lay = layoutNetmap(topo, posMap || netmapPos);
+  const pos = lay.pos;
+  const header = `${esc(topo.customer || "")}${topo.customer && topo.site ? " · " : ""}${esc(topo.site || "")}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${lay.width}" height="${lay.height}" viewBox="0 0 ${lay.width} ${lay.height}" font-family="Segoe UI, Vazirmatn, sans-serif">
+    <rect width="100%" height="100%" fill="${pal.bg}"/>
+    <text x="${lay.pad}" y="28" fill="${pal.dim}" font-size="11" letter-spacing="2" font-family="ui-monospace, monospace">NETWORK TOPOLOGY</text>
+    <text x="${lay.width - lay.pad}" y="28" text-anchor="end" fill="${pal.ink}" font-size="13" font-weight="700">${header}</text>
+    ${forPrint ? "" : `<text x="${lay.pad}" y="${lay.height - 14}" fill="${pal.dim}" font-size="10" font-family="ui-monospace, monospace">${esc(t("netmap_drag"))}</text>`}
+    <g id="nm-links">${netmapLinksMarkup(topo, pos, pal)}</g>
+    <g id="nm-nodes">${netmapNodesMarkup(topo, pos, pal)}</g>
+  </svg>`;
+}
+function svgPoint(svg, e) {
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function refreshNetmapWires(svg, topo) {
+  const pal = netmapPalette(false);
+  const g = svg.querySelector("#nm-links");
+  if (g) g.innerHTML = netmapLinksMarkup(topo, netmapPos, pal);
+}
+function snapshotLiveNetmap() {
+  const svg = document.querySelector("#netmapSvgWrap svg");
+  if (!svg) return lastNetmapSvg;
+  const clone = svg.cloneNode(true);
+  clone.querySelectorAll(".nm-node").forEach(n => n.classList.remove("is-drag"));
+  return new XMLSerializer().serializeToString(clone);
+}
+function bindNetmapDrag(topo) {
+  const svg = document.querySelector("#netmapSvgWrap svg");
+  if (!svg) return;
+  svg.addEventListener("pointerdown", e => {
+    const g = e.target.closest(".nm-node");
+    if (!g) return;
+    const id = g.getAttribute("data-id");
+    const p = netmapPos[id];
+    if (!p) return;
+    e.preventDefault();
+    g.setPointerCapture(e.pointerId);
+    g.classList.add("is-drag");
+    const pt = svgPoint(svg, e);
+    netmapDrag = { id, g, dx: pt.x - p.x, dy: pt.y - p.y };
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!netmapDrag) return;
+    const p = netmapPos[netmapDrag.id];
+    const pt = svgPoint(svg, e);
+    const vb = svg.viewBox.baseVal;
+    p.x = Math.min(Math.max(10, pt.x - netmapDrag.dx), vb.width - p.w - 10);
+    p.y = Math.min(Math.max(36, pt.y - netmapDrag.dy), vb.height - p.h - 18);
+    p.cx = p.x + p.w / 2;
+    p.cy = p.y + p.h / 2;
+    netmapDrag.g.setAttribute("transform", `translate(${p.x},${p.y})`);
+    refreshNetmapWires(svg, topo);
+  });
+  const end = () => {
+    if (!netmapDrag) return;
+    netmapDrag.g.classList.remove("is-drag");
+    netmapDrag = null;
+    lastNetmapSvg = snapshotLiveNetmap();
+  };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+}
+
+function renderNetmap(topo) {
+  lastNetmapTopo = topo;
+  netmapDrag = null;
+  const lay = layoutNetmap(topo, null);
+  netmapPos = lay.pos;
+  const st = topo.stats || {};
+  document.getElementById("netmapStats").innerHTML = `<div class="scan-stats">
+    <div class="stat"><div class="n">${st.devices || 0}</div><div class="l">${esc(t("netmap_stat_dev"))}</div></div>
+    <div class="stat"><div class="n">${st.links || 0}</div><div class="l">${esc(t("netmap_stat_link"))}</div></div>
+    <div class="stat"><div class="n">${st.dumped || 0}</div><div class="l">${esc(t("netmap_stat_dump"))}</div></div>
+  </div>`;
+  lastNetmapSvg = drawNetmapSvg(topo, false, netmapPos);
+  document.getElementById("netmapSvgWrap").innerHTML = lastNetmapSvg;
+  bindNetmapDrag(topo);
+  const legend = document.getElementById("netmapLegend");
+  legend.hidden = false;
+  legend.innerHTML = `
+    <span><i style="background:${cssVar("--accent")}"></i>${esc(t("netmap_leg_trunk"))}</span>
+    <span><i style="background:${cssVar("--accent2")}"></i>${esc(t("netmap_leg_access"))}</span>
+    <span><i style="background:${cssVar("--up")}"></i>${esc(t("netmap_leg_routed"))}</span>
+    <span><i style="background:${cssVar("--accent")};height:7px;border:1px solid ${cssVar("--surface-solid")}"></i>${esc(t("netmap_leg_bundle"))}</span>`;
+  const names = {};
+  (topo.devices || []).forEach(d => { names[d.id] = d.hostname; });
+  const rows = (topo.links || []).filter(l => l.proto !== "logical").map(l => `
+    <tr><td>${esc(names[l.a] || l.a)}</td><td>${esc(l.a_port)}</td><td>${esc(names[l.b] || l.b)}</td><td>${esc(l.b_port)}</td><td>${esc(l.bundle ? "port-channel" : l.kind)}</td><td>${esc(l.detail)}</td></tr>`).join("");
+  document.getElementById("netmapTables").innerHTML = rows ? `<div class="table-scroll" style="margin-top:14px">
+    <table><thead><tr><th>${esc(t("netmap_tbl_if"))}</th><th></th><th></th><th></th><th></th><th></th></tr>
+    <tr><th>A</th><th>Port</th><th>B</th><th>Port</th><th>Type</th><th>VLAN / IP</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>` : "";
+}
+
+document.getElementById("netmapDrawBtn").onclick = async () => {
+  const btn = document.getElementById("netmapDrawBtn");
+  const payload = netmapPayload();
+  if (!payload.devices.length) {
+    document.getElementById("netmapSvgWrap").innerHTML = `<div class="empty">${esc(t("netmap_need"))}</div>`;
+    return;
+  }
+  setLoading(btn, true);
+  try {
+    const res = await fetch("/api/netmap", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById("netmapSvgWrap").innerHTML = `<div class="empty">${esc(t("error_prefix") + data.error)}</div>`;
+      return;
+    }
+    renderNetmap(data);
+  } catch (err) {
+    document.getElementById("netmapSvgWrap").innerHTML = `<div class="empty">${esc(t("error_prefix") + (err.message || err))}</div>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("netmapXlsxBtn").onclick = async () => {
+  const btn = document.getElementById("netmapXlsxBtn");
+  const payload = netmapPayload();
+  if (!payload.devices.length) {
+    document.getElementById("netmapSvgWrap").innerHTML = `<div class="empty">${esc(t("netmap_need"))}</div>`;
+    return;
+  }
+  setLoading(btn, true);
+  try {
+    const res = await fetch("/api/netmap/xlsx", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({error: res.statusText}));
+      throw new Error(data.error || res.statusText);
+    }
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    const site = (payload.site || "site").replace(/[^\w.-]+/g, "-");
+    a.href = URL.createObjectURL(blob);
+    a.download = `network-map-${site}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) {
+    document.getElementById("netmapSvgWrap").innerHTML = `<div class="empty">${esc(t("error_prefix") + (err.message || err))}</div>`;
+  } finally { setLoading(btn, false); }
+};
+
+document.getElementById("netmapSvgBtn").onclick = () => {
+  if (!lastNetmapSvg) {
+    document.getElementById("netmapDrawBtn").click();
+    return;
+  }
+  const blob = new Blob([lastNetmapSvg], {type: "image/svg+xml;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "network-map.svg";
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+document.getElementById("netmapPngBtn").onclick = async () => {
+  if (!lastNetmapTopo) {
+    document.getElementById("netmapDrawBtn").click();
+    return;
+  }
+  const btn = document.getElementById("netmapPngBtn");
+  setLoading(btn, true);
+  try {
+    const svg = drawNetmapSvg(lastNetmapTopo, true, netmapPos);
+    const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    const w = m ? Number(m[1]) : 1600;
+    const h = m ? Number(m[2]) : 900;
+    const scale = 2.5;
+    const blob = new Blob([svg], {type: "image/svg+xml;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        c.width = Math.round(w * scale);
+        c.height = Math.round(h * scale);
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(b => {
+          if (!b) { reject(new Error("png")); return; }
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(b);
+          a.download = "network-map.png";
+          a.click();
+          URL.revokeObjectURL(a.href);
+          resolve();
+        }, "image/png");
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("svg")); };
+      img.src = url;
+    });
+  } catch (err) {
+    document.getElementById("netmapSvgWrap").innerHTML = `<div class="empty">${esc(t("error_prefix") + (err.message || err))}</div>`;
+  } finally { setLoading(btn, false); }
+};
+
+function netmapRoleFa(d) {
+  const h = String(d.hostname || "");
+  if (d.role === "wan" || d.layer === "wan") return "اینترنت / لینک بیرونی";
+  if (/phone|sip|w70|yealink|grandstream/i.test(h + (d.platform || ""))) return "تلفن IP";
+  if (/camera|cam/i.test(h)) return "دوربین / سوئیچ دوربین";
+  if (d.layer === "core" || /core/i.test(h)) return "سوئیچ مرکزی";
+  if (d.layer === "access") return "سوئیچ دسترسی";
+  if (d.role === "router" || d.layer === "router") return "مسیریاب";
+  if (d.role === "switch") return "سوئیچ";
+  return "دستگاه انتهایی";
+}
+function netmapRoleEn(d) {
+  const h = String(d.hostname || "");
+  if (d.role === "wan" || d.layer === "wan") return "Internet / WAN";
+  if (/phone|sip|w70|yealink|grandstream/i.test(h + (d.platform || ""))) return "IP phone";
+  if (/camera|cam/i.test(h)) return "Camera / camera switch";
+  if (d.layer === "core" || /core/i.test(h)) return "Core switch";
+  if (d.layer === "access") return "Access switch";
+  if (d.role === "router" || d.layer === "router") return "Router";
+  if (d.role === "switch") return "Switch";
+  return "Endpoint";
+}
+function netmapKindFa(lk) {
+  if (lk.bundle) return "دو کابل موازی (یک لینک منطقی)";
+  if (lk.kind === "trunk") return "کابل مشترک چند شبکه";
+  if (lk.kind === "access") return "پورت کاربر / دوربین / تلفن";
+  if (lk.kind === "routed") return "مسیر لایه ۳";
+  return lk.kind || "لینک";
+}
+function netmapKindEn(lk) {
+  if (lk.bundle) return "Two cables as one logical link (LACP)";
+  if (lk.kind === "trunk") return "Shared cable for several VLANs";
+  if (lk.kind === "access") return "User / camera / phone port";
+  if (lk.kind === "routed") return "Layer-3 path";
+  return lk.kind || "Link";
+}
+function buildNetmapCustomerHtml(topo) {
+  const customer = topo.customer || "";
+  const site = topo.site || "";
+  const whenFa = new Date().toLocaleString("fa-IR");
+  const whenEn = new Date().toLocaleString("en-GB");
+  const devices = (topo.devices || []).filter(d => d.source !== "virtual");
+  const links = netmapWireLinks(topo);
+  const names = {};
+  devices.forEach(d => { names[d.id] = d.hostname || d.id; });
+  const cores = devices.filter(d => d.layer === "core" || /core/i.test(d.hostname || "")).map(d => d.hostname);
+  const acc = devices.filter(d => d.layer === "access").map(d => d.hostname);
+  const routers = devices.filter(d => d.role === "router" || d.layer === "router").map(d => d.hostname);
+  const storyFa = [
+    customer || site ? `این برگه نقشه شبکه ${customer ? "«" + customer + "»" : ""}${customer && site ? " — " : ""}${site ? "سایت «" + site + "»" : ""} است.` : "این برگه نقشه شبکه همین سایت است.",
+    cores.length ? `قلب شبکه: ${cores.join("، ")}.` : "",
+    routers.length ? `مسیریابی / لبه: ${routers.join("، ")}.` : "",
+    acc.length ? `سوئیچ‌های دسترسی: ${acc.join("، ")}.` : "",
+    `${devices.length} دستگاه و ${links.length} لینک. رمز و کانفیگ خام در این فایل نیست.`,
+  ].filter(Boolean).join(" ");
+  const storyEn = [
+    customer || site ? `This is the network map for ${customer || "the customer"}${site ? " at " + site : ""}.` : "This is the site network map.",
+    cores.length ? `Core: ${cores.join(", ")}.` : "",
+    routers.length ? `Edge / routing: ${routers.join(", ")}.` : "",
+    acc.length ? `Access switches: ${acc.join(", ")}.` : "",
+    `${devices.length} devices and ${links.length} links. No passwords or raw configs.`,
+  ].filter(Boolean).join(" ");
+  const pack = {
+    site, customer,
+    box: { w: 176, h: 92 },
+    devices: devices.map(d => {
+      const p = (netmapPos && netmapPos[d.id]) || { x: 40, y: 40, w: 176, h: 92 };
+      return {
+        id: d.id,
+        hostname: d.hostname || d.id,
+        roleFa: netmapRoleFa(d),
+        roleEn: netmapRoleEn(d),
+        vendor: d.vendor || "",
+        platform: d.platform || "",
+        ip: d.mgmt_ip || "",
+        layer: d.layer || d.role || "",
+        x: p.x, y: p.y,
+      };
+    }),
+    links: links.map(lk => ({
+      a: lk.a, b: lk.b,
+      a_port: lk.a_port || "", b_port: lk.b_port || "",
+      kind: lk.kind || "", bundle: !!lk.bundle,
+      kindFa: netmapKindFa(lk), kindEn: netmapKindEn(lk),
+      detail: lk.detail || "",
+    })),
+  };
+  const dataJson = JSON.stringify(pack).replace(/</g, "\\u003c");
+  const cards = pack.devices.map(d => {
+    const src = devices.find(x => x.id === d.id) || {};
+    const vlan = (src.vlans || []).slice(0, 8).map(v => v.id || v.name || v).filter(Boolean).join(", ");
+    return `<article class="card" id="dev-${esc(d.id)}">
+      <div class="tag">${esc(d.layer)}</div>
+      <h3>${esc(d.hostname)}</h3>
+      <p class="fa">${esc(d.roleFa)}</p>
+      <p class="en">${esc(d.roleEn)}</p>
+      <dl>
+        <div><dt class="fa">سازنده</dt><dt class="en">Vendor</dt><dd>${esc(d.vendor || "—")}</dd></div>
+        <div><dt class="fa">آدرس مدیریت</dt><dt class="en">Mgmt IP</dt><dd dir="ltr">${esc(d.ip || "—")}</dd></div>
+        <div><dt class="fa">مدل</dt><dt class="en">Platform</dt><dd>${esc(d.platform || "—")}</dd></div>
+        ${vlan ? `<div><dt>VLAN</dt><dd dir="ltr">${esc(vlan)}</dd></div>` : ""}
+      </dl>
+    </article>`;
+  }).join("");
+  const rows = pack.links.map(lk => `<tr>
+    <td>${esc(names[lk.a] || lk.a)}</td>
+    <td dir="ltr">${esc(lk.a_port)}</td>
+    <td>${esc(names[lk.b] || lk.b)}</td>
+    <td dir="ltr">${esc(lk.b_port)}</td>
+    <td class="fa">${esc(lk.kindFa)}</td>
+    <td class="en">${esc(lk.kindEn)}</td>
+    <td dir="ltr">${esc(lk.detail)}</td>
+  </tr>`).join("");
+  const head = `<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-lang="fa">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${esc(customer || "Network")} · ${esc(site || "Map")}</title>
+<style>
+:root{--ink:#1b2430;--dim:#5c6b7a;--paper:#fffdf8;--bg:#ebe4d6;--line:#ddcfc0;--copper:#c56a2d;--teal:#1f7a86;--navy:#1e2a3a}
+*{box-sizing:border-box}
+body{margin:0;font-family:Vazirmatn,"Segoe UI",Tahoma,sans-serif;color:var(--ink);background:radial-gradient(900px 400px at 10% -10%,rgba(197,106,45,.18),transparent 50%),radial-gradient(700px 380px at 100% 0%,rgba(31,122,134,.14),transparent 46%),var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
+header.hero{background:linear-gradient(135deg,#1e2a3a,#2a3d52 55%,#c56a2d);color:#f7efe6;border-radius:22px;padding:28px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 18px 40px rgba(30,42,58,.22)}
+header.hero .k{letter-spacing:.18em;font-size:11px;opacity:.75;font-family:ui-monospace,monospace}
+header.hero h1{margin:8px 0 6px;font-size:28px}
+.tools button{border:0;background:rgba(255,255,255,.14);color:#fff;padding:8px 12px;border-radius:9px;cursor:pointer;font:inherit}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat b{display:block;font-size:26px}
+.stat span,.story,.hint{color:var(--dim)}
+.story{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 20px;line-height:1.85;margin-bottom:14px;color:var(--ink)}
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:0 0 16px}
+.guide div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12px;color:var(--dim);margin:0 0 10px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-inline-end:6px;vertical-align:middle}
+.stage{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:auto;direction:ltr;min-height:420px;touch-action:none}
+.stage svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.box{position:absolute;width:176px;background:#fff;border:1.6px solid #1f7a86;border-radius:12px;padding:10px 12px 12px;cursor:grab;box-shadow:0 8px 18px rgba(30,42,58,.08);user-select:none}
+.box.is-drag{cursor:grabbing;box-shadow:0 14px 28px rgba(30,42,58,.18);z-index:4}
+.box.router{border-color:#c56a2d}
+.box h3{margin:0;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.box .who{font-size:11px;color:var(--dim);margin-top:3px}
+.box .ip{font-size:11px;color:#1f7a86;margin-top:4px;font-family:ui-monospace,monospace}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chip{font-size:10px;font-family:ui-monospace,monospace;background:#f4efe6;border:1px solid var(--line);border-radius:999px;padding:2px 7px;color:#c56a2d}
+h2{font-size:18px;margin:28px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card.flash{outline:2px solid var(--copper)}
+.card h3{margin:0 0 4px;font-family:ui-monospace,Menlo,monospace;font-size:15px;direction:ltr;text-align:start}
+.card .tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-family:ui-monospace,monospace}
+.card dl{margin:10px 0 0;display:grid;gap:6px;font-size:13px}
+.card dt{color:var(--dim);font-size:11px}
+.card dd{margin:0}
+table{width:100%;border-collapse:collapse;background:var(--paper);border-radius:14px;overflow:hidden}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:start;font-size:13px}
+th{background:var(--navy);color:#f7efe6}
+footer{margin-top:28px;color:var(--dim);font-size:12px}
+html[data-lang="fa"] .en{display:none!important}
+html[data-lang="en"] .fa{display:none!important}
+html[data-lang="en"]{direction:ltr}
+@media print{body{background:#fff}.tools{display:none}.box{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div>
+    <div class="k">NETWORK FIELD BRIEF</div>
+    <h1>${esc(customer || "Network map")}</h1>
+    <div>${esc(site || "—")} · <span class="fa">${esc(whenFa)}</span><span class="en">${esc(whenEn)}</span></div>
+  </div>
+  <div class="tools">
+    <button type="button" id="langBtn">EN / FA</button>
+    <button type="button" onclick="window.print()"><span class="fa">چاپ</span><span class="en">Print</span></button>
+  </div>
+</header>
+<div class="stats">
+  <div class="stat"><b>${pack.devices.length}</b><span class="fa">دستگاه</span><span class="en">Devices</span></div>
+  <div class="stat"><b>${pack.links.length}</b><span class="fa">لینک</span><span class="en">Links</span></div>
+  <div class="stat"><b>${(topo.stats && topo.stats.dumped) || devices.filter(d => d.source !== "inferred").length}</b><span class="fa">دارای کانفیگ</span><span class="en">From config</span></div>
+</div>
+<div class="story"><span class="fa">${esc(storyFa)}</span><span class="en">${esc(storyEn)}</span></div>
+<div class="guide">
+  <div><span class="fa">هر جعبه یک دستگاه است. بکشید تا جایش عوض شود.</span><span class="en">Each box is one device. Drag to move it.</span></div>
+  <div><span class="fa">خط ضخیم نارنجی یعنی دو کابل موازی که یکی شده‌اند.</span><span class="en">A thick copper line is two cables acting as one.</span></div>
+  <div><span class="fa">نام پورت روی خود جعبه است تا روی نقشه قاطی نشود.</span><span class="en">Port names sit on the box so the map stays readable.</span></div>
+</div>
+<h2 class="fa">نقشه زنده</h2><h2 class="en">Live map</h2>
+<div class="legend">
+  <span><i style="background:#c56a2d"></i><span class="fa">کابل مشترک</span><span class="en">Trunk</span></span>
+  <span><i style="background:#1f8aa0"></i><span class="fa">پورت کاربر</span><span class="en">Access</span></span>
+  <span><i style="background:#1a8a58"></i><span class="fa">مسیر لایه ۳</span><span class="en">Routed</span></span>
+</div>
+<div class="stage" id="stage"><svg id="wires" xmlns="http://www.w3.org/2000/svg"></svg></div>
+<h2 class="fa">دستگاه‌ها به زبان ساده</h2><h2 class="en">Devices in plain language</h2>
+<div class="grid">${cards}</div>
+<h2 class="fa">کابل‌ها و لینک‌ها</h2><h2 class="en">Cables and links</h2>
+<div style="overflow:auto"><table>
+<thead><tr><th>A</th><th>Port</th><th>B</th><th>Port</th><th class="fa">یعنی چه</th><th class="en">Meaning</th><th>VLAN / IP</th></tr></thead>
+<tbody>${rows || "<tr><td colspan='7'>—</td></tr>"}</tbody>
+</table></div>
+<footer>
+  <span class="fa">فایل تکی است و بدون اینترنت باز می‌شود. رمز داخل نیست.</span>
+  <span class="en">Single offline file. No passwords inside.</span>
+</footer>
+</div>
+`;
+  const packScript = `
+(function(){
+  var D = ${dataJson};
+  var stage = document.getElementById("stage");
+  var svg = document.getElementById("wires");
+  var byId = {};
+  D.devices.forEach(function(d){ byId[d.id] = d; });
+  function color(lk){
+    if (lk.bundle) return "#c56a2d";
+    if (lk.kind === "access") return "#1f8aa0";
+    if (lk.kind === "routed") return "#1a8a58";
+    return "#c56a2d";
+  }
+  function sizeStage(){
+    var maxX = 480, maxY = 380;
+    D.devices.forEach(function(d){
+      maxX = Math.max(maxX, d.x + D.box.w + 80);
+      maxY = Math.max(maxY, d.y + D.box.h + 80);
+    });
+    stage.style.height = maxY + "px";
+    stage.style.minWidth = maxX + "px";
+    svg.setAttribute("viewBox", "0 0 " + maxX + " " + maxY);
+    svg.setAttribute("width", maxX);
+    svg.setAttribute("height", maxY);
+  }
+  function portsOf(id){
+    var out = [];
+    D.links.forEach(function(lk){
+      if (lk.a === id) out.push(lk.a_port);
+      else if (lk.b === id) out.push(lk.b_port);
+    });
+    return out.filter(Boolean);
+  }
+  function drawBoxes(){
+    stage.querySelectorAll(".box").forEach(function(n){ n.remove(); });
+    D.devices.forEach(function(d){
+      var el = document.createElement("div");
+      el.className = "box" + (d.layer === "router" || d.layer === "wan" ? " router" : "");
+      el.dataset.id = d.id;
+      el.style.left = d.x + "px";
+      el.style.top = d.y + "px";
+      var chips = portsOf(d.id).map(function(p){ return '<span class="chip">' + p.replace(/</g,"") + "</span>"; }).join("");
+      el.innerHTML = "<h3></h3><div class=\\"who fa\\"></div><div class=\\"who en\\"></div><div class=\\"ip\\" dir=\\"ltr\\"></div><div class=\\"chips\\"></div>";
+      el.querySelector("h3").textContent = d.hostname;
+      el.querySelector(".fa").textContent = d.roleFa;
+      el.querySelector(".en").textContent = d.roleEn;
+      el.querySelector(".ip").textContent = d.ip || "";
+      el.querySelector(".chips").innerHTML = chips;
+      el.addEventListener("click", function(ev){
+        if (el.dataset.moved === "1") return;
+        var card = document.getElementById("dev-" + d.id);
+        if (!card) return;
+        document.querySelectorAll(".card.flash").forEach(function(c){ c.classList.remove("flash"); });
+        card.classList.add("flash");
+        card.scrollIntoView({behavior:"smooth", block:"center"});
+      });
+      bindDrag(el, d);
+      stage.appendChild(el);
+    });
+  }
+  function drawWires(){
+    var parts = [];
+    D.links.forEach(function(lk){
+      var a = byId[lk.a], b = byId[lk.b];
+      if (!a || !b) return;
+      var ax = a.x + D.box.w/2, ay = a.y + D.box.h/2;
+      var bx = b.x + D.box.w/2, by = b.y + D.box.h/2;
+      var my = (ay + by) / 2;
+      var sw = lk.bundle ? 6 : (lk.kind === "trunk" ? 3 : 2);
+      var d = "M "+ax+" "+ay+" C "+ax+" "+my+", "+bx+" "+my+", "+bx+" "+by;
+      parts.push('<path d="'+d+'" fill="none" stroke="'+color(lk)+'" stroke-width="'+sw+'" stroke-linecap="round" opacity=".88"/>');
+      if (lk.bundle) parts.push('<path d="'+d+'" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>');
+    });
+    svg.innerHTML = parts.join("");
+  }
+  function bindDrag(el, d){
+    var drag = null;
+    el.addEventListener("pointerdown", function(e){
+      if (e.button) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("is-drag");
+      el.dataset.moved = "0";
+      drag = { x: e.clientX, y: e.clientY, ox: d.x, oy: d.y };
+    });
+    el.addEventListener("pointermove", function(e){
+      if (!drag) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.abs(dx)+Math.abs(dy) > 3) el.dataset.moved = "1";
+      d.x = Math.max(8, drag.ox + dx);
+      d.y = Math.max(8, drag.oy + dy);
+      el.style.left = d.x + "px";
+      el.style.top = d.y + "px";
+      sizeStage();
+      drawWires();
+    });
+    function end(){
+      if (!drag) return;
+      el.classList.remove("is-drag");
+      drag = null;
+    }
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+  }
+  document.getElementById("langBtn").onclick = function(){
+    var html = document.documentElement;
+    var en = html.getAttribute("data-lang") !== "en";
+    html.setAttribute("data-lang", en ? "en" : "fa");
+    html.setAttribute("lang", en ? "en" : "fa");
+    html.setAttribute("dir", en ? "ltr" : "rtl");
+  };
+  sizeStage();
+  drawBoxes();
+  drawWires();
+})();
+`;
+  return head + "<script>" + packScript + "<\/script></body></html>";
+}
+document.getElementById("netmapHtmlBtn").onclick = () => {
+  if (!lastNetmapTopo) {
+    document.getElementById("netmapDrawBtn").click();
+    return;
+  }
+  const html = buildNetmapCustomerHtml(lastNetmapTopo);
+  const blob = new Blob([html], {type: "text/html;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const site = (lastNetmapTopo.site || "site").replace(/[^\w.-]+/g, "-");
+  a.href = url;
+  a.download = `network-brief-${site}.html`;
+  a.click();
+  window.open(url, "_blank");
 };
 </script>
 </body>

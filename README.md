@@ -3,7 +3,7 @@
 **v2** — a portable network & security dashboard you carry on your laptop. One Docker container, one web UI, works on whatever network you plug into — client site, home lab, or your own office.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-2.2-d4894a)
+![Version](https://img.shields.io/badge/version-2.3-d4894a)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)
 ![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)
@@ -16,16 +16,17 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 
 ## Versions
 
-| | [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) | [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) | [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0) | **v2.2.0 (current)** |
-|---|---|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ | ✅ | ✅ |
-| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ |
-| Host profiles | ❌ | ✅ | ✅ | ✅ |
-| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ |
-| WiFi QR, copy / download PNG | ❌ | ❌ | ❌ | ✅ |
+| | [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) | [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) | [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0) | [v2.2.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.2.0) | **v2.3.0 (current)** |
+|---|---|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ |
+| WiFi QR, copy / download PNG | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Network map (Cisco/MikroTik), OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 `main` is always **v2**. v1 stays as a git tag so you can still clone and build the original dashboard:
 
@@ -33,7 +34,7 @@ Field/network technicians end up carrying a pile of separate tools — a scanner
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
 ```
 
-Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) · [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) · [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0) · [v2.2.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.2.0)
+Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0.0) · [v2.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.0.0) · [v2.1.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.1.0) · [v2.2.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.2.0) · [v2.3.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v2.3.0)
 
 ## Contents
 
@@ -56,10 +57,11 @@ Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0
 - Traceroute and live MTR (hop loss and latency together)
 - IPv4 subnet calculator (CIDR, usable hosts, typical gateway, split)
 - Neighbor discovery — CDP (Cisco) and LLDP (standard)
+- Network map from pasted Cisco running-config / CDP or MikroTik export / IP neighbor — layered topology SVG plus customer Excel (devices, VLANs, links, IPs)
 - SNMP get/walk — hostname, uptime, port names, VLANs (switch / printer / UPS / camera / Dahua / Hikvision, community v1/v2c)
 - Site visit report — last discover + neighbors + link status + notes, download Markdown/text for a ticket
 - WiFi analyzer (nearby SSIDs, signal, frequency)
-- Speed test (download/upload/ping via Cloudflare)
+- Speed test (download/upload/ping via Cloudflare, then Hetzner / OVH / others if one is blocked) plus a self-hosted [OpenSpeedTest](https://openspeedtest.com/) you start from the panel for LAN tests, then stop so port 3000 is not left open
 - Wake-on-LAN
 - Local ARP table viewer
 - Live bandwidth monitor (RX/TX per interface)
@@ -67,8 +69,8 @@ Releases: [v1.0.0](https://github.com/sspiricco-dot/nettoolbox/releases/tag/v1.0
 **Security**
 - Multi-record DNS lookup (A, AAAA, MX, TXT, NS, CNAME, SOA)
 - Whois lookup
-- Public IP / IP geolocation lookup (yours or any IP)
-- Domain recon: main A record + subdomains from public SSL certificate transparency logs (crt.sh) — fully passive
+- Public IP / IP geolocation lookup (yours or any IP), with fallbacks if ipinfo is unreachable
+- Domain recon: main A record + subdomains from certificate transparency (crt.sh, then other public APIs) — fully passive
 - SSL/TLS certificate inspector (works on self-signed/internal certs too)
 - HTTP security header checker (HSTS, CSP, X-Frame-Options, etc.)
 - Hash / Base64 / JWT toolkit — MD5, SHA-1/256/384/512, Base64 encode/decode, JWT decode, all client-side
@@ -93,6 +95,15 @@ docker build -t nettoolbox .
 ./run.sh
 ```
 
+Or pull the image from Docker Hub:
+
+```bash
+docker pull sajadprp/nettoolbox:v2.3.0
+docker run -d --restart unless-stopped --net=host \
+  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox \
+  sajadprp/nettoolbox:v2.3.0
+```
+
 Then open **http://127.0.0.1:8642**.
 
 `run.sh` starts the container with `--restart unless-stopped`, so it comes back automatically after a reboot as long as Docker itself is set to start on boot (`sudo systemctl enable docker` on Linux, or enable "Start Docker Desktop on login" on Mac/Windows).
@@ -101,12 +112,12 @@ Then open **http://127.0.0.1:8642**.
 
 ```bash
 # this machine
-docker save nettoolbox:v2.2.0 nettoolbox:latest | gzip > nettoolbox-v2.2.0.tar.gz
+docker save nettoolbox:v2.3.0 nettoolbox:latest | gzip > nettoolbox-v2.3.0.tar.gz
 
 # the other laptop (Docker installed)
-gzip -dc nettoolbox-v2.2.0.tar.gz | docker load
+gzip -dc nettoolbox-v2.3.0.tar.gz | docker load
 docker run -d --restart unless-stopped --net=host \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.2.0
+  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.3.0
 ```
 
 Open **http://127.0.0.1:8642**. If a container named `nettoolbox` already exists, `docker rm -f nettoolbox` first.
@@ -127,7 +138,8 @@ This tool is intentionally powerful, so it's worth understanding what it does be
 
 - **Host networking + `NET_ADMIN`/`NET_RAW`**: the container runs with `--net=host` and raw-socket capabilities so tools like `nmap`, `arp-scan`, and CDP/LLDP capture can see the real network your host is on. This is what makes it a useful field tool, but it also means the container has broad visibility into (and can send packets on) whatever network you plug into.
 - **Dashboard, terminal, and RDP viewer are loopback-only.** The web UI (`:8642`), the browser terminal (`:7681`, via ttyd), and the noVNC RDP viewer (`:7682`) all bind to `127.0.0.1` inside the container — they are **not** exposed to the LAN you're connected to, even though the container itself has host networking. Only processes on your own machine can reach them.
-- **A handful of tools call out to the internet**: Speed Test (Cloudflare), IP Geolocation / "My IP" (ipinfo.io), Domain recon's subdomain lookup (crt.sh), and Whois. Everything else (scanning, ARP, CDP/LLDP, SSH/Telnet, RDP, hashing) stays local.
+- **OpenSpeedTest (`:3000`) is off until you start it** in the Speed Test tab. While it is on, other devices on the LAN can measure speed to this laptop (static HTML/JS only, no shell). Stop it when you are done.
+- **A handful of tools call out to the internet**: Speed Test (Cloudflare and other CDNs as fallbacks), IP Geolocation / "My IP" (ipinfo.io and other public APIs), Domain recon subdomain lookup (crt.sh and fallbacks), and Whois. Everything else (scanning, ARP, CDP/LLDP, SSH/Telnet, RDP, hashing, OpenSpeedTest LAN) stays local.
 - **The terminal is a real shell** with `ssh`/`telnet` clients and your container's privileges — treat it like any other terminal you carry around.
 - **RDP passwords** are sent to FreeRDP on stdin (not on the command line). Internal/self-signed certificates are ignored, same as you'd do on a field box.
 
@@ -155,6 +167,7 @@ NetToolbox trades NETworkManager's much larger native feature set (VNC, PowerShe
 ## Tech stack
 
 - Backend: Python/Flask, calling out to `nmap`, `arp-scan`, `tshark`, `dig`, `openssl`, `iw`, `traceroute`, `curl`
+- LAN speed test: [OpenSpeedTest](https://github.com/openspeedtest/Speed-Test) (MIT) served by nginx on `:3000`
 - Frontend: single-file HTML/CSS/JS, no build step, no external CDN dependencies
 - Terminal: [ttyd](https://github.com/tsl0922/ttyd)
 - RDP: [FreeRDP](https://github.com/FreeRDP/FreeRDP) + [noVNC](https://github.com/novnc/noVNC) on a headless X display
