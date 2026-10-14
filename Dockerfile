@@ -69,6 +69,7 @@ COPY openspeedtest.conf /etc/nginx/conf.d/openspeedtest.conf
 WORKDIR /app
 COPY app.py /app/app.py
 COPY netmap.py /app/netmap.py
+COPY audit.py /app/audit.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh

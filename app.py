@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import os
 import re
@@ -9,9 +10,11 @@ import subprocess
 import time
 import urllib.parse
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 
+from audit import run_audit
 from netmap import topology_from_payload, topology_xlsx
 
 app = Flask(__name__, static_folder="static", static_url_path="")
@@ -213,6 +216,86 @@ def _lookup_subdomains(domain):
     if not found and errors:
         crt_error = "subdomain lookups unreachable (" + ", ".join(errors) + ")"
     return sorted(found)[:300], crt_error
+
+
+def _valid_ipv6(text):
+    try:
+        ipaddress.IPv6Address(text or "")
+    except (ipaddress.AddressValueError, ValueError):
+        return False
+    return True
+
+
+def _dig_ips(host, rtype):
+    try:
+        proc = subprocess.run(
+            ["dig", "+time=2", "+tries=1", "+short", rtype, host],
+            capture_output=True,
+            text=True,
+            timeout=7,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    found = []
+    for line in (proc.stdout or "").splitlines():
+        line = line.strip().rstrip(".")
+        if rtype == "A" and _valid_ipv4(line) and line not in found:
+            found.append(line)
+        elif rtype == "AAAA" and _valid_ipv6(line) and line not in found:
+            found.append(line)
+    return found
+
+
+def _resolve_host_ips(host):
+    return {
+        "host": host,
+        "ips": _dig_ips(host, "A"),
+        "ipv6": _dig_ips(host, "AAAA"),
+    }
+
+
+def _resolve_hosts(hosts):
+    ordered = []
+    seen = set()
+    for host in hosts:
+        name = (host or "").strip().lower()
+        if not name or name in seen or not _valid_host(name):
+            continue
+        seen.add(name)
+        ordered.append(name)
+    rows = []
+    if not ordered:
+        return rows
+    workers = min(20, len(ordered))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futs = {pool.submit(_resolve_host_ips, host): host for host in ordered}
+        by_host = {}
+        for fut in as_completed(futs):
+            host = futs[fut]
+            try:
+                by_host[host] = fut.result()
+            except Exception:
+                by_host[host] = {"host": host, "ips": [], "ipv6": []}
+    for host in ordered:
+        rows.append(by_host[host])
+    return rows
+
+
+def _unique_ips(rows, key):
+    found = []
+    seen = set()
+    for row in rows:
+        for ip in row.get(key) or []:
+            if ip not in seen:
+                seen.add(ip)
+                found.append(ip)
+    def _sort_key(ip):
+        try:
+            return (0, int(ipaddress.ip_address(ip)))
+        except ValueError:
+            return (1, ip)
+    found.sort(key=_sort_key)
+    return found
 
 
 def _curl_speed(url, timeout=25, upload_file=None):
@@ -699,17 +782,19 @@ def domain_recon():
     if not _valid_host(domain) or "." not in domain:
         return jsonify({"error": "invalid domain"}), 400
 
-    dig_proc = subprocess.run(
-        ["dig", "+short", "A", domain], capture_output=True, text=True, timeout=10
-    )
-    ips = [line.strip() for line in dig_proc.stdout.splitlines() if _valid_ipv4(line.strip())]
-
     subdomains, crt_error = _lookup_subdomains(domain)
+    hosts = _resolve_hosts([domain] + list(subdomains))
+    ips = (hosts[0]["ips"] if hosts else []) or []
+    all_ips = _unique_ips(hosts, "ips")
+    all_ipv6 = _unique_ips(hosts, "ipv6")
 
     return jsonify(
         {
             "domain": domain,
             "ips": ips,
+            "all_ips": all_ips,
+            "all_ipv6": all_ipv6,
+            "hosts": hosts,
             "subdomains": subdomains,
             "crt_error": crt_error,
         }
@@ -1314,6 +1399,277 @@ def link_status():
     )
 
 
+DNSBL_ZONES = (
+    "zen.spamhaus.org",
+    "bl.spamcop.net",
+    "cbl.abuseat.org",
+    "dnsbl.sorbs.net",
+    "b.barracudacentral.org",
+)
+
+
+def _whois_text(query):
+    try:
+        proc = subprocess.run(
+            ["whois", "-H", query],
+            capture_output=True,
+            text=True,
+            timeout=18,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    text = (proc.stdout or proc.stderr or "").replace("\x00", "")
+    if len(text) > 48000:
+        text = text[:48000] + "\n\n[truncated]"
+    return text
+
+
+def _whois_field(text, patterns):
+    for pat in patterns:
+        match = re.search(pat, text or "", re.I | re.M)
+        if not match:
+            continue
+        val = match.group(1).strip()
+        if val and val.lower() not in ("redacted for privacy", "not disclosed", "privacy", ".", "-"):
+            return val
+    return ""
+
+
+def _whois_emails(text):
+    found = []
+    for mail in re.findall(r"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}", text or "", re.I):
+        low = mail.lower()
+        if low not in found and "example.com" not in low:
+            found.append(low)
+    return found[:20]
+
+
+def _parse_domain_whois(text):
+    emails = _whois_emails(text)
+    nss = []
+    for match in re.finditer(r"(?im)^(?:nserver|name server|nameserver)\s*:\s*(\S+)", text or ""):
+        ns = match.group(1).strip().rstrip(".").lower()
+        if ns and ns not in nss:
+            nss.append(ns)
+    return {
+        "registrar": _whois_field(text, (r"(?im)^registrar:\s*(.+)$",)),
+        "org": _whois_field(
+            text,
+            (
+                r"(?im)^registrant organization:\s*(.+)$",
+                r"(?im)^org(?:anisation|anization|name)?:\s*(.+)$",
+            ),
+        ),
+        "person": _whois_field(
+            text,
+            (
+                r"(?im)^registrant name:\s*(.+)$",
+                r"(?im)^person:\s*(.+)$",
+                r"(?im)^registrant:\s*(.+)$",
+            ),
+        ),
+        "country": _whois_field(text, (r"(?im)^registrant country:\s*(.+)$", r"(?im)^country:\s*(.+)$")),
+        "created": _whois_field(
+            text,
+            (
+                r"(?im)^creation date:\s*(.+)$",
+                r"(?im)^created:\s*(.+)$",
+                r"(?im)^registered:\s*(.+)$",
+            ),
+        ),
+        "expires": _whois_field(
+            text,
+            (
+                r"(?im)^registry expiry date:\s*(.+)$",
+                r"(?im)^paid-till:\s*(.+)$",
+                r"(?im)^expires(?: on)?:\s*(.+)$",
+            ),
+        ),
+        "nameservers": nss[:12],
+        "abuse_emails": [e for e in emails if "abuse" in e][:8],
+        "emails": emails[:12],
+    }
+
+
+def _parse_ip_whois(text):
+    emails = _whois_emails(text)
+    return {
+        "netname": _whois_field(text, (r"(?im)^netname:\s*(.+)$", r"(?im)^net name:\s*(.+)$")),
+        "org": _whois_field(
+            text,
+            (
+                r"(?im)^org(?:-name|name|anization)?:\s*(.+)$",
+                r"(?im)^descr:\s*(.+)$",
+                r"(?im)^owner:\s*(.+)$",
+            ),
+        ),
+        "person": _whois_field(text, (r"(?im)^person:\s*(.+)$", r"(?im)^role:\s*(.+)$")),
+        "country": _whois_field(text, (r"(?im)^country:\s*(.+)$",)),
+        "cidr": _whois_field(
+            text,
+            (
+                r"(?im)^cidr:\s*(.+)$",
+                r"(?im)^inetnum:\s*(.+)$",
+                r"(?im)^netrange:\s*(.+)$",
+            ),
+        ),
+        "abuse_emails": [e for e in emails if "abuse" in e][:8],
+        "emails": emails[:12],
+    }
+
+
+def _dig_ptr(ip):
+    try:
+        proc = subprocess.run(
+            ["dig", "+time=2", "+tries=1", "+short", "-x", ip],
+            capture_output=True,
+            text=True,
+            timeout=6,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    for line in (proc.stdout or "").splitlines():
+        name = line.strip().rstrip(".")
+        if name and not _valid_ipv4(name):
+            return name
+    return ""
+
+
+def _ping_probe(host):
+    try:
+        proc = subprocess.run(
+            ["ping", "-c", "4", "-W", "1", host],
+            capture_output=True,
+            text=True,
+            timeout=12,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return {"reachable": False, "loss_percent": 100, "avg_ms": None, "ttl": None}
+    out = proc.stdout or ""
+    loss_match = re.search(r"([\d.]+)% packet loss", out)
+    rtt_match = re.search(r"= ([\d.]+)/([\d.]+)/([\d.]+)/", out)
+    ttls = [int(x) for x in re.findall(r"\bttl=(\d+)", out, re.I)]
+    return {
+        "reachable": proc.returncode == 0,
+        "loss_percent": float(loss_match.group(1)) if loss_match else None,
+        "avg_ms": float(rtt_match.group(2)) if rtt_match else None,
+        "ttl": max(ttls) if ttls else None,
+    }
+
+
+def _os_from_ttl(ttl):
+    if ttl is None:
+        return None
+    if ttl <= 64:
+        return "Linux/Unix"
+    if ttl <= 128:
+        return "Windows"
+    return "Network OS / older Unix"
+
+
+def _nmap_os(ip):
+    try:
+        xml = _nmap_xml(
+            [
+                "-O",
+                "--osscan-guess",
+                "-Pn",
+                "-n",
+                "--max-retries",
+                "1",
+                "--host-timeout",
+                "12s",
+                "-T4",
+                ip,
+            ],
+            timeout=20,
+        )
+    except (OSError, subprocess.TimeoutExpired, RuntimeError, ET.ParseError):
+        return []
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError:
+        return []
+    matches = []
+    for node in root.findall(".//osmatch"):
+        name = (node.get("name") or "").strip()
+        if not name:
+            continue
+        try:
+            accuracy = int(node.get("accuracy") or 0)
+        except ValueError:
+            accuracy = 0
+        matches.append({"name": name, "accuracy": accuracy})
+    matches.sort(key=lambda row: -row["accuracy"])
+    return matches[:3]
+
+
+def _dnsbl_check(ip):
+    hits = []
+    blocked = []
+    rev = ".".join(reversed(ip.split(".")))
+    with ThreadPoolExecutor(max_workers=len(DNSBL_ZONES)) as pool:
+        futs = {pool.submit(_dig_ips, f"{rev}.{zone}", "A"): zone for zone in DNSBL_ZONES}
+        for fut, zone in futs.items():
+            try:
+                recs = fut.result()
+            except Exception:
+                recs = []
+            error = [r for r in recs if r.startswith("127.255.255.")]
+            listed = [r for r in recs if r.startswith("127.") and r not in error]
+            if error:
+                blocked.append(zone)
+            elif listed:
+                hits.append({"zone": zone, "records": listed})
+    return {"listed": bool(hits), "hits": hits, "unavailable": blocked}
+
+
+def _ip_owner_api(ip):
+    rec = _lookup_geoip(ip)
+    extra = _http_json(
+        f"http://ip-api.com/json/{ip}?fields=status,isp,org,as,reverse,hosting,proxy,query",
+        8,
+    )
+    if rec and isinstance(extra, dict) and extra.get("status") == "success":
+        rec["isp"] = extra.get("isp") or rec.get("org") or ""
+        rec["as"] = extra.get("as") or ""
+        rec["reverse"] = extra.get("reverse") or rec.get("hostname") or ""
+        rec["hosting"] = bool(extra.get("hosting"))
+        rec["proxy"] = bool(extra.get("proxy"))
+    return rec
+
+
+def _whois_target_intel(ip, do_os=False):
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        f_ping = pool.submit(_ping_probe, ip)
+        f_bl = pool.submit(_dnsbl_check, ip)
+        f_geo = pool.submit(_ip_owner_api, ip)
+        f_ptr = pool.submit(_dig_ptr, ip)
+        f_who = pool.submit(_whois_text, ip)
+        f_os = pool.submit(_nmap_os, ip) if do_os else None
+        ping = f_ping.result()
+        dnsbl = f_bl.result()
+        geo = f_geo.result()
+        ptr = f_ptr.result()
+        ip_whois = _parse_ip_whois(f_who.result())
+        nmap_os = f_os.result() if f_os else []
+    ttl_guess = _os_from_ttl(ping.get("ttl"))
+    os_name = nmap_os[0]["name"] if nmap_os else ttl_guess
+    return {
+        "ip": ip,
+        "ptr": ptr or (geo or {}).get("reverse") or (geo or {}).get("hostname") or "",
+        "geo": geo,
+        "ip_whois": ip_whois,
+        "dnsbl": dnsbl,
+        "ping": ping,
+        "os": {
+            "name": os_name,
+            "ttl_guess": ttl_guess,
+            "nmap": nmap_os,
+        },
+    }
+
+
 @app.route("/api/whois", methods=["POST"])
 def whois_lookup():
     domain = (request.json or {}).get("domain", "").strip().lower()
@@ -1323,21 +1679,75 @@ def whois_lookup():
     domain = domain.split("/")[0].split(":")[0]
     if not _valid_host(domain) or "." not in domain:
         return jsonify({"error": "invalid domain"}), 400
-    try:
-        proc = subprocess.run(
-            ["whois", "-H", domain],
-            capture_output=True,
-            text=True,
-            timeout=22,
-        )
-    except subprocess.TimeoutExpired:
-        return jsonify({"error": "whois timed out"}), 504
-    text = (proc.stdout or proc.stderr or "").replace("\x00", "")
-    if len(text) > 48000:
-        text = text[:48000] + "\n\n[truncated]"
-    if not text.strip():
+
+    is_ip = _valid_ipv4(domain)
+    ips = [domain] if is_ip else _dig_ips(domain, "A")[:3]
+    if not ips and not is_ip:
+        ips = []
+
+    text = ""
+    targets = []
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        f_whois = pool.submit(_whois_text, domain)
+        f_targets = [
+            pool.submit(_whois_target_intel, ip, idx == 0)
+            for idx, ip in enumerate(ips)
+        ]
+        text = f_whois.result()
+        for fut in f_targets:
+            try:
+                targets.append(fut.result())
+            except Exception:
+                continue
+
+    parsed = _parse_ip_whois(text) if is_ip else _parse_domain_whois(text)
+    if not (text or "").strip() and not targets:
         return jsonify({"error": "empty whois response"}), 502
-    return jsonify({"domain": domain, "text": text})
+    return jsonify(
+        {
+            "domain": domain,
+            "text": text,
+            "parsed": parsed,
+            "ips": ips,
+            "targets": targets,
+        }
+    )
+
+
+@app.route("/api/audit", methods=["POST"])
+def router_audit():
+    body = request.json or {}
+    host = (body.get("host") or "").strip()
+    user = (body.get("user") or "").strip()
+    password = body.get("password") or ""
+    proto = (body.get("proto") or "ssh").strip().lower()
+    vendor = (body.get("vendor") or "auto").strip().lower()
+    port = body.get("port")
+    if not _valid_host(host):
+        return jsonify({"error": "invalid host"}), 400
+    if not USER_RE.match(user):
+        return jsonify({"error": "invalid username"}), 400
+    if not isinstance(password, str) or not (1 <= len(password) <= 256):
+        return jsonify({"error": "invalid password"}), 400
+    if proto == "ssh":
+        default_port = 22
+    elif proto == "telnet":
+        default_port = 23
+    else:
+        return jsonify({"error": "protocol must be ssh or telnet"}), 400
+    if port in (None, ""):
+        port = default_port
+    try:
+        port = int(port)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid port"}), 400
+    if not (1 <= port <= 65535):
+        return jsonify({"error": "invalid port"}), 400
+    result = run_audit(host, user, password, port, proto, vendor)
+    if result.get("error") and "status" not in result:
+        code = 504 if "timed out" in result["error"].lower() else 502
+        return jsonify(result), code
+    return jsonify(result)
 
 
 def _mtr_snapshot(target, hops):
