@@ -23,6 +23,7 @@ from audit import run_audit
 from netmap import topology_from_payload, topology_xlsx
 from tftp import TftpError, tftp_get, tftp_put
 from tftp import resolve as tftp_resolve
+import compress as complab
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
@@ -1574,6 +1575,73 @@ def tftp_client():
         daemon=True,
     ).start()
     return jsonify(_tftp_payload())
+
+
+# --------------------------------------------------------------------------- Compression lab
+
+def _comp_input():
+    """Uploaded file or pasted text -> (bytes, filename)."""
+    item = request.files.get("file")
+    if item:
+        return item.read(), _safe_share_name(item.filename) or "file"
+    text = request.form.get("text")
+    if text:
+        return text.encode("utf-8"), "text.txt"
+    return None, None
+
+
+def _comp_download(data, filename, headers=None):
+    resp = Response(data, mimetype="application/octet-stream")
+    resp.headers["Content-Disposition"] = "attachment; filename*=UTF-8''" + urllib.parse.quote(filename)
+    resp.headers["Content-Length"] = str(len(data))
+    for key, value in (headers or {}).items():
+        resp.headers[key] = value
+    return resp
+
+
+@app.route("/api/compress/codecs")
+def compress_codecs():
+    return jsonify({"codecs": complab.codec_list(), "pure_limit": complab.PURE_PY_LIMIT,
+                    "analyze_limit": complab.ANALYZE_LIMIT})
+
+
+@app.route("/api/compress/analyze", methods=["POST"])
+def compress_analyze():
+    data, name = _comp_input()
+    if data is None:
+        return jsonify({"error": "no file or text"}), 400
+    try:
+        out = complab.analyze(data, request.form.get("level") or "default")
+    except complab.CompressError as exc:
+        return jsonify({"error": str(exc)}), 400
+    out["name"] = name
+    return jsonify(out)
+
+
+@app.route("/api/compress/run", methods=["POST"])
+def compress_run():
+    data, name = _comp_input()
+    if data is None:
+        return jsonify({"error": "no file or text"}), 400
+    algo = request.form.get("algo") or ""
+    try:
+        packed, ext = complab.compress(data, algo, request.form.get("level") or "default")
+    except complab.CompressError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return _comp_download(packed, name + ext, {"X-Original-Size": str(len(data))})
+
+
+@app.route("/api/compress/unpack", methods=["POST"])
+def compress_unpack():
+    item = request.files.get("file")
+    if not item:
+        return jsonify({"error": "no file"}), 400
+    blob = item.read()
+    try:
+        data, algo, out_name = complab.decompress(blob, _safe_share_name(item.filename) or "file")
+    except complab.CompressError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return _comp_download(data, out_name, {"X-Codec": algo})
 
 
 @app.route("/api/tls", methods=["POST"])

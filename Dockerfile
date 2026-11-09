@@ -37,6 +37,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdotool \
     fonts-dejavu-core \
     nginx \
+    python3-brotli \
+    python3-zstandard \
     && rm -rf /var/lib/apt/lists/*
 
 # ttyd: static binary, provides a browser-based terminal for ssh/telnet
@@ -72,6 +74,7 @@ COPY netmap.py /app/netmap.py
 COPY audit.py /app/audit.py
 COPY share_http.py /app/share_http.py
 COPY tftp.py /app/tftp.py
+COPY compress.py /app/compress.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh

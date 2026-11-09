@@ -1,12 +1,12 @@
 # NetToolbox
 
-**v2.6.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
+**v2.7.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
 
 One Docker container. One web UI. Run it on your laptop, workstation, server, home lab, or client site.
 
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sajadprp/nettoolbox?logo=docker)](https://hub.docker.com/r/sajadprp/nettoolbox)
-[![Version](https://img.shields.io/badge/version-2.6.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
+[![Version](https://img.shields.io/badge/version-2.7.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)](https://www.docker.com/)
 [![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)](https://hub.docker.com/r/sajadprp/nettoolbox)
@@ -19,7 +19,7 @@ Demo walkthrough (sample lab data only — not a real customer network): This li
 
 Docker Hub: https://hub.docker.com/r/sajadprp/nettoolbox
 
-Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.6.0`
+Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.7.0`
 
 ### 1. Pull the Docker image
 
@@ -30,7 +30,7 @@ docker pull sajadprp/nettoolbox:latest
 Or pin a version:
 
 ```bash
-docker pull sajadprp/nettoolbox:v2.6.0
+docker pull sajadprp/nettoolbox:v2.7.0
 ```
 
 ### 2. Run NetToolbox
@@ -92,7 +92,7 @@ docker run -d \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   --name nettoolbox \
-  sajadprp/nettoolbox:v2.6.0
+  sajadprp/nettoolbox:v2.7.0
 ```
 
 ## Build from source
@@ -109,30 +109,31 @@ docker build -t nettoolbox .
 **Copy a pre-built image to another laptop (USB, no rebuild)**
 
 ```bash
-docker save nettoolbox:v2.6.0 nettoolbox:latest | gzip > nettoolbox-v2.6.0.tar.gz
-gzip -dc nettoolbox-v2.6.0.tar.gz | docker load
+docker save nettoolbox:v2.7.0 nettoolbox:latest | gzip > nettoolbox-v2.7.0.tar.gz
+gzip -dc nettoolbox-v2.7.0.tar.gz | docker load
 docker run -d --restart unless-stopped --net=host \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.6.0
+  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.7.0
 ```
 
 ## Versions
 
 `main` is always **v2**. v1 stays as a git tag.
 
-| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | **v2.6** |
-|---|---|---|---|---|---|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | v2.6 | **v2.7** |
+|---|---|---|---|---|---|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Compression lab (Huffman, LZW, Deflate, bzip2, LZMA, Zstd, Brotli), quick/full Whois | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ```bash
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
@@ -172,7 +173,7 @@ git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoo
 
 **DNS lookup** — A, AAAA, MX, TXT, NS, CNAME, SOA.
 
-**Whois** — domain and IP. Also abuse DNSBLs, owner/org, ping, and OS guess (nmap or TTL).
+**Whois** — domain and IP. Quick by default (resolved IPs, location, ISP). Tick "Full details" for raw whois, abuse DNSBLs, owner/org, ping, and OS guess (nmap or TTL).
 
 **Public IP / geolocation** — yours or any IP, with fallbacks if ipinfo is unreachable.
 
@@ -211,6 +212,10 @@ Text, URL, or WiFi join. Copy or download PNG. WiFi QR from this laptop’s netw
 ### LAN file drop
 
 Put a firmware image, PDF, or script on this laptop. Start sharing from the File drop tab; phones and other PCs on the same LAN open a clean download page (link or QR). Stop sharing and port 8765 closes. LAN visitors can only download; uploads stay on the dashboard.
+
+### Compression lab
+
+Drop a file or paste text and compare Huffman, LZW, Deflate/gzip, bzip2, LZMA/xz, Zstandard, and Brotli side by side: compressed size, ratio, bits per byte, compress/decompress time, and a round-trip check. The order-0 entropy is shown as the floor for byte-wise coders. Huffman (canonical, codes limited to 15 bits) and LZW (9–16 bit codes) are implemented in pure Python, with their own `.huff` / `.lzw` formats. The Huffman card shows the code table (symbol, count, probability, code) and the coding efficiency against entropy. Any algorithm's output can be downloaded, and the Decompress box detects `.huff .lzw .gz .bz2 .xz .zst .br` automatically. Levels: fast, balanced, max. Limits: 16 MB for Huffman/LZW, 64 MB for comparison. Everything runs locally.
 
 ### TFTP
 
@@ -268,7 +273,7 @@ This tool is powerful. Understand what it does before you run it.
 - **TFTP (UDP `69`) is off until you start it.** TFTP has no authentication: while it runs, anyone on the LAN can read the TFTP folder, and write to it if uploads are allowed. Paths cannot leave that folder. Stop it when you are done.
 - **The terminal is a real shell** with ssh/telnet and the container’s privileges.
 - **RDP passwords** go to FreeRDP on stdin, not on the command line.
-- **Internet-connected features**: Speed Test (Cloudflare and other CDNs as fallbacks), public IP / geolocation, domain recon (crt.sh, DNS), Whois, abuse DNSBLs. Router audit talks only to the device you name over SSH/Telnet. Scanning, ARP, CDP/LLDP, RDP, hashing, OpenSpeedTest LAN, File drop, and TFTP stay local.
+- **Internet-connected features**: Speed Test (Cloudflare and other CDNs as fallbacks), public IP / geolocation, domain recon (crt.sh, DNS), Whois, abuse DNSBLs. Router audit talks only to the device you name over SSH/Telnet. Scanning, ARP, CDP/LLDP, RDP, hashing, OpenSpeedTest LAN, File drop, TFTP, and the compression lab stay local.
 - Run only on hardware and networks you are authorized to administer. Do not expose the dashboard beyond loopback unless you add your own authentication.
 
 ## Updating
@@ -316,7 +321,7 @@ docker run -d `
 ```text
 sajadprp/nettoolbox:latest
 sajadprp/nettoolbox:v2
-sajadprp/nettoolbox:v2.6.0
+sajadprp/nettoolbox:v2.7.0
 ```
 
 ## How it compares

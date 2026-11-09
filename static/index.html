@@ -281,6 +281,24 @@
   .share-file .sz { color: var(--ink-dim); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
   #shareQr { margin-top: 8px; }
   .tftp-port { min-width: 0; width: 90px; }
+  .cz-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 4px 0 14px; }
+  .cz-stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .cz-stat .v { font-family: ui-monospace, Menlo, monospace; font-size: 18px; font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+  .cz-stat .k { color: var(--ink-dim); font-size: 12px; margin-top: 2px; }
+  .cz-wrap { overflow-x: auto; }
+  .cz-table td.algo { font-family: inherit; }
+  .cz-table td.algo b { display: block; }
+  .cz-table td.algo span { color: var(--ink-dim); font-size: 11.5px; }
+  .cz-table tr.best td { background: color-mix(in srgb, var(--up) 9%, transparent); }
+  .cz-bar { position: relative; height: 8px; min-width: 90px; border-radius: 6px; background: var(--line); overflow: hidden; }
+  .cz-bar > i { position: absolute; inset-block: 0; inset-inline-start: 0; background: var(--accent); border-radius: 6px; }
+  .cz-bar.grow > i { background: var(--down); }
+  .cz-ent { position: absolute; inset-block: -2px; width: 2px; background: var(--accent2); }
+  .cz-code { font-family: ui-monospace, Menlo, monospace; direction: ltr; unicode-bidi: isolate; letter-spacing: .5px; color: var(--accent2); }
+  .cz-input-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; margin-bottom: 12px; }
+  .cz-input-row .share-drop { flex: 1 1 260px; margin: 0; }
+  .cz-input-row textarea { flex: 1 1 260px; min-height: 92px; margin: 0; }
+  .cz-file { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; color: var(--accent2); direction: ltr; unicode-bidi: isolate; }
   .tftp-cmds { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 14px; }
   .tftp-cmd {
     display: flex; gap: 8px; align-items: center;
@@ -730,6 +748,10 @@
         <button class="tab" data-panel="fileshare">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           <span data-i18n="nav_fileshare">اشتراک فایل</span>
+        </button>
+        <button class="tab" data-panel="compress">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+          <span data-i18n="nav_compress">فشرده‌سازی</span>
         </button>
         <button class="tab" data-panel="tftp">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
@@ -1266,6 +1288,55 @@
         </div>
       </section>
 
+      <section id="compress" class="panel">
+        <header class="panel-head">
+          <div class="kicker">HUFFMAN · LZW · LZMA · ZSTD</div>
+          <h2 data-i18n="nav_compress">فشرده‌سازی</h2>
+          <p class="lede" data-i18n="cz_lede">یک فایل یا متن را با هافمن، LZW، Deflate، bzip2، LZMA، Zstandard و Brotli فشرده کنید، نتیجه‌ها را کنار هم ببینید و خروجی را دانلود کنید.</p>
+        </header>
+
+        <div class="cz-input-row">
+          <label class="share-drop" id="czDrop">
+            <input type="file" id="czFileInput" hidden>
+            <strong data-i18n="cz_drop">فایل را بکشید اینجا یا کلیک کنید</strong>
+            <span id="czFileName" data-i18n="cz_drop_sub">هافمن و LZW تا ۱۶ مگ، بقیه تا ۶۴ مگ برای مقایسه.</span>
+          </label>
+          <textarea id="czText" data-i18n-placeholder="cz_text_ph" placeholder="یا متن را اینجا بچسبانید..."></textarea>
+        </div>
+        <div class="row">
+          <select id="czLevel" title="level">
+            <option value="fast" data-i18n="cz_lv_fast">سریع</option>
+            <option value="default" selected data-i18n="cz_lv_default">متعادل</option>
+            <option value="max" data-i18n="cz_lv_max">حداکثر فشرده‌سازی</option>
+          </select>
+          <button class="action" id="czAnalyzeBtn" data-i18n="cz_analyze">تحلیل و مقایسه</button>
+          <select id="czAlgo"></select>
+          <button class="action secondary" id="czDownloadBtn" data-i18n="cz_download">فشرده کن و دانلود</button>
+        </div>
+        <div id="czMsg" class="empty" style="margin:-6px 0 10px;color:var(--down)"></div>
+        <div class="hint" data-i18n="cz_hint">آنتروپی (مرتبه‌ی صفر) کف فشرده‌سازی برای کدهای بایت‌به‌بایت مثل هافمن است؛ روش‌های دیکشنری‌دار (LZ) روی داده‌ی تکراری می‌توانند از آن پایین‌تر بروند. داده‌ی رندوم یا از قبل فشرده کوچک‌تر نمی‌شود.</div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="cz_results">مقایسه‌ی الگوریتم‌ها</div>
+          <div id="czResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="cz_huff">جدول کد هافمن</div>
+          <div id="czHuff" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="cz_unpack">باز کردن فایل فشرده</div>
+          <label class="share-drop" id="czUnpackDrop" style="margin:0">
+            <input type="file" id="czUnpackInput" hidden>
+            <strong data-i18n="cz_unpack_drop">فایل .huff .lzw .gz .bz2 .xz .zst .br را بکشید اینجا</strong>
+            <span data-i18n="cz_unpack_sub">نوع فایل خودکار تشخیص داده می‌شود و فایل اصلی دانلود می‌شود.</span>
+          </label>
+          <div id="czUnpackStatus" class="empty" style="margin-top:8px"></div>
+        </div>
+      </section>
+
       <section id="tftp" class="panel">
         <header class="panel-head">
           <div class="kicker">UDP · 69</div>
@@ -1683,6 +1754,49 @@ const translations = {
     share_no_files: "هنوز فایلی نیست.",
     share_remove: "حذف",
     share_uploading: "در حال آپلود...",
+    cz_lede: "یک فایل یا متن را با هافمن، LZW، Deflate، bzip2، LZMA، Zstandard و Brotli فشرده کنید، نتیجه‌ها را کنار هم ببینید و خروجی را دانلود کنید.",
+    nav_compress: "فشرده‌سازی",
+    cz_drop: "فایل را بکشید اینجا یا کلیک کنید",
+    cz_drop_sub: "هافمن و LZW تا ۱۶ مگ، بقیه تا ۶۴ مگ برای مقایسه.",
+    cz_text_ph: "یا متن را اینجا بچسبانید...",
+    cz_lv_fast: "سریع",
+    cz_lv_default: "متعادل",
+    cz_lv_max: "حداکثر فشرده‌سازی",
+    cz_analyze: "تحلیل و مقایسه",
+    cz_download: "فشرده کن و دانلود",
+    cz_hint: "آنتروپی (مرتبه‌ی صفر) کف فشرده‌سازی برای کدهای بایت‌به‌بایت مثل هافمن است؛ روش‌های دیکشنری‌دار (LZ) روی داده‌ی تکراری می‌توانند از آن پایین‌تر بروند. داده‌ی رندوم یا از قبل فشرده کوچک‌تر نمی‌شود.",
+    cz_results: "مقایسه‌ی الگوریتم‌ها",
+    cz_huff: "جدول کد هافمن",
+    cz_unpack: "باز کردن فایل فشرده",
+    cz_unpack_drop: "فایل .huff .lzw .gz .bz2 .xz .zst .br را بکشید اینجا",
+    cz_unpack_sub: "نوع فایل خودکار تشخیص داده می‌شود و فایل اصلی دانلود می‌شود.",
+    cz_need: "اول یک فایل انتخاب کنید یا متن وارد کنید.",
+    cz_running: "در حال فشرده‌سازی با همه‌ی الگوریتم‌ها...",
+    cz_size: "حجم اصلی",
+    cz_entropy: "آنتروپی (بیت/بایت)",
+    cz_floor: "کف هافمن (آنتروپی)",
+    cz_unique: "بایت‌های متفاوت",
+    cz_best: "بهترین",
+    cz_col_algo: "الگوریتم",
+    cz_col_size: "حجم",
+    cz_col_ratio: "نسبت",
+    cz_col_bpb: "بیت/بایت",
+    cz_col_c: "فشرده (ms)",
+    cz_col_d: "باز (ms)",
+    cz_col_ok: "سالم",
+    cz_skipped: "رد شد",
+    cz_avg_len: "میانگین طول کد",
+    cz_eff: "بازده نسبت به آنتروپی",
+    cz_max_len: "بلندترین کد",
+    cz_symbols: "تعداد نماد",
+    cz_col_sym: "نماد",
+    cz_col_count: "تکرار",
+    cz_col_prob: "احتمال",
+    cz_col_len: "طول",
+    cz_col_code: "کد",
+    cz_top: "۶۴ نماد پرتکرار",
+    cz_unpacked: "باز شد",
+    cz_grew: "بزرگ‌تر شد",
     tftp_lede: "سرور و کلاینت TFTP برای سوییچ و روتر: بک‌آپ کانفیگ، آپلود IOS/فریمور، یا گرفتن فایل از یک سرور TFTP دیگر.",
     tftp_server: "سرور",
     tftp_allow_write: "اجازه‌ی آپلود از دستگاه‌ها",
@@ -2089,6 +2203,49 @@ const translations = {
     share_no_files: "No files yet.",
     share_remove: "Remove",
     share_uploading: "Uploading...",
+    cz_lede: "Compress a file or text with Huffman, LZW, Deflate, bzip2, LZMA, Zstandard, and Brotli, compare them side by side, and download the result.",
+    nav_compress: "Compression",
+    cz_drop: "Drop a file here, or click",
+    cz_drop_sub: "Huffman and LZW up to 16 MB, the rest up to 64 MB for comparison.",
+    cz_text_ph: "Or paste text here...",
+    cz_lv_fast: "Fast",
+    cz_lv_default: "Balanced",
+    cz_lv_max: "Max compression",
+    cz_analyze: "Analyze & compare",
+    cz_download: "Compress & download",
+    cz_hint: "Order-0 entropy is the floor for byte-by-byte coders like Huffman; dictionary (LZ) methods can beat it on repetitive data. Random or already-compressed data will not shrink.",
+    cz_results: "Algorithm comparison",
+    cz_huff: "Huffman code table",
+    cz_unpack: "Decompress a file",
+    cz_unpack_drop: "Drop a .huff .lzw .gz .bz2 .xz .zst .br file here",
+    cz_unpack_sub: "The format is detected automatically and the original file downloads.",
+    cz_need: "Pick a file or enter some text first.",
+    cz_running: "Compressing with every algorithm...",
+    cz_size: "Original size",
+    cz_entropy: "Entropy (bits/byte)",
+    cz_floor: "Huffman floor (entropy)",
+    cz_unique: "Distinct bytes",
+    cz_best: "best",
+    cz_col_algo: "Algorithm",
+    cz_col_size: "Size",
+    cz_col_ratio: "Ratio",
+    cz_col_bpb: "bits/byte",
+    cz_col_c: "Compress (ms)",
+    cz_col_d: "Decompress (ms)",
+    cz_col_ok: "OK",
+    cz_skipped: "skipped",
+    cz_avg_len: "Average code length",
+    cz_eff: "Efficiency vs entropy",
+    cz_max_len: "Longest code",
+    cz_symbols: "Symbols",
+    cz_col_sym: "Symbol",
+    cz_col_count: "Count",
+    cz_col_prob: "Probability",
+    cz_col_len: "Length",
+    cz_col_code: "Code",
+    cz_top: "64 most frequent symbols",
+    cz_unpacked: "Decompressed",
+    cz_grew: "grew",
     tftp_lede: "TFTP server and client for switches and routers: back up configs, push IOS/firmware, or pull files from another TFTP server.",
     tftp_server: "Server",
     tftp_allow_write: "Allow devices to upload",
@@ -2427,6 +2584,7 @@ function switchTab(id) {
   if (id === "speedtest") loadOpenSpeedTest();
   if (id === "fileshare") loadFileShare();
   if (id === "tftp") loadTftp();
+  if (id === "compress") loadCompressCodecs();
 }
 tabs.forEach(tb => tb.onclick = () => switchTab(tb.dataset.panel));
 
@@ -3515,6 +3673,174 @@ function shareMakeQr(text) {
     el.innerHTML = `<svg class="qr-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
   } catch (_) { el.innerHTML = ""; }
 }
+// ---------------------------------------------------------------- Compression lab
+let czFile = null;
+let czCodecsLoaded = false;
+let czLast = null;
+function czInputForm() {
+  const body = new FormData();
+  const text = document.getElementById("czText").value;
+  if (czFile) body.append("file", czFile);
+  else if (text) body.append("text", text);
+  else return null;
+  body.append("level", document.getElementById("czLevel").value);
+  return body;
+}
+function czSaveBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function czFilename(res, fallback) {
+  const cd = res.headers.get("Content-Disposition") || "";
+  const m = cd.match(/filename\*=UTF-8''([^;]+)/i);
+  return m ? decodeURIComponent(m[1]) : fallback;
+}
+async function loadCompressCodecs() {
+  if (czCodecsLoaded) return;
+  try {
+    const data = await (await fetch("/api/compress/codecs")).json();
+    document.getElementById("czAlgo").innerHTML = (data.codecs || []).map(c =>
+      `<option value="${esc(c.id)}"${c.id === "zstd" ? " selected" : ""}>${esc(c.name)} (${esc(c.ext)})</option>`).join("");
+    czCodecsLoaded = true;
+  } catch (_) {}
+}
+function czPct(x) { return (x * 100).toFixed(x < 0.1 ? 2 : 1) + "%"; }
+function renderCompress(data) {
+  czLast = data;
+  const out = document.getElementById("czResult");
+  const rows = data.results || [];
+  const valid = rows.filter(r => r.size != null);
+  const best = valid.length ? valid.reduce((a, b) => (b.size < a.size ? b : a)) : null;
+  const entRatio = data.size ? data.entropy / 8 : 0;
+  const stats = `<div class="cz-stats">
+    <div class="cz-stat"><div class="v">${esc(fmtBytes(data.size))}</div><div class="k">${esc(t("cz_size"))}${data.name ? ` · <span class="cz-file">${esc(data.name)}</span>` : ""}</div></div>
+    <div class="cz-stat"><div class="v">${data.entropy.toFixed(3)}</div><div class="k">${esc(t("cz_entropy"))}</div></div>
+    <div class="cz-stat"><div class="v">${esc(fmtBytes(data.entropy_bytes))}</div><div class="k">${esc(t("cz_floor"))} · ${czPct(entRatio)}</div></div>
+    <div class="cz-stat"><div class="v">${data.unique} / 256</div><div class="k">${esc(t("cz_unique"))}</div></div>
+    ${best ? `<div class="cz-stat"><div class="v">${esc(best.name)}</div><div class="k">${esc(t("cz_best"))} · ${czPct(best.ratio)}</div></div>` : ""}
+  </div>`;
+  const body = rows.map(r => {
+    if (r.size == null) {
+      return `<tr><td class="algo"><b>${esc(r.name)}</b><span>${esc(r.family)}</span></td>
+        <td colspan="7" style="color:var(--ink-dim)">${esc(r.skipped ? t("cz_skipped") + " · " + r.skipped : t("error_prefix") + (r.error || ""))}</td></tr>`;
+    }
+    const grew = r.ratio > 1;
+    const w = Math.min(100, r.ratio * 100);
+    return `<tr class="${best && r.id === best.id ? "best" : ""}">
+      <td class="algo"><b>${esc(r.name)}</b><span>${esc(r.family)}</span></td>
+      <td>${esc(fmtBytes(r.size))}</td>
+      <td><div style="display:flex;gap:8px;align-items:center"><div class="cz-bar ${grew ? "grow" : ""}" style="flex:1"><i style="width:${w}%"></i><span class="cz-ent" style="inset-inline-start:${Math.min(100, entRatio * 100)}%"></span></div><span>${czPct(r.ratio)}${grew ? " ↑" : ""}</span></div></td>
+      <td>${r.bpb.toFixed(2)}</td>
+      <td>${r.c_ms}</td>
+      <td>${r.d_ms}</td>
+      <td>${r.ok ? `<span style="color:var(--up)">✓</span>` : `<span style="color:var(--down)">✗</span>`}</td>
+      <td><button type="button" class="action secondary cz-dl" data-algo="${esc(r.id)}">${esc(r.ext)}</button></td>
+    </tr>`;
+  }).join("");
+  out.className = "";
+  out.innerHTML = stats + `<div class="cz-wrap"><table class="cz-table">
+    <tr><th>${esc(t("cz_col_algo"))}</th><th>${esc(t("cz_col_size"))}</th><th>${esc(t("cz_col_ratio"))}</th><th>${esc(t("cz_col_bpb"))}</th>
+    <th>${esc(t("cz_col_c"))}</th><th>${esc(t("cz_col_d"))}</th><th>${esc(t("cz_col_ok"))}</th><th></th></tr>${body}</table></div>`;
+  out.querySelectorAll(".cz-dl").forEach(btn => { btn.onclick = () => czDownload(btn.dataset.algo, btn); });
+
+  const hEl = document.getElementById("czHuff");
+  const h = data.huffman;
+  if (!h) { hEl.className = "empty"; hEl.textContent = t("empty_generic"); return; }
+  const eff = h.avg_len ? Math.min(1, data.entropy / h.avg_len) : 1;
+  hEl.className = "";
+  hEl.innerHTML = `<div class="cz-stats">
+      <div class="cz-stat"><div class="v">${h.avg_len.toFixed(3)}</div><div class="k">${esc(t("cz_avg_len"))} (bit)</div></div>
+      <div class="cz-stat"><div class="v">${data.entropy.toFixed(3)}</div><div class="k">${esc(t("cz_entropy"))}</div></div>
+      <div class="cz-stat"><div class="v">${czPct(eff)}</div><div class="k">${esc(t("cz_eff"))}</div></div>
+      <div class="cz-stat"><div class="v">${h.max_len} bit</div><div class="k">${esc(t("cz_max_len"))}</div></div>
+      <div class="cz-stat"><div class="v">${h.symbols}</div><div class="k">${esc(t("cz_symbols"))}</div></div>
+    </div>
+    <div class="hint" style="margin-top:0">${esc(t("cz_top"))}</div>
+    <div class="cz-wrap"><table>
+      <tr><th>${esc(t("cz_col_sym"))}</th><th>${esc(t("cz_col_count"))}</th><th>${esc(t("cz_col_prob"))}</th><th>${esc(t("cz_col_len"))}</th><th>${esc(t("cz_col_code"))}</th></tr>
+      ${h.table.map(r => `<tr><td><span class="cz-code" style="color:var(--ink)">${esc(r.char)}</span> <span style="color:var(--ink-dim)">0x${r.byte.toString(16).padStart(2, "0").toUpperCase()}</span></td>
+        <td>${r.count.toLocaleString()}</td><td>${czPct(r.prob)}</td><td>${r.len}</td><td class="cz-code">${esc(r.code)}</td></tr>`).join("")}
+    </table></div>`;
+}
+document.getElementById("czAnalyzeBtn").onclick = async e => {
+  const btn = e.currentTarget;
+  const out = document.getElementById("czResult");
+  const body = czInputForm();
+  if (!body) { out.className = "empty"; out.textContent = t("cz_need"); return; }
+  setLoading(btn, true);
+  out.className = "empty"; out.textContent = t("cz_running");
+  try {
+    const data = await (await fetch("/api/compress/analyze", {method: "POST", body})).json();
+    if (data.error) { out.className = "empty"; out.textContent = t("error_prefix") + data.error; return; }
+    renderCompress(data);
+  } catch (err) {
+    out.className = "empty"; out.textContent = t("error_prefix") + (err.message || err);
+  } finally { setLoading(btn, false); }
+};
+async function czDownload(algo, btn) {
+  const out = document.getElementById("czResult");
+  const body = czInputForm();
+  if (!body) { out.className = "empty"; out.textContent = t("cz_need"); return; }
+  body.append("algo", algo);
+  document.getElementById("czMsg").textContent = "";
+  setLoading(btn, true);
+  try {
+    const res = await fetch("/api/compress/run", {method: "POST", body});
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      document.getElementById("czMsg").textContent = t("error_prefix") + (data.error || res.status);
+      return;
+    }
+    czSaveBlob(await res.blob(), czFilename(res, "compressed"));
+  } finally { setLoading(btn, false); }
+}
+document.getElementById("czDownloadBtn").onclick = e => czDownload(document.getElementById("czAlgo").value, e.currentTarget);
+function czSetFile(file) {
+  czFile = file || null;
+  const label = document.getElementById("czFileName");
+  if (czFile) {
+    label.innerHTML = `<span class="cz-file">${esc(czFile.name)}</span> · ${esc(fmtBytes(czFile.size))}`;
+    document.getElementById("czText").value = "";
+  } else {
+    label.textContent = t("cz_drop_sub");
+  }
+}
+document.getElementById("czFileInput").onchange = e => czSetFile(e.target.files[0]);
+document.getElementById("czText").addEventListener("input", () => {
+  if (czFile && document.getElementById("czText").value) { czFile = null; document.getElementById("czFileInput").value = ""; czSetFile(null); }
+});
+async function czUnpack(file) {
+  if (!file) return;
+  const st = document.getElementById("czUnpackStatus");
+  st.textContent = t("running");
+  const body = new FormData();
+  body.append("file", file);
+  try {
+    const res = await fetch("/api/compress/unpack", {method: "POST", body});
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      st.textContent = t("error_prefix") + (data.error || res.status);
+      return;
+    }
+    const blob = await res.blob();
+    const name = czFilename(res, "file");
+    czSaveBlob(blob, name);
+    st.textContent = `${t("cz_unpacked")} (${res.headers.get("X-Codec") || "?"}): ${name} · ${fmtBytes(file.size)} → ${fmtBytes(blob.size)}`;
+  } catch (err) {
+    st.textContent = t("error_prefix") + (err.message || err);
+  } finally { document.getElementById("czUnpackInput").value = ""; }
+}
+document.getElementById("czUnpackInput").onchange = e => czUnpack(e.target.files[0]);
+[["czDrop", f => czSetFile(f)], ["czUnpackDrop", f => czUnpack(f)]].forEach(([id, fn]) => {
+  const el = document.getElementById(id);
+  el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("drag"); });
+  el.addEventListener("dragleave", () => el.classList.remove("drag"));
+  el.addEventListener("drop", e => { e.preventDefault(); el.classList.remove("drag"); fn(e.dataTransfer.files[0]); });
+});
+
 // ---------------------------------------------------------------- TFTP
 let tftpPoll = null;
 function tftpErr(msg) {
