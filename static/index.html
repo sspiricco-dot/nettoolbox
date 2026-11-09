@@ -1112,9 +1112,10 @@
         </header>
         <div class="row">
           <input id="whoisInput" placeholder="example.com یا 8.8.8.8" />
+          <label class="chk"><input type="checkbox" id="whoisFull"> <span data-i18n="whois_full">اطلاعات کامل</span></label>
           <button class="action" id="whoisBtn" data-i18n="whois_btn">Whois</button>
         </div>
-        <div class="hint" data-i18n="whois_hint">Whois خام می‌ماند؛ جداگانه آی‌پی‌ها روی DNSBL abuse، مالک/سازمان، پینگ و OS چک می‌شوند. بعضی TLDها whois کامل نمی‌دهند.</div>
+        <div class="hint" data-i18n="whois_hint">بدون تیک «اطلاعات کامل» فقط IP، موقعیت و ISP نشان داده می‌شود (سریع). با تیک: whois خام، مالک/سازمان، DNSBL abuse، پینگ و OS. بعضی TLDها whois کامل نمی‌دهند.</div>
         <div class="bezel">
           <div class="bezel-label" data-i18n="nav_whois">Whois</div>
           <div id="whoisResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
@@ -1817,7 +1818,11 @@ const translations = {
     subnet_in: "این IP داخل شبکه است", subnet_out: "این IP داخل این شبکه نیست",
     subnet_private: "خصوصی", subnet_public: "عمومی",
     whois_lede: "مالک دامنه/IP، abuse، لیست سیاه، پینگ و حدس سیستم‌عامل.",
-    whois_hint: "Whois خام می‌ماند؛ جداگانه آی‌پی‌ها روی DNSBL abuse، مالک/سازمان، پینگ و OS چک می‌شوند. بعضی TLDها whois کامل نمی‌دهند.",
+    whois_hint: "بدون تیک «اطلاعات کامل» فقط IP، موقعیت و ISP نشان داده می‌شود (سریع). با تیک: whois خام، مالک/سازمان، DNSBL abuse، پینگ و OS. بعضی TLDها whois کامل نمی‌دهند.",
+    whois_full: "اطلاعات کامل",
+    whois_quick_checking: "در حال پیدا کردن IP و موقعیت...",
+    whois_private: "IP خصوصی / داخلی — موقعیت ندارد",
+    whois_no_geo: "موقعیت پیدا نشد",
     whois_btn: "Whois",
     whois_checking: "در حال whois، abuse، پینگ و OS...",
     whois_registrar: "رجیسترار",
@@ -2219,7 +2224,11 @@ const translations = {
     subnet_in: "This IP is inside the network", subnet_out: "This IP is outside this network",
     subnet_private: "Private", subnet_public: "Public",
     whois_lede: "Domain/IP owner, abuse, blocklists, ping, and OS guess.",
-    whois_hint: "Raw whois stays. IPs are also checked on abuse DNSBLs, owner/org, ping, and OS. Some TLDs no longer return full whois.",
+    whois_hint: "Without \"Full details\" you get IP, location, and ISP only (fast). With it: raw whois, owner/org, abuse DNSBLs, ping, and OS. Some TLDs no longer return full whois.",
+    whois_full: "Full details",
+    whois_quick_checking: "Finding IP and location...",
+    whois_private: "Private / internal IP — no location",
+    whois_no_geo: "Location not found",
     whois_btn: "Whois",
     whois_checking: "Whois, abuse lists, ping, and OS...",
     whois_registrar: "Registrar",
@@ -4647,16 +4656,37 @@ document.getElementById("whoisBtn").onclick = async () => {
   const btn = document.getElementById("whoisBtn");
   const domain = document.getElementById("whoisInput").value.trim();
   const out = document.getElementById("whoisResult");
+  const full = document.getElementById("whoisFull").checked;
+  try { localStorage.setItem("nettoolbox_whois_full", full ? "1" : "0"); } catch (_) {}
   setLoading(btn, true);
   out.className = "empty";
-  out.textContent = t("whois_checking");
+  out.textContent = t(full ? "whois_checking" : "whois_quick_checking");
   try {
     const res = await fetch("/api/whois", {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({domain})
+      body: JSON.stringify({domain, full})
     });
     const data = await res.json();
     if (data.error) { out.className = "empty"; out.textContent = t("error_prefix") + data.error; return; }
+    if (data.quick) {
+      out.className = "";
+      out.innerHTML = `<div class="whois-targets" style="margin-top:0">${(data.targets || []).map(row => {
+        const geo = row.geo || {};
+        const loc = [geo.city, geo.region, geo.country].filter(Boolean).join(", ");
+        const note = row.private ? t("whois_private") : (!row.geo ? t("whois_no_geo") : "");
+        return `<div class="whois-card">
+          <h3>${esc(row.ip)}${geo.reverse ? " · " + esc(geo.reverse) : ""}</h3>
+          ${note ? `<div class="empty">${esc(note)}</div>` : ""}
+          <div class="info-grid">
+            ${whoisKv(t("info_country"), loc)}
+            ${whoisKv(t("whois_isp"), [geo.isp || geo.org, geo.as].filter(Boolean).join(" · "))}
+            ${geo.hosting ? whoisKv(t("whois_hosting"), "yes") : ""}
+            ${geo.proxy ? whoisKv(t("whois_proxy"), "yes") : ""}
+          </div>
+        </div>`;
+      }).join("")}</div>`;
+      return;
+    }
     const p = data.parsed || {};
     const geo0 = ((data.targets || [])[0] || {}).geo || {};
     const orgTop = (p.org && !/^ORG-[A-Z0-9-]+$/i.test(p.org) ? p.org : (geo0.org || p.org));
@@ -4682,6 +4712,11 @@ document.getElementById("whoisBtn").onclick = async () => {
     out.textContent = t("error_prefix") + (err.message || err);
   } finally { setLoading(btn, false); }
 };
+
+try { document.getElementById("whoisFull").checked = localStorage.getItem("nettoolbox_whois_full") === "1"; } catch (_) {}
+document.getElementById("whoisInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("whoisBtn").click();
+});
 
 document.getElementById("auditProto").onchange = () => {
   const port = document.getElementById("auditPort");

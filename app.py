@@ -2273,6 +2273,14 @@ def _whois_target_intel(ip, do_os=False):
     }
 
 
+def _ip_is_private(ip):
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return not addr.is_global
+
+
 @app.route("/api/whois", methods=["POST"])
 def whois_lookup():
     domain = (request.json or {}).get("domain", "").strip().lower()
@@ -2287,6 +2295,24 @@ def whois_lookup():
     ips = [domain] if is_ip else _dig_ips(domain, "A")[:3]
     if not ips and not is_ip:
         ips = []
+
+    if not (request.json or {}).get("full"):
+        # Quick mode: resolved IPs + location / ISP only. No whois, ping, DNSBL, or nmap.
+        if not ips:
+            return jsonify({"error": "could not resolve any IPv4 address"}), 502
+        with ThreadPoolExecutor(max_workers=len(ips)) as pool:
+            geos = list(pool.map(_ip_owner_api, ips))
+        return jsonify(
+            {
+                "domain": domain,
+                "quick": True,
+                "ips": ips,
+                "targets": [
+                    {"ip": ip, "geo": geo, "private": _ip_is_private(ip)}
+                    for ip, geo in zip(ips, geos)
+                ],
+            }
+        )
 
     text = ""
     targets = []
