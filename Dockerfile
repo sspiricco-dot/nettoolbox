@@ -70,6 +70,7 @@ WORKDIR /app
 COPY app.py /app/app.py
 COPY netmap.py /app/netmap.py
 COPY audit.py /app/audit.py
+COPY share_http.py /app/share_http.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh

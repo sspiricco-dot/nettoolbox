@@ -1,12 +1,16 @@
+import atexit
 import ipaddress
 import json
 import os
 import re
+import shutil
 import base64
 import secrets
 import signal
 import socket
+import struct
 import subprocess
+import sys
 import time
 import urllib.parse
 import xml.etree.ElementTree as ET
@@ -18,6 +22,7 @@ from audit import run_audit
 from netmap import topology_from_payload, topology_xlsx
 
 app = Flask(__name__, static_folder="static", static_url_path="")
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
 
 IFACE_RE = re.compile(r"^[a-zA-Z0-9_.@-]{1,15}$")
 SUBNET_RE = re.compile(r"^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$")
@@ -1008,6 +1013,9 @@ def speedtest():
 
 
 OST_PORT = 3000
+SHARE_PORT = 8765
+SHARE_DIR = os.environ.get("NETTOOLBOX_SHARE", "/tmp/nettoolbox-share")
+_share_proc = None
 
 
 def _tcp_up(host, port):
@@ -1019,7 +1027,7 @@ def _tcp_up(host, port):
         return False
 
 
-def _ost_payload():
+def _lan_http_urls(port):
     urls = []
     seen = set()
     out = subprocess.run(
@@ -1033,16 +1041,147 @@ def _ost_payload():
             ip = token.split("/")[0]
             if not IP_RE.match(ip) or ip.startswith("127."):
                 continue
-            url = f"http://{ip}:{OST_PORT}"
+            url = f"http://{ip}:{port}"
             if url not in seen:
                 seen.add(url)
                 urls.append({"iface": parts[0], "ip": ip, "url": url})
+    return urls
+
+
+def _ost_payload():
     return {
         "up": _tcp_up("127.0.0.1", OST_PORT),
         "port": OST_PORT,
         "local": f"http://127.0.0.1:{OST_PORT}",
-        "urls": urls,
+        "urls": _lan_http_urls(OST_PORT),
     }
+
+
+def _safe_share_name(name):
+    name = os.path.basename(name or "").replace("\x00", "")
+    name = name.replace("/", "_").replace("\\", "_")
+    name = re.sub(r"[\r\n\t]", "", name).strip(" .")
+    if not name or name in (".", ".."):
+        return None
+    return name[:180]
+
+
+def _safe_share_rel(rel):
+    rel = (rel or "").replace("\\", "/").replace("\x00", "")
+    parts = []
+    for part in rel.split("/"):
+        part = part.strip()
+        if not part or part in (".", ".."):
+            continue
+        safe = _safe_share_name(part)
+        if not safe:
+            return None
+        parts.append(safe)
+        if len(parts) > 8:
+            return None
+    if not parts:
+        return None
+    joined = "/".join(parts)
+    if len(joined) > 400:
+        return None
+    return joined
+
+
+def _share_path(rel):
+    rel = _safe_share_rel(rel)
+    if not rel:
+        return None
+    root = os.path.realpath(SHARE_DIR)
+    os.makedirs(root, exist_ok=True)
+    path = os.path.realpath(os.path.join(root, *rel.split("/")))
+    if path != root and not path.startswith(root + os.sep):
+        return None
+    if path == root:
+        return None
+    return path
+
+
+def _share_unique(rel):
+    dest = _share_path(rel)
+    if not dest:
+        return None, None
+    if not os.path.exists(dest):
+        return dest, rel
+    stem, ext = os.path.splitext(rel)
+    for n in range(2, 100):
+        cand_rel = f"{stem}-{n}{ext}"
+        cand = _share_path(cand_rel)
+        if cand and not os.path.exists(cand):
+            return cand, cand_rel
+    return None, None
+
+
+def _share_list():
+    os.makedirs(SHARE_DIR, exist_ok=True)
+    files = []
+    root = os.path.realpath(SHARE_DIR)
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in (".", "..")]
+        for filename in filenames:
+            full = os.path.join(dirpath, filename)
+            if not os.path.isfile(full):
+                continue
+            rel = os.path.relpath(full, root).replace("\\", "/")
+            if rel.startswith(".."):
+                continue
+            files.append({"name": rel, "size": os.path.getsize(full)})
+            if len(files) >= 500:
+                return sorted(files, key=lambda row: row["name"].lower())
+    return sorted(files, key=lambda row: row["name"].lower())
+
+
+def _share_payload():
+    return {
+        "up": _tcp_up("127.0.0.1", SHARE_PORT),
+        "port": SHARE_PORT,
+        "local": f"http://127.0.0.1:{SHARE_PORT}",
+        "urls": _lan_http_urls(SHARE_PORT),
+        "files": _share_list(),
+    }
+
+
+def _share_stop():
+    global _share_proc
+    proc = _share_proc
+    _share_proc = None
+    if proc and proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=2)
+def _share_start():
+    global _share_proc
+    if _tcp_up("127.0.0.1", SHARE_PORT):
+        return None
+    os.makedirs(SHARE_DIR, exist_ok=True)
+    env = os.environ.copy()
+    env["NETTOOLBOX_SHARE"] = SHARE_DIR
+    env["NETTOOLBOX_SHARE_PORT"] = str(SHARE_PORT)
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "share_http.py")
+    _share_proc = subprocess.Popen(
+        [sys.executable, script],
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    for _ in range(25):
+        if _tcp_up("127.0.0.1", SHARE_PORT):
+            return None
+        if _share_proc.poll() is not None:
+            return "share server exited"
+        time.sleep(0.1)
+    return "share server started but port is not listening"
+
+
+atexit.register(_share_stop)
 
 
 def _nginx_stop():
@@ -1086,6 +1225,79 @@ def openspeedtest_start():
 def openspeedtest_stop():
     _nginx_stop()
     return jsonify(_ost_payload())
+
+
+@app.route("/api/share")
+def share_info():
+    return jsonify(_share_payload())
+
+
+@app.route("/api/share/start", methods=["POST"])
+def share_start():
+    err = _share_start()
+    if err:
+        return jsonify({"error": err}), 502
+    return jsonify(_share_payload())
+
+
+@app.route("/api/share/stop", methods=["POST"])
+def share_stop():
+    _share_stop()
+    return jsonify(_share_payload())
+
+
+@app.route("/api/share/upload", methods=["POST"])
+def share_upload():
+    os.makedirs(SHARE_DIR, exist_ok=True)
+    saved = []
+    incoming = request.files.getlist("files")
+    paths = request.form.getlist("paths")
+    if not incoming:
+        return jsonify({"error": "no files"}), 400
+    if len(incoming) > 400:
+        return jsonify({"error": "too many files in one folder (max 400)"}), 400
+    for index, item in enumerate(incoming):
+        rel = paths[index] if index < len(paths) else item.filename
+        rel = _safe_share_rel(rel) or _safe_share_name(item.filename)
+        dest, rel = _share_unique(rel)
+        if not dest or not rel:
+            continue
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        item.save(dest)
+        saved.append(rel)
+    if not saved:
+        return jsonify({"error": "could not save files"}), 400
+    return jsonify(_share_payload())
+
+
+@app.route("/api/share/delete", methods=["POST"])
+def share_delete():
+    rel = _safe_share_rel((request.json or {}).get("name") or "")
+    path = _share_path(rel) if rel else None
+    if not path or not os.path.isfile(path):
+        return jsonify({"error": "file not found"}), 404
+    os.remove(path)
+    parent = os.path.dirname(path)
+    root = os.path.realpath(SHARE_DIR)
+    while parent != root and parent.startswith(root + os.sep):
+        try:
+            os.rmdir(parent)
+        except OSError:
+            break
+        parent = os.path.dirname(parent)
+    return jsonify(_share_payload())
+
+
+@app.route("/api/share/clear", methods=["POST"])
+def share_clear():
+    os.makedirs(SHARE_DIR, exist_ok=True)
+    for name in os.listdir(SHARE_DIR):
+        path = os.path.join(SHARE_DIR, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=True)
+        elif os.path.isfile(path):
+            os.remove(path)
+    return jsonify(_share_payload())
 
 
 @app.route("/api/tls", methods=["POST"])
@@ -1254,6 +1466,97 @@ def _read_iface_bytes(iface):
     return None
 
 
+def _iface_ip_set(iface):
+    found = set()
+    for fam in ("-4", "-6"):
+        for rec in _ip_json([fam, "addr", "show", "dev", iface]):
+            for addr in rec.get("addr_info") or []:
+                local = (addr.get("local") or "").split("%")[0].strip()
+                if local:
+                    found.add(local.lower())
+    return found
+
+
+def _parse_eth_ip(frame):
+    if len(frame) < 14:
+        return None
+    ethertype = struct.unpack("!H", frame[12:14])[0]
+    off = 14
+    if ethertype == 0x8100:
+        if len(frame) < 18:
+            return None
+        ethertype = struct.unpack("!H", frame[16:18])[0]
+        off = 18
+    if ethertype == 0x0800:
+        if len(frame) < off + 20:
+            return None
+        if frame[off] >> 4 != 4:
+            return None
+        total = struct.unpack("!H", frame[off + 2:off + 4])[0]
+        src = socket.inet_ntoa(frame[off + 12:off + 16])
+        dst = socket.inet_ntoa(frame[off + 16:off + 20])
+        nbytes = min(max(total, 20), max(len(frame) - off, 20))
+        return src, dst, nbytes
+    if ethertype == 0x86DD:
+        if len(frame) < off + 40:
+            return None
+        payload = struct.unpack("!H", frame[off + 4:off + 6])[0]
+        src = socket.inet_ntop(socket.AF_INET6, frame[off + 8:off + 24])
+        dst = socket.inet_ntop(socket.AF_INET6, frame[off + 24:off + 40])
+        nbytes = min(40 + payload, max(len(frame) - off, 40))
+        return src, dst, nbytes
+    return None
+
+
+def _flow_dir(src, dst, local_ips):
+    src_l = src.split("%")[0].lower()
+    dst_l = dst.split("%")[0].lower()
+    src_here = src_l in local_ips
+    dst_here = dst_l in local_ips
+    if dst_here and not src_here:
+        return "in"
+    if src_here and not dst_here:
+        return "out"
+    if src_here and dst_here:
+        return "lan"
+    return "fwd"
+
+
+def _sample_ip_talkers(iface, duration=0.85, max_pkts=6000):
+    talkers = {}
+    try:
+        sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(3))
+        sock.bind((iface, 0))
+        sock.settimeout(0.12)
+    except OSError as err:
+        return {"error": str(err), "flows": []}
+    deadline = time.time() + duration
+    n = 0
+    try:
+        while time.time() < deadline and n < max_pkts:
+            try:
+                frame = sock.recv(65535)
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            parsed = _parse_eth_ip(frame)
+            if not parsed:
+                continue
+            src, dst, nbytes = parsed
+            rec = talkers.get((src, dst))
+            if rec is None:
+                talkers[(src, dst)] = {"src": src, "dst": dst, "bytes": nbytes, "packets": 1}
+            else:
+                rec["bytes"] += nbytes
+                rec["packets"] += 1
+            n += 1
+    finally:
+        sock.close()
+    flows = sorted(talkers.values(), key=lambda row: row["bytes"], reverse=True)[:16]
+    return {"error": None, "flows": flows}
+
+
 @app.route("/api/bandwidth/stream")
 def bandwidth_stream():
     iface = request.args.get("iface", "")
@@ -1263,16 +1566,40 @@ def bandwidth_stream():
     def generate():
         prev = _read_iface_bytes(iface)
         prev_time = time.time()
+        local_ips = sorted(_iface_ip_set(iface))
+        local_set = set(local_ips)
+        session = {}
         for _ in range(180):
-            time.sleep(1)
+            sample = _sample_ip_talkers(iface)
             cur = _read_iface_bytes(iface)
             now = time.time()
-            if prev and cur:
-                dt = now - prev_time
-                rx_bps = (cur[0] - prev[0]) * 8 / dt if dt > 0 else 0
-                tx_bps = (cur[1] - prev[1]) * 8 / dt if dt > 0 else 0
-                yield f"data: {json.dumps({'rx_bps': rx_bps, 'tx_bps': tx_bps})}\n\n"
+            dt = now - prev_time
+            rx_bps = tx_bps = 0
+            if prev and cur and dt > 0:
+                rx_bps = (cur[0] - prev[0]) * 8 / dt
+                tx_bps = (cur[1] - prev[1]) * 8 / dt
             prev, prev_time = cur, now
+            talkers = []
+            for flow in sample["flows"]:
+                key = (flow["src"], flow["dst"])
+                session[key] = session.get(key, 0) + flow["bytes"]
+                talkers.append({
+                    "src": flow["src"],
+                    "dst": flow["dst"],
+                    "bytes": flow["bytes"],
+                    "packets": flow["packets"],
+                    "bps": flow["bytes"] * 8 / dt if dt > 0 else 0,
+                    "session_bytes": session[key],
+                    "dir": _flow_dir(flow["src"], flow["dst"], local_set),
+                })
+            payload = {
+                "rx_bps": rx_bps,
+                "tx_bps": tx_bps,
+                "local_ips": local_ips,
+                "talkers": talkers,
+                "capture_error": sample["error"],
+            }
+            yield f"data: {json.dumps(payload)}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
 

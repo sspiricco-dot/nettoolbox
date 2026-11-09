@@ -18,3 +18,4 @@ docker run -d \
 
 echo "NetToolbox is running at http://127.0.0.1:8642"
 echo "LAN OpenSpeedTest (port 3000) stays off until you start it in the Speed Test tab"
+echo "LAN file drop (port 8765) stays off until you start it in the File drop tab"
