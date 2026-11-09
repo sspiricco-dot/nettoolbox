@@ -1,12 +1,12 @@
 # NetToolbox
 
-**v2.5.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
+**v2.6.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
 
 One Docker container. One web UI. Run it on your laptop, workstation, server, home lab, or client site.
 
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sajadprp/nettoolbox?logo=docker)](https://hub.docker.com/r/sajadprp/nettoolbox)
-[![Version](https://img.shields.io/badge/version-2.5.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
+[![Version](https://img.shields.io/badge/version-2.6.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)](https://www.docker.com/)
 [![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)](https://hub.docker.com/r/sajadprp/nettoolbox)
@@ -19,7 +19,7 @@ Demo walkthrough (sample lab data only — not a real customer network): This li
 
 Docker Hub: https://hub.docker.com/r/sajadprp/nettoolbox
 
-Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.5.0`
+Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.6.0`
 
 ### 1. Pull the Docker image
 
@@ -30,7 +30,7 @@ docker pull sajadprp/nettoolbox:latest
 Or pin a version:
 
 ```bash
-docker pull sajadprp/nettoolbox:v2.5.0
+docker pull sajadprp/nettoolbox:v2.6.0
 ```
 
 ### 2. Run NetToolbox
@@ -92,7 +92,7 @@ docker run -d \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   --name nettoolbox \
-  sajadprp/nettoolbox:v2.5.0
+  sajadprp/nettoolbox:v2.6.0
 ```
 
 ## Build from source
@@ -109,29 +109,30 @@ docker build -t nettoolbox .
 **Copy a pre-built image to another laptop (USB, no rebuild)**
 
 ```bash
-docker save nettoolbox:v2.5.0 nettoolbox:latest | gzip > nettoolbox-v2.5.0.tar.gz
-gzip -dc nettoolbox-v2.5.0.tar.gz | docker load
+docker save nettoolbox:v2.6.0 nettoolbox:latest | gzip > nettoolbox-v2.6.0.tar.gz
+gzip -dc nettoolbox-v2.6.0.tar.gz | docker load
 docker run -d --restart unless-stopped --net=host \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.5.0
+  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.6.0
 ```
 
 ## Versions
 
 `main` is always **v2**. v1 stays as a git tag.
 
-| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | **v2.5** |
-|---|---|---|---|---|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | **v2.6** |
+|---|---|---|---|---|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ```bash
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
@@ -211,6 +212,12 @@ Text, URL, or WiFi join. Copy or download PNG. WiFi QR from this laptop’s netw
 
 Put a firmware image, PDF, or script on this laptop. Start sharing from the File drop tab; phones and other PCs on the same LAN open a clean download page (link or QR). Stop sharing and port 8765 closes. LAN visitors can only download; uploads stay on the dashboard.
 
+### TFTP
+
+Server and client for switches and routers. Start the server from the TFTP tab (UDP 69 by default, read-only or read/write), drop an IOS image or firmware into its folder, and the tab shows ready-to-copy commands (`copy running-config tftp://…`, `copy tftp://… flash:`, MikroTik `/tool fetch`). Configs that devices upload appear in the same list for download. The client gets/puts files from another TFTP server with live progress. Supports blksize/tsize/timeout options and files over 32 MB. Every transfer is logged.
+
+If the host already runs a TFTP server on UDP 69 (`tftpd-hpa`, `dnsmasq`), stop it or pick another port; Cisco IOS normally only talks to 69.
+
 ### Interface
 
 Persian and English. Light and dark themes. Single HTML page, no CDN.
@@ -240,6 +247,7 @@ docker run -d \
 | RDP / noVNC | 7682 | loopback |
 | OpenSpeedTest | 3000 | LAN, **only while started** from the Speed Test tab |
 | File drop | 8765 | LAN, **only while started** from the File drop tab |
+| TFTP | 69/udp (configurable) | LAN, **only while started** from the TFTP tab |
 
 Dashboard:
 
@@ -247,7 +255,7 @@ Dashboard:
 http://127.0.0.1:8642
 ```
 
-The UI, terminal, and RDP viewer are **not** published on the LAN even with host networking. Only processes on this machine can reach them. OpenSpeedTest and File drop are the exceptions, and only while you leave them on.
+The UI, terminal, and RDP viewer are **not** published on the LAN even with host networking. Only processes on this machine can reach them. OpenSpeedTest, File drop, and TFTP are the exceptions, and only while you leave them on.
 
 ## Security notes
 
@@ -257,9 +265,10 @@ This tool is powerful. Understand what it does before you run it.
 - **Dashboard / terminal / RDP are loopback-only** (`8642`, `7681`, `7682`).
 - **OpenSpeedTest (`:3000`) is off until you start it.** Other devices on the LAN can then measure speed to this laptop (static HTML/JS, no shell). Stop it when you are done.
 - **File drop (`:8765`) is off until you start it.** Other devices on the LAN can then download the files you staged. The LAN page is read-only (no upload, no directory escape). Stop it when you are done.
+- **TFTP (UDP `69`) is off until you start it.** TFTP has no authentication: while it runs, anyone on the LAN can read the TFTP folder, and write to it if uploads are allowed. Paths cannot leave that folder. Stop it when you are done.
 - **The terminal is a real shell** with ssh/telnet and the container’s privileges.
 - **RDP passwords** go to FreeRDP on stdin, not on the command line.
-- **Internet-connected features**: Speed Test (Cloudflare and other CDNs as fallbacks), public IP / geolocation, domain recon (crt.sh, DNS), Whois, abuse DNSBLs. Router audit talks only to the device you name over SSH/Telnet. Scanning, ARP, CDP/LLDP, RDP, hashing, OpenSpeedTest LAN, and File drop stay local.
+- **Internet-connected features**: Speed Test (Cloudflare and other CDNs as fallbacks), public IP / geolocation, domain recon (crt.sh, DNS), Whois, abuse DNSBLs. Router audit talks only to the device you name over SSH/Telnet. Scanning, ARP, CDP/LLDP, RDP, hashing, OpenSpeedTest LAN, File drop, and TFTP stay local.
 - Run only on hardware and networks you are authorized to administer. Do not expose the dashboard beyond loopback unless you add your own authentication.
 
 ## Updating
@@ -307,7 +316,7 @@ docker run -d `
 ```text
 sajadprp/nettoolbox:latest
 sajadprp/nettoolbox:v2
-sajadprp/nettoolbox:v2.5.0
+sajadprp/nettoolbox:v2.6.0
 ```
 
 ## How it compares

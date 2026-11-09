@@ -11,6 +11,7 @@ import socket
 import struct
 import subprocess
 import sys
+import threading
 import time
 import urllib.parse
 import xml.etree.ElementTree as ET
@@ -20,6 +21,8 @@ from flask import Flask, Response, jsonify, request, send_from_directory, stream
 
 from audit import run_audit
 from netmap import topology_from_payload, topology_xlsx
+from tftp import TftpError, tftp_get, tftp_put
+from tftp import resolve as tftp_resolve
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
@@ -1298,6 +1301,279 @@ def share_clear():
         elif os.path.isfile(path):
             os.remove(path)
     return jsonify(_share_payload())
+
+
+# --------------------------------------------------------------------------- TFTP
+
+TFTP_DIR = os.environ.get("NETTOOLBOX_TFTP_DIR", "/tmp/nettoolbox-tftp")
+TFTP_LOG = os.environ.get("NETTOOLBOX_TFTP_LOG", "/tmp/nettoolbox-tftp.log")
+TFTP_ERR = "/tmp/nettoolbox-tftp.err"
+_tftp_proc = None
+_tftp_state = {"port": 69, "write": True}
+_tftp_jobs = {}
+_tftp_jobs_lock = threading.Lock()
+
+
+def _tftp_up():
+    return _tftp_proc is not None and _tftp_proc.poll() is None
+
+
+def _tftp_files():
+    os.makedirs(TFTP_DIR, exist_ok=True)
+    root = os.path.realpath(TFTP_DIR)
+    files = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        for filename in filenames:
+            if filename.endswith(".part"):
+                continue
+            full = os.path.join(dirpath, filename)
+            if not os.path.isfile(full):
+                continue
+            rel = os.path.relpath(full, root).replace("\\", "/")
+            if rel.startswith(".."):
+                continue
+            st = os.stat(full)
+            files.append({"name": rel, "size": st.st_size, "mtime": st.st_mtime})
+            if len(files) >= 500:
+                break
+    return sorted(files, key=lambda row: row["name"].lower())
+
+
+def _tftp_log_tail(n=40):
+    try:
+        with open(TFTP_LOG, encoding="utf-8") as fh:
+            lines = fh.readlines()[-n:]
+    except OSError:
+        return []
+    out = []
+    for line in reversed(lines):
+        try:
+            out.append(json.loads(line))
+        except ValueError:
+            continue
+    return out
+
+
+def _tftp_payload():
+    with _tftp_jobs_lock:
+        jobs = sorted(_tftp_jobs.values(), key=lambda j: j["started"], reverse=True)[:15]
+        jobs = [dict(j) for j in jobs]
+    return {
+        "up": _tftp_up(),
+        "port": _tftp_state["port"],
+        "write": _tftp_state["write"],
+        "root": TFTP_DIR,
+        "ips": [{"iface": u["iface"], "ip": u["ip"]} for u in _lan_http_urls(_tftp_state["port"])],
+        "files": _tftp_files(),
+        "log": _tftp_log_tail(),
+        "jobs": jobs,
+    }
+
+
+def _tftp_stop():
+    global _tftp_proc
+    proc = _tftp_proc
+    _tftp_proc = None
+    if proc and proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=2)
+
+
+atexit.register(_tftp_stop)
+
+
+def _tftp_start(port, write):
+    global _tftp_proc
+    if _tftp_up():
+        if _tftp_state["port"] == port and _tftp_state["write"] == write:
+            return None
+        _tftp_stop()
+    os.makedirs(TFTP_DIR, exist_ok=True)
+    env = os.environ.copy()
+    env.update({
+        "NETTOOLBOX_TFTP_DIR": TFTP_DIR,
+        "NETTOOLBOX_TFTP_PORT": str(port),
+        "NETTOOLBOX_TFTP_WRITE": "1" if write else "0",
+        "NETTOOLBOX_TFTP_LOG": TFTP_LOG,
+    })
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tftp.py")
+    err_fh = open(TFTP_ERR, "w", encoding="utf-8")
+    _tftp_proc = subprocess.Popen(
+        [sys.executable, script, "serve"],
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=err_fh,
+        start_new_session=True,
+    )
+    err_fh.close()
+    _tftp_state.update(port=port, write=write)
+    for _ in range(30):
+        try:
+            with open(TFTP_ERR, encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError:
+            text = ""
+        if "READY" in text:
+            return None
+        if _tftp_proc.poll() is not None:
+            _tftp_proc = None
+            if "BIND_ERROR" in text:
+                if "in use" in text.lower():
+                    return (f"UDP port {port} is already in use on this machine "
+                            "(another TFTP server, e.g. tftpd-hpa or dnsmasq?). "
+                            "Stop it on the host or pick another port.")
+                return text.strip().split("BIND_ERROR:", 1)[-1].strip()
+            return text.strip()[-300:] or "TFTP server exited"
+        time.sleep(0.1)
+    return None
+
+
+@app.route("/api/tftp")
+def tftp_info():
+    return jsonify(_tftp_payload())
+
+
+@app.route("/api/tftp/start", methods=["POST"])
+def tftp_start():
+    body = request.json or {}
+    try:
+        port = int(body.get("port") or 69)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid port"}), 400
+    if not 1 <= port <= 65535:
+        return jsonify({"error": "invalid port"}), 400
+    err = _tftp_start(port, bool(body.get("write", True)))
+    if err:
+        return jsonify({"error": err}), 502
+    return jsonify(_tftp_payload())
+
+
+@app.route("/api/tftp/stop", methods=["POST"])
+def tftp_stop():
+    _tftp_stop()
+    return jsonify(_tftp_payload())
+
+
+@app.route("/api/tftp/upload", methods=["POST"])
+def tftp_upload():
+    incoming = request.files.getlist("files")
+    if not incoming:
+        return jsonify({"error": "no files"}), 400
+    saved = 0
+    for item in incoming:
+        path, _rel = tftp_resolve(TFTP_DIR, _safe_share_name(item.filename) or "")
+        if not path:
+            continue
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        item.save(path)
+        saved += 1
+    if not saved:
+        return jsonify({"error": "could not save files"}), 400
+    return jsonify(_tftp_payload())
+
+
+@app.route("/api/tftp/download")
+def tftp_download():
+    path, rel = tftp_resolve(TFTP_DIR, request.args.get("name") or "")
+    if not path or not os.path.isfile(path):
+        return jsonify({"error": "file not found"}), 404
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True)
+
+
+@app.route("/api/tftp/delete", methods=["POST"])
+def tftp_delete():
+    path, _rel = tftp_resolve(TFTP_DIR, (request.json or {}).get("name") or "")
+    if not path or not os.path.isfile(path):
+        return jsonify({"error": "file not found"}), 404
+    os.remove(path)
+    root = os.path.realpath(TFTP_DIR)
+    parent = os.path.dirname(path)
+    while parent != root and parent.startswith(root + os.sep):
+        try:
+            os.rmdir(parent)
+        except OSError:
+            break
+        parent = os.path.dirname(parent)
+    return jsonify(_tftp_payload())
+
+
+@app.route("/api/tftp/clearlog", methods=["POST"])
+def tftp_clearlog():
+    try:
+        open(TFTP_LOG, "w").close()
+    except OSError:
+        pass
+    with _tftp_jobs_lock:
+        for jid in [k for k, j in _tftp_jobs.items() if j["state"] != "running"]:
+            _tftp_jobs.pop(jid, None)
+    return jsonify(_tftp_payload())
+
+
+def _tftp_job_run(job, action, host, port, remote, local_path, blksize):
+    def progress(done, total):
+        job["done"] = done
+        if total:
+            job["total"] = total
+
+    started = time.time()
+    try:
+        if action == "get":
+            n = tftp_get(host, port, remote, local_path, blksize=blksize, progress=progress)
+        else:
+            n = tftp_put(host, port, local_path, remote, blksize=blksize, progress=progress)
+        job.update(state="done", done=n, secs=round(time.time() - started, 2))
+    except TftpError as exc:
+        job.update(state="error", error=str(exc), secs=round(time.time() - started, 2))
+    except OSError as exc:
+        job.update(state="error", error=exc.strerror or str(exc), secs=round(time.time() - started, 2))
+
+
+@app.route("/api/tftp/client", methods=["POST"])
+def tftp_client():
+    body = request.json or {}
+    action = body.get("action")
+    host = (body.get("host") or "").strip()
+    remote = (body.get("remote") or "").strip()
+    local = (body.get("local") or "").strip() or os.path.basename(remote.replace("\\", "/"))
+    if action not in ("get", "put"):
+        return jsonify({"error": "action must be get or put"}), 400
+    if not _valid_host(host):
+        return jsonify({"error": "invalid host"}), 400
+    try:
+        port = int(body.get("port") or 69)
+        blksize = int(body.get("blksize") or 1468)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid port or block size"}), 400
+    if not 1 <= port <= 65535 or not 8 <= blksize <= 65464:
+        return jsonify({"error": "invalid port or block size"}), 400
+    if not remote or len(remote) > 400 or any(ord(c) < 32 for c in remote):
+        return jsonify({"error": "invalid remote file name"}), 400
+    local_path, local_rel = tftp_resolve(TFTP_DIR, local)
+    if not local_path:
+        return jsonify({"error": "invalid local file name"}), 400
+    if action == "put" and not os.path.isfile(local_path):
+        return jsonify({"error": "local file not found in the TFTP folder"}), 404
+    job = {
+        "id": secrets.token_hex(6), "action": action, "host": host, "port": port,
+        "remote": remote, "local": local_rel, "state": "running",
+        "done": 0, "total": os.path.getsize(local_path) if action == "put" else None,
+        "started": time.time(),
+    }
+    with _tftp_jobs_lock:
+        _tftp_jobs[job["id"]] = job
+        if len(_tftp_jobs) > 50:
+            for old in sorted(_tftp_jobs.values(), key=lambda j: j["started"])[:-50]:
+                _tftp_jobs.pop(old["id"], None)
+    threading.Thread(
+        target=_tftp_job_run,
+        args=(job, action, host, port, remote, local_path, blksize),
+        daemon=True,
+    ).start()
+    return jsonify(_tftp_payload())
 
 
 @app.route("/api/tls", methods=["POST"])

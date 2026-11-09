@@ -280,6 +280,28 @@
   .share-file .name { flex: 1; min-width: 140px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; direction: ltr; unicode-bidi: isolate; word-break: break-all; }
   .share-file .sz { color: var(--ink-dim); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
   #shareQr { margin-top: 8px; }
+  .tftp-port { min-width: 0; width: 90px; }
+  .tftp-cmds { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 14px; }
+  .tftp-cmd {
+    display: flex; gap: 8px; align-items: center;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px;
+  }
+  .tftp-cmd code {
+    flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px;
+    direction: ltr; text-align: left; unicode-bidi: isolate; overflow-wrap: anywhere;
+  }
+  .tftp-cmd .lbl { color: var(--ink-dim); font-size: 12px; white-space: nowrap; }
+  .tftp-row {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 13px;
+  }
+  .tftp-row:last-child { border-bottom: 0; }
+  .tftp-row .mono { font-family: ui-monospace, Menlo, monospace; direction: ltr; unicode-bidi: isolate; word-break: break-all; }
+  .tftp-row .dim { color: var(--ink-dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .tftp-row .ok { color: var(--up); font-weight: 700; }
+  .tftp-row .bad { color: var(--down); font-weight: 700; }
+  .tftp-bar { flex-basis: 100%; height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .tftp-bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
   body:has(#rdp.panel.active) main { max-width: min(1680px, calc(100vw - 48px)); }
   #rdpStage {
     position: relative; margin-top: 10px; background: #0a0e14; border: 1px solid var(--line);
@@ -708,6 +730,10 @@
         <button class="tab" data-panel="fileshare">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           <span data-i18n="nav_fileshare">اشتراک فایل</span>
+        </button>
+        <button class="tab" data-panel="tftp">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+          <span>TFTP</span>
         </button>
         <button class="tab" data-panel="qrcode">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><line x1="14" y1="14" x2="14" y2="21"></line><line x1="21" y1="14" x2="21" y2="21"></line><line x1="14" y1="17.5" x2="21" y2="17.5"></line></svg>
@@ -1239,6 +1265,68 @@
         </div>
       </section>
 
+      <section id="tftp" class="panel">
+        <header class="panel-head">
+          <div class="kicker">UDP · 69</div>
+          <h2>TFTP</h2>
+          <p class="lede" data-i18n="tftp_lede">سرور و کلاینت TFTP برای سوییچ و روتر: بک‌آپ کانفیگ، آپلود IOS/فریمور، یا گرفتن فایل از یک سرور TFTP دیگر.</p>
+        </header>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="tftp_server">سرور</div>
+          <div class="row">
+            <input id="tftpPort" class="tftp-port" type="number" min="1" max="65535" value="69" title="UDP port" />
+            <label class="chk"><input type="checkbox" id="tftpWrite" checked> <span data-i18n="tftp_allow_write">اجازه‌ی آپلود از دستگاه‌ها</span></label>
+            <button class="action" id="tftpStartBtn" data-i18n="tftp_start">روشن کردن سرور</button>
+            <button class="action secondary" id="tftpStopBtn" data-i18n="tftp_stop">خاموش کردن</button>
+          </div>
+          <div class="hint" data-i18n="tftp_hint">تا وقتی خاموش است پورت UDP روی شبکه باز نیست. TFTP رمز ندارد؛ هر کس در LAN بتواند فایل‌ها را بخواند (و اگر آپلود روشن باشد بنویسد). بعد از کار خاموش کنید.</div>
+          <div id="tftpStatus" class="empty" data-i18n="tftp_down">خاموش است.</div>
+          <div id="tftpCmds" class="tftp-cmds"></div>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="tftp_files">فایل‌های پوشه‌ی TFTP</div>
+          <label class="share-drop" id="tftpDrop">
+            <input type="file" id="tftpFileInput" multiple hidden>
+            <strong data-i18n="tftp_drop">فایل (IOS، فریمور، کانفیگ) را بکشید اینجا یا کلیک کنید</strong>
+            <span data-i18n="tftp_drop_sub">فایل‌ها در ریشه‌ی TFTP قرار می‌گیرند و دستگاه‌ها با همین نام می‌گیرند.</span>
+          </label>
+          <div id="tftpFiles" class="empty" data-i18n="share_no_files">هنوز فایلی نیست.</div>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="tftp_client">کلاینت</div>
+          <div class="row">
+            <select id="tftpAction">
+              <option value="get" data-i18n="tftp_get">دریافت (get) از سرور</option>
+              <option value="put" data-i18n="tftp_put">ارسال (put) به سرور</option>
+            </select>
+            <input id="tftpHost" data-i18n-placeholder="tftp_host_ph" placeholder="IP سرور TFTP" style="min-width:160px" />
+            <input id="tftpCPort" class="tftp-port" type="number" min="1" max="65535" value="69" title="UDP port" />
+            <select id="tftpBlk" title="block size">
+              <option value="1468">blksize 1468</option>
+              <option value="512">blksize 512</option>
+              <option value="8192">blksize 8192</option>
+            </select>
+          </div>
+          <div class="row">
+            <input id="tftpRemote" data-i18n-placeholder="tftp_remote_ph" placeholder="نام فایل روی سرور" style="min-width:200px" />
+            <input id="tftpLocal" list="tftpLocalList" data-i18n-placeholder="tftp_local_ph" placeholder="نام فایل در پوشه‌ی TFTP (اختیاری)" style="min-width:200px" />
+            <datalist id="tftpLocalList"></datalist>
+            <button class="action" id="tftpRunBtn" data-i18n="tftp_run">اجرا</button>
+          </div>
+          <div class="hint" data-i18n="tftp_client_hint">get فایل را در پوشه‌ی TFTP ذخیره می‌کند (از لیست بالا دانلودش کنید). put یکی از فایل‌های همین پوشه را می‌فرستد.</div>
+          <div id="tftpJobs"></div>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="tftp_log">لاگ انتقال‌ها</div>
+          <div class="row"><button class="action secondary" id="tftpClearLogBtn" data-i18n="tftp_clear_log">پاک کردن لاگ</button></div>
+          <div id="tftpLog" class="empty" data-i18n="tftp_no_log">هنوز انتقالی نبوده.</div>
+        </div>
+      </section>
+
       <section id="qrcode" class="panel">
         <header class="panel-head">
           <div class="kicker">CLIENT · PNG</div>
@@ -1594,6 +1682,38 @@ const translations = {
     share_no_files: "هنوز فایلی نیست.",
     share_remove: "حذف",
     share_uploading: "در حال آپلود...",
+    tftp_lede: "سرور و کلاینت TFTP برای سوییچ و روتر: بک‌آپ کانفیگ، آپلود IOS/فریمور، یا گرفتن فایل از یک سرور TFTP دیگر.",
+    tftp_server: "سرور",
+    tftp_allow_write: "اجازه‌ی آپلود از دستگاه‌ها",
+    tftp_start: "روشن کردن سرور",
+    tftp_stop: "خاموش کردن",
+    tftp_hint: "تا وقتی خاموش است پورت UDP روی شبکه باز نیست. TFTP رمز ندارد؛ هر کس در LAN بتواند فایل‌ها را بخواند (و اگر آپلود روشن باشد بنویسد). بعد از کار خاموش کنید.",
+    tftp_down: "خاموش است.",
+    tftp_on_rw: "روشن — UDP {port} روی LAN باز است. خواندن و نوشتن مجاز.",
+    tftp_on_ro: "روشن — UDP {port} روی LAN باز است. فقط خواندن.",
+    tftp_cmd_backup: "بک‌آپ کانفیگ",
+    tftp_cmd_image: "گرفتن فایل/IOS",
+    tftp_cmd_mt: "MikroTik",
+    tftp_cmd_port_warn: "پورت غیر از ۶۹ است؛ سیسکو معمولاً فقط ۶۹ را می‌شناسد.",
+    tftp_files: "فایل‌های پوشه‌ی TFTP",
+    tftp_drop: "فایل (IOS، فریمور، کانفیگ) را بکشید اینجا یا کلیک کنید",
+    tftp_drop_sub: "فایل‌ها در ریشه‌ی TFTP قرار می‌گیرند و دستگاه‌ها با همین نام می‌گیرند.",
+    tftp_download: "دانلود",
+    tftp_client: "کلاینت",
+    tftp_get: "دریافت (get) از سرور",
+    tftp_put: "ارسال (put) به سرور",
+    tftp_host_ph: "IP سرور TFTP",
+    tftp_remote_ph: "نام فایل روی سرور",
+    tftp_local_ph: "نام فایل در پوشه‌ی TFTP (اختیاری)",
+    tftp_run: "اجرا",
+    tftp_client_hint: "get فایل را در پوشه‌ی TFTP ذخیره می‌کند (از لیست بالا دانلودش کنید). put یکی از فایل‌های همین پوشه را می‌فرستد.",
+    tftp_log: "لاگ انتقال‌ها",
+    tftp_clear_log: "پاک کردن لاگ",
+    tftp_no_log: "هنوز انتقالی نبوده.",
+    tftp_need: "IP سرور و نام فایل را وارد کنید.",
+    tftp_read: "خواندن",
+    tftp_write: "نوشتن",
+    tftp_running: "در حال انتقال",
     download_label: "دانلود", upload_label: "آپلود",
     wol_btn: "فرستادن Magic Packet",
     wol_hint: "دستگاه مقصد باید Wake-on-LAN رو توی BIOS/تنظیمات شبکه فعال داشته باشه و به همون شبکه‌ی فیزیکی وصل باشه.",
@@ -1964,6 +2084,38 @@ const translations = {
     share_no_files: "No files yet.",
     share_remove: "Remove",
     share_uploading: "Uploading...",
+    tftp_lede: "TFTP server and client for switches and routers: back up configs, push IOS/firmware, or pull files from another TFTP server.",
+    tftp_server: "Server",
+    tftp_allow_write: "Allow devices to upload",
+    tftp_start: "Start server",
+    tftp_stop: "Stop server",
+    tftp_hint: "The UDP port stays closed until you start it. TFTP has no password: anyone on the LAN can read the files (and write, if uploads are on). Stop it when you are done.",
+    tftp_down: "Off.",
+    tftp_on_rw: "On — UDP {port} is open on the LAN. Read and write allowed.",
+    tftp_on_ro: "On — UDP {port} is open on the LAN. Read-only.",
+    tftp_cmd_backup: "Back up config",
+    tftp_cmd_image: "Pull file / IOS",
+    tftp_cmd_mt: "MikroTik",
+    tftp_cmd_port_warn: "Port is not 69; Cisco IOS normally only talks to 69.",
+    tftp_files: "Files in the TFTP folder",
+    tftp_drop: "Drop a file (IOS, firmware, config) here, or click",
+    tftp_drop_sub: "Files land in the TFTP root; devices request them by this name.",
+    tftp_download: "Download",
+    tftp_client: "Client",
+    tftp_get: "Get from server",
+    tftp_put: "Put to server",
+    tftp_host_ph: "TFTP server IP",
+    tftp_remote_ph: "File name on the server",
+    tftp_local_ph: "File name in the TFTP folder (optional)",
+    tftp_run: "Run",
+    tftp_client_hint: "Get saves into the TFTP folder (download it from the list above). Put sends a file from that folder.",
+    tftp_log: "Transfer log",
+    tftp_clear_log: "Clear log",
+    tftp_no_log: "No transfers yet.",
+    tftp_need: "Enter the server IP and a file name.",
+    tftp_read: "read",
+    tftp_write: "write",
+    tftp_running: "transferring",
     download_label: "Download", upload_label: "Upload",
     wol_btn: "Send Magic Packet",
     wol_hint: "The target device must have Wake-on-LAN enabled in BIOS/network settings and be on the same physical network.",
@@ -2265,6 +2417,7 @@ function switchTab(id) {
   if (id === "report") paintReport();
   if (id === "speedtest") loadOpenSpeedTest();
   if (id === "fileshare") loadFileShare();
+  if (id === "tftp") loadTftp();
 }
 tabs.forEach(tb => tb.onclick = () => switchTab(tb.dataset.panel));
 
@@ -3353,6 +3506,168 @@ function shareMakeQr(text) {
     el.innerHTML = `<svg class="qr-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
   } catch (_) { el.innerHTML = ""; }
 }
+// ---------------------------------------------------------------- TFTP
+let tftpPoll = null;
+function tftpErr(msg) {
+  const el = document.getElementById("tftpStatus");
+  el.className = "empty";
+  el.textContent = t("error_prefix") + msg;
+}
+function tftpCopyBtn(text) {
+  return `<button type="button" class="action secondary tftp-copy" data-text="${esc(text)}">${esc(t("ost_copy").split(" ")[0])}</button>`;
+}
+function paintTftp(data) {
+  const up = !!data.up;
+  document.getElementById("tftpStartBtn").disabled = up;
+  document.getElementById("tftpStopBtn").disabled = !up;
+  const status = document.getElementById("tftpStatus");
+  status.className = "empty";
+  status.textContent = up ? t(data.write ? "tftp_on_rw" : "tftp_on_ro").replace("{port}", data.port) : t("tftp_down");
+  if (up) {
+    document.getElementById("tftpPort").value = data.port;
+    document.getElementById("tftpWrite").checked = !!data.write;
+  }
+
+  const cmds = document.getElementById("tftpCmds");
+  if (!up) {
+    cmds.innerHTML = "";
+  } else {
+    const ips = (data.ips || []).map(x => x.ip);
+    const ip = ips[0] || "<this-laptop-ip>";
+    const first = (data.files || [])[0];
+    const img = first ? first.name : "c2960-image.bin";
+    const lines = [];
+    if (ips.length > 1) lines.push(["IP", ips.join("  ·  ")]);
+    if (data.write) lines.push([t("tftp_cmd_backup"), `copy running-config tftp://${ip}/switch-confg`]);
+    lines.push([t("tftp_cmd_image"), `copy tftp://${ip}/${img} flash:`]);
+    lines.push([t("tftp_cmd_mt"), `/tool fetch mode=tftp address=${ip} src-path=${img}`]);
+    let html = lines.map(([lbl, c]) => `
+      <div class="tftp-cmd"><span class="lbl">${esc(lbl)}</span><code>${esc(c)}</code>${lbl === "IP" ? "" : tftpCopyBtn(c)}</div>`).join("");
+    if (Number(data.port) !== 69) html += `<div class="hint" style="margin:4px 0 0">${esc(t("tftp_cmd_port_warn"))}</div>`;
+    cmds.innerHTML = html;
+  }
+
+  const files = data.files || [];
+  const filesEl = document.getElementById("tftpFiles");
+  document.getElementById("tftpLocalList").innerHTML = files.map(f => `<option value="${esc(f.name)}">`).join("");
+  if (!files.length) {
+    filesEl.className = "empty";
+    filesEl.textContent = t("share_no_files");
+  } else {
+    filesEl.className = "";
+    filesEl.innerHTML = files.map(f => `
+      <div class="share-file">
+        <span class="name">${esc(f.name)}</span>
+        <span class="sz">${esc(fmtBytes(f.size || 0))}</span>
+        <a class="action secondary" href="/api/tftp/download?name=${encodeURIComponent(f.name)}">${esc(t("tftp_download"))}</a>
+        <button type="button" class="action secondary tftp-del" data-name="${esc(f.name)}">${esc(t("share_remove"))}</button>
+      </div>`).join("");
+    filesEl.querySelectorAll(".tftp-del").forEach(btn => { btn.onclick = () => tftpPost("/api/tftp/delete", {name: btn.dataset.name}); });
+  }
+
+  const jobs = data.jobs || [];
+  document.getElementById("tftpJobs").innerHTML = jobs.map(j => {
+    const pct = j.total ? Math.min(100, Math.round(100 * (j.done || 0) / j.total)) : (j.state === "done" ? 100 : 0);
+    const state = j.state === "done" ? `<span class="ok">✓</span>` : j.state === "error" ? `<span class="bad">✗</span>` : `<span class="spin"></span>`;
+    const arrow = j.action === "get" ? `${j.host}:${j.remote} → ${j.local}` : `${j.local} → ${j.host}:${j.remote}`;
+    const meta = `${fmtBytes(j.done || 0)}${j.total ? " / " + fmtBytes(j.total) : ""}${j.secs != null ? " · " + j.secs + "s" : ""}`;
+    return `<div class="tftp-row">${state}<span class="mono">${esc(j.action.toUpperCase())} ${esc(arrow)}</span>
+      <span class="dim">${esc(meta)}</span>${j.error ? `<span class="bad">${esc(j.error)}</span>` : ""}
+      ${j.state === "running" ? `<div class="tftp-bar"><i style="width:${pct}%"></i></div>` : ""}</div>`;
+  }).join("");
+
+  const log = data.log || [];
+  const logEl = document.getElementById("tftpLog");
+  if (!log.length) {
+    logEl.className = "empty";
+    logEl.textContent = t("tftp_no_log");
+  } else {
+    logEl.className = "";
+    logEl.innerHTML = log.map(r => {
+      const when = new Date((r.ts || 0) * 1000).toLocaleTimeString();
+      const op = r.op === "write" ? "⬆ " + t("tftp_write") : "⬇ " + t("tftp_read");
+      const res = r.ok ? `<span class="ok">✓</span> <span class="dim">${esc(fmtBytes(r.bytes || 0))}${r.secs != null ? " · " + r.secs + "s" : ""}</span>`
+                       : `<span class="bad">✗ ${esc(r.error || "")}</span>`;
+      return `<div class="tftp-row"><span class="dim">${esc(when)}</span><span class="mono">${esc(r.peer || "")}</span>
+        <span>${esc(op)}</span><span class="mono">${esc(r.file || "")}</span>${res}</div>`;
+    }).join("");
+  }
+
+  document.querySelectorAll("#tftp .tftp-copy").forEach(btn => {
+    btn.onclick = async () => {
+      const prev = btn.textContent;
+      try { await navigator.clipboard.writeText(btn.dataset.text); btn.textContent = t("copied"); }
+      catch (_) { btn.textContent = t("error_prefix"); }
+      setTimeout(() => { btn.textContent = prev; }, 1200);
+    };
+  });
+
+  // Keep refreshing while the server is on or a client transfer is running, only on this tab.
+  const busy = up || jobs.some(j => j.state === "running");
+  const visible = document.getElementById("tftp").classList.contains("active");
+  clearTimeout(tftpPoll);
+  if (busy && visible) tftpPoll = setTimeout(loadTftp, jobs.some(j => j.state === "running") ? 700 : 3000);
+}
+async function loadTftp() {
+  try {
+    const res = await fetch("/api/tftp");
+    paintTftp(await res.json());
+  } catch (err) { tftpErr(err.message || err); }
+}
+async function tftpPost(url, body, btn) {
+  if (btn) setLoading(btn, true);
+  try {
+    const res = await fetch(url, {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body || {})
+    });
+    const data = await res.json();
+    if (data.error) { tftpErr(data.error); return; }
+    paintTftp(data);
+  } catch (err) { tftpErr(err.message || err); }
+  finally { if (btn) setLoading(btn, false); }
+}
+async function tftpUpload(files) {
+  if (!files || !files.length) return;
+  const drop = document.getElementById("tftpDrop");
+  const strong = drop.querySelector("strong");
+  const prev = strong.textContent;
+  strong.textContent = t("share_uploading");
+  const body = new FormData();
+  Array.from(files).forEach(f => body.append("files", f));
+  try {
+    const res = await fetch("/api/tftp/upload", {method: "POST", body});
+    const data = await res.json();
+    if (data.error) { tftpErr(data.error); return; }
+    paintTftp(data);
+  } catch (err) { tftpErr(err.message || err); }
+  finally { strong.textContent = prev; document.getElementById("tftpFileInput").value = ""; }
+}
+document.getElementById("tftpStartBtn").onclick = e => tftpPost("/api/tftp/start", {
+  port: Number(document.getElementById("tftpPort").value) || 69,
+  write: document.getElementById("tftpWrite").checked
+}, e.currentTarget);
+document.getElementById("tftpStopBtn").onclick = e => tftpPost("/api/tftp/stop", {}, e.currentTarget);
+document.getElementById("tftpStopBtn").disabled = true;
+document.getElementById("tftpClearLogBtn").onclick = e => tftpPost("/api/tftp/clearlog", {}, e.currentTarget);
+document.getElementById("tftpRunBtn").onclick = e => {
+  const host = document.getElementById("tftpHost").value.trim();
+  const remote = document.getElementById("tftpRemote").value.trim();
+  const local = document.getElementById("tftpLocal").value.trim();
+  const action = document.getElementById("tftpAction").value;
+  if (!host || (!remote && !(action === "put" && local))) { tftpErr(t("tftp_need")); return; }
+  tftpPost("/api/tftp/client", {
+    action, host, remote: remote || local, local,
+    port: Number(document.getElementById("tftpCPort").value) || 69,
+    blksize: Number(document.getElementById("tftpBlk").value) || 1468
+  }, e.currentTarget);
+};
+document.getElementById("tftpFileInput").onchange = e => tftpUpload(e.target.files);
+const tftpDrop = document.getElementById("tftpDrop");
+tftpDrop.addEventListener("dragover", e => { e.preventDefault(); tftpDrop.classList.add("drag"); });
+tftpDrop.addEventListener("dragleave", () => tftpDrop.classList.remove("drag"));
+tftpDrop.addEventListener("drop", e => { e.preventDefault(); tftpDrop.classList.remove("drag"); tftpUpload(e.dataTransfer.files); });
+
 document.getElementById("shareStartBtn").onclick = () => shareToggle(true);
 document.getElementById("shareStopBtn").onclick = () => shareToggle(false);
 document.getElementById("shareOpenBtn").disabled = true;
