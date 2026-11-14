@@ -1,12 +1,12 @@
 # NetToolbox
 
-**v2.7.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
+**v2.8.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
 
 One Docker container. One web UI. Run it on your laptop, workstation, server, home lab, or client site.
 
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sajadprp/nettoolbox?logo=docker)](https://hub.docker.com/r/sajadprp/nettoolbox)
-[![Version](https://img.shields.io/badge/version-2.7.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
+[![Version](https://img.shields.io/badge/version-2.8.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)](https://www.docker.com/)
 [![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)](https://hub.docker.com/r/sajadprp/nettoolbox)
@@ -19,7 +19,7 @@ Demo walkthrough (sample lab data only — not a real customer network): This li
 
 Docker Hub: https://hub.docker.com/r/sajadprp/nettoolbox
 
-Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.7.0`
+Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.8.0`
 
 ### 1. Pull the Docker image
 
@@ -30,7 +30,7 @@ docker pull sajadprp/nettoolbox:latest
 Or pin a version:
 
 ```bash
-docker pull sajadprp/nettoolbox:v2.7.0
+docker pull sajadprp/nettoolbox:v2.8.0
 ```
 
 ### 2. Run NetToolbox
@@ -41,6 +41,8 @@ docker run -d \
   --net=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
+  -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
   --name nettoolbox \
   sajadprp/nettoolbox:latest
 ```
@@ -91,8 +93,10 @@ docker run -d \
   --net=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
+  -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
   --name nettoolbox \
-  sajadprp/nettoolbox:v2.7.0
+  sajadprp/nettoolbox:v2.8.0
 ```
 
 ## Build from source
@@ -109,31 +113,36 @@ docker build -t nettoolbox .
 **Copy a pre-built image to another laptop (USB, no rebuild)**
 
 ```bash
-docker save nettoolbox:v2.7.0 nettoolbox:latest | gzip > nettoolbox-v2.7.0.tar.gz
-gzip -dc nettoolbox-v2.7.0.tar.gz | docker load
+docker save nettoolbox:v2.8.0 nettoolbox:latest | gzip > nettoolbox-v2.8.0.tar.gz
+gzip -dc nettoolbox-v2.8.0.tar.gz | docker load
+mkdir -p ~/.config/nettoolbox/ssh-keys && chmod 700 ~/.config/nettoolbox/ssh-keys
 docker run -d --restart unless-stopped --net=host \
-  --cap-add=NET_ADMIN --cap-add=NET_RAW --name nettoolbox nettoolbox:v2.7.0
+  --cap-add=NET_ADMIN --cap-add=NET_RAW \
+  -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
+  --name nettoolbox nettoolbox:v2.8.0
 ```
 
 ## Versions
 
 `main` is always **v2**. v1 stays as a git tag.
 
-| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | v2.6 | **v2.7** |
-|---|---|---|---|---|---|---|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Compression lab (Huffman, LZW, Deflate, bzip2, LZMA, Zstd, Brotli), quick/full Whois | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | v2.6 | v2.7 | **v2.8** |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Compression lab (Huffman, LZW, Deflate, bzip2, LZMA, Zstd, Brotli), quick/full Whois | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| SSH key manager (generate, install on server, key login in terminal) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ```bash
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
@@ -213,6 +222,12 @@ Text, URL, or WiFi join. Copy or download PNG. WiFi QR from this laptop’s netw
 
 Put a firmware image, PDF, or script on this laptop. Start sharing from the File drop tab; phones and other PCs on the same LAN open a clean download page (link or QR). Stop sharing and port 8765 closes. LAN visitors can only download; uploads stay on the dashboard.
 
+### SSH keys
+
+Generate Ed25519, RSA 4096/3072, or ECDSA keys (optional passphrase) or import an existing private key. Each key shows its SHA256 and MD5 fingerprints and a one-click **Copy public key** for Hetzner, other cloud panels, or `authorized_keys`. **Install key on server** logs in once with the password and appends the key (like `ssh-copy-id`; the password is not stored). **Test key login** checks a key-only login, and the SSH/Telnet terminal has a key picker so you connect without a password.
+
+Keys are stored on the host in `~/.config/nettoolbox/ssh-keys` (mounted by `run.sh`, owned by your user), so they survive container rebuilds and also work from the laptop: `ssh -i ~/.config/nettoolbox/ssh-keys/<name> root@<server>`. The tab warns if that folder is not mounted.
+
 ### Compression lab
 
 Drop a file or paste text and compare Huffman, LZW, Deflate/gzip, bzip2, LZMA/xz, Zstandard, and Brotli side by side: compressed size, ratio, bits per byte, compress/decompress time, and a round-trip check. The order-0 entropy is shown as the floor for byte-wise coders. Huffman (canonical, codes limited to 15 bits) and LZW (9–16 bit codes) are implemented in pure Python, with their own `.huff` / `.lzw` formats. The Huffman card shows the code table (symbol, count, probability, code) and the coding efficiency against entropy. Any algorithm's output can be downloaded, and the Decompress box detects `.huff .lzw .gz .bz2 .xz .zst .br` automatically. Levels: fast, balanced, max. Limits: 16 MB for Huffman/LZW, 64 MB for comparison. Everything runs locally.
@@ -235,6 +250,8 @@ docker run -d \
   --net=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
+  -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
   --name nettoolbox \
   sajadprp/nettoolbox:latest
 ```
@@ -270,6 +287,7 @@ This tool is powerful. Understand what it does before you run it.
 - **Dashboard / terminal / RDP are loopback-only** (`8642`, `7681`, `7682`).
 - **OpenSpeedTest (`:3000`) is off until you start it.** Other devices on the LAN can then measure speed to this laptop (static HTML/JS, no shell). Stop it when you are done.
 - **File drop (`:8765`) is off until you start it.** Other devices on the LAN can then download the files you staged. The LAN page is read-only (no upload, no directory escape). Stop it when you are done.
+- **SSH private keys** stay in `~/.config/nettoolbox/ssh-keys` (mode 700/600). Only the public key is meant to leave the laptop; set a passphrase on keys you download or copy elsewhere.
 - **TFTP (UDP `69`) is off until you start it.** TFTP has no authentication: while it runs, anyone on the LAN can read the TFTP folder, and write to it if uploads are allowed. Paths cannot leave that folder. Stop it when you are done.
 - **The terminal is a real shell** with ssh/telnet and the container’s privileges.
 - **RDP passwords** go to FreeRDP on stdin, not on the command line.
@@ -286,11 +304,13 @@ docker run -d \
   --net=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
+  -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
   --name nettoolbox \
   sajadprp/nettoolbox:latest
 ```
 
-Treat container state as disposable unless you mount your own volumes.
+Treat container state as disposable unless you mount your own volumes. The `-v …/ssh-keys` mount keeps SSH keys from the SSH keys tab across rebuilds; without it the tab shows a warning.
 
 ## Linux / Windows / macOS
 
@@ -310,6 +330,7 @@ docker run -d `
   --net=host `
   --cap-add=NET_ADMIN `
   --cap-add=NET_RAW `
+  -v "${HOME}/.nettoolbox/ssh-keys:/data/ssh-keys" `
   --name nettoolbox `
   sajadprp/nettoolbox:latest
 ```
@@ -321,7 +342,7 @@ docker run -d `
 ```text
 sajadprp/nettoolbox:latest
 sajadprp/nettoolbox:v2
-sajadprp/nettoolbox:v2.7.0
+sajadprp/nettoolbox:v2.8.0
 ```
 
 ## How it compares

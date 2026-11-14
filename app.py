@@ -24,6 +24,7 @@ from netmap import topology_from_payload, topology_xlsx
 from tftp import TftpError, tftp_get, tftp_put
 from tftp import resolve as tftp_resolve
 import compress as complab
+import sshkeys
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
@@ -1575,6 +1576,113 @@ def tftp_client():
         daemon=True,
     ).start()
     return jsonify(_tftp_payload())
+
+
+# --------------------------------------------------------------------------- SSH keys
+
+def _sshkeys_payload():
+    return {"keys": sshkeys.list_keys(), "persistent": sshkeys.persistent(), "dir": sshkeys.KEY_DIR}
+
+
+def _ssh_target_args(body):
+    host = (body.get("host") or "").strip()
+    user = (body.get("user") or "").strip()
+    if not _valid_host(host):
+        raise sshkeys.SshKeyError("invalid host")
+    if user and not re.match(r"^[A-Za-z0-9._-]{1,64}$", user):
+        raise sshkeys.SshKeyError("invalid user name")
+    try:
+        port = int(body.get("port") or 22)
+    except (TypeError, ValueError):
+        raise sshkeys.SshKeyError("invalid port")
+    if not 1 <= port <= 65535:
+        raise sshkeys.SshKeyError("invalid port")
+    return host, port, user
+
+
+def _sshkey_call(fn):
+    try:
+        return fn()
+    except sshkeys.SshKeyError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "timed out"}), 504
+
+
+@app.route("/api/sshkeys")
+def sshkeys_list():
+    return _sshkey_call(lambda: jsonify(_sshkeys_payload()))
+
+
+@app.route("/api/sshkeys/generate", methods=["POST"])
+def sshkeys_generate():
+    body = request.json or {}
+
+    def run():
+        key = sshkeys.generate(
+            (body.get("name") or "").strip(), body.get("type") or "ed25519",
+            body.get("comment") or "", body.get("passphrase") or "",
+        )
+        return jsonify({**_sshkeys_payload(), "created": key["name"]})
+    return _sshkey_call(run)
+
+
+@app.route("/api/sshkeys/import", methods=["POST"])
+def sshkeys_import():
+    body = request.json or {}
+
+    def run():
+        key = sshkeys.import_key((body.get("name") or "").strip(), body.get("private") or "",
+                                 body.get("passphrase") or "")
+        return jsonify({**_sshkeys_payload(), "created": key["name"]})
+    return _sshkey_call(run)
+
+
+@app.route("/api/sshkeys/delete", methods=["POST"])
+def sshkeys_delete():
+    body = request.json or {}
+
+    def run():
+        sshkeys.delete((body.get("name") or "").strip())
+        return jsonify(_sshkeys_payload())
+    return _sshkey_call(run)
+
+
+@app.route("/api/sshkeys/download")
+def sshkeys_download():
+    name = (request.args.get("name") or "").strip()
+    part = "public" if request.args.get("part") == "public" else "private"
+
+    def run():
+        data = sshkeys.read_file(name, part)
+        fname = name + (".pub" if part == "public" else "")
+        resp = Response(data, mimetype="application/octet-stream")
+        resp.headers["Content-Disposition"] = f'attachment; filename="{fname}"'
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+    return _sshkey_call(run)
+
+
+@app.route("/api/sshkeys/install", methods=["POST"])
+def sshkeys_install():
+    body = request.json or {}
+
+    def run():
+        host, port, user = _ssh_target_args(body)
+        out = sshkeys.install((body.get("name") or "").strip(), host, port, user, body.get("password") or "")
+        return jsonify({**_sshkeys_payload(), "ok": True, "output": out})
+    return _sshkey_call(run)
+
+
+@app.route("/api/sshkeys/test", methods=["POST"])
+def sshkeys_test():
+    body = request.json or {}
+
+    def run():
+        host, port, user = _ssh_target_args(body)
+        ok, out = sshkeys.test((body.get("name") or "").strip(), host, port, user, body.get("passphrase") or "")
+        return jsonify({"ok": ok, "output": out})
+    return _sshkey_call(run)
 
 
 # --------------------------------------------------------------------------- Compression lab

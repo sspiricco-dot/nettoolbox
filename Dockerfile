@@ -75,6 +75,7 @@ COPY audit.py /app/audit.py
 COPY share_http.py /app/share_http.py
 COPY tftp.py /app/tftp.py
 COPY compress.py /app/compress.py
+COPY sshkeys.py /app/sshkeys.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh

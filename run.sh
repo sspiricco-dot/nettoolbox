@@ -7,12 +7,18 @@ docker_nm=""
 if [ -d /etc/NetworkManager/system-connections ]; then
   docker_nm="-v /etc/NetworkManager/system-connections:/host/nm-connections:ro"
 fi
+# SSH keys made in the SSH keys tab live here on the host, so they survive
+# container rebuilds. Losing a key can lock you out of a server.
+ssh_dir="${NETTOOLBOX_SSH_HOST_DIR:-$HOME/.config/nettoolbox/ssh-keys}"
+mkdir -p "$ssh_dir" && chmod 700 "$ssh_dir"
 docker run -d \
   --restart unless-stopped \
   --net=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   $docker_nm \
+  -v "$ssh_dir:/data/ssh-keys" \
+  -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
   --name nettoolbox \
   nettoolbox
 
@@ -20,3 +26,4 @@ echo "NetToolbox is running at http://127.0.0.1:8642"
 echo "LAN OpenSpeedTest (port 3000) stays off until you start it in the Speed Test tab"
 echo "LAN file drop (port 8765) stays off until you start it in the File drop tab"
 echo "TFTP server (UDP 69) stays off until you start it in the TFTP tab"
+echo "SSH keys are stored on the host in $ssh_dir"

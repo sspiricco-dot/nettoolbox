@@ -281,6 +281,25 @@
   .share-file .sz { color: var(--ink-dim); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
   #shareQr { margin-top: 8px; }
   .tftp-port { min-width: 0; width: 90px; }
+  .sk-warn {
+    border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line)); color: var(--warn);
+    background: color-mix(in srgb, var(--warn) 10%, var(--surface-2));
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; font-size: 13px; line-height: 1.6;
+  }
+  .sk-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; background: var(--surface-2); }
+  .sk-card h3 { margin: 0 0 6px; font-size: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sk-card h3 .nm { font-family: ui-monospace, Menlo, monospace; direction: ltr; unicode-bidi: isolate; }
+  .sk-meta { color: var(--ink-dim); font-size: 12px; font-family: ui-monospace, Menlo, monospace; direction: ltr; text-align: left; line-height: 1.7; word-break: break-all; }
+  .sk-pub {
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px; direction: ltr; text-align: left;
+    background: var(--surface-solid); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 10px; margin: 8px 0; word-break: break-all; user-select: all; color: var(--ink);
+  }
+  .sk-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sk-actions .action { padding: 6px 12px; font-size: 12.5px; }
+  .sk-steps { margin: 4px 0 0; padding-inline-start: 20px; line-height: 1.9; font-size: 13px; color: var(--ink-dim); }
+  .sk-steps code { font-family: ui-monospace, Menlo, monospace; color: var(--ink); direction: ltr; unicode-bidi: isolate; }
+  details.sk-import summary { cursor: pointer; color: var(--accent2); font-size: 13px; margin-top: 4px; }
   .cz-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 4px 0 14px; }
   .cz-stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .cz-stat .v { font-family: ui-monospace, Menlo, monospace; font-size: 18px; font-weight: 700; direction: ltr; unicode-bidi: isolate; }
@@ -768,6 +787,10 @@
         <button class="tab" data-panel="scripts">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
           <span data-i18n="nav_scripts">اسکریپت‌ها</span>
+        </button>
+        <button class="tab" data-panel="sshkeys">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+          <span data-i18n="nav_sshkeys">کلیدهای SSH</span>
         </button>
         <button class="tab" data-panel="terminal">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
@@ -1550,6 +1573,76 @@
         </div>
       </section>
 
+      <section id="sshkeys" class="panel">
+        <header class="panel-head">
+          <div class="kicker">ED25519 · RSA · ECDSA</div>
+          <h2 data-i18n="nav_sshkeys">کلیدهای SSH</h2>
+          <p class="lede" data-i18n="sk_lede">کلید SSH بسازید، کلید عمومی را به Hetzner یا هر سرور دیگری بدهید و بدون پسورد وصل شوید.</p>
+        </header>
+        <div id="skPersistWarn" class="sk-warn" hidden></div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="sk_new">کلید جدید</div>
+          <div class="row">
+            <input id="skName" data-i18n-placeholder="sk_name_ph" placeholder="اسم کلید (مثلاً hetzner)" style="min-width:170px" />
+            <select id="skType">
+              <option value="ed25519" data-i18n="sk_t_ed">Ed25519 (پیشنهادی)</option>
+              <option value="rsa4096">RSA 4096</option>
+              <option value="rsa3072">RSA 3072</option>
+              <option value="ecdsa521">ECDSA P-521</option>
+            </select>
+            <input id="skComment" data-i18n-placeholder="sk_comment_ph" placeholder="توضیح (مثلاً ssp@laptop)" style="min-width:170px" />
+            <input id="skPass" type="password" autocomplete="new-password" data-i18n-placeholder="sk_pass_ph" placeholder="passphrase (اختیاری)" style="min-width:170px" />
+            <button class="action" id="skGenBtn" data-i18n="sk_gen">ساخت کلید</button>
+          </div>
+          <div class="hint" data-i18n="sk_gen_hint">Ed25519 کوتاه، سریع و امن است و Hetzner، لینوکس‌های جدید، GitHub و MikroTik 7 همه قبولش دارند. RSA 4096 برای دستگاه‌های قدیمی. passphrase کلید خصوصی را رمز می‌کند؛ اگر کلید را دانلود یا جابه‌جا می‌کنید، بگذارید.</div>
+          <details class="sk-import">
+            <summary data-i18n="sk_import">وارد کردن کلید خصوصی موجود</summary>
+            <div class="row" style="margin-top:10px">
+              <input id="skImpName" data-i18n-placeholder="sk_name_ph" placeholder="اسم کلید" style="min-width:170px" />
+              <input id="skImpPass" type="password" autocomplete="off" data-i18n-placeholder="sk_imp_pass_ph" placeholder="passphrase (اگر دارد)" style="min-width:170px" />
+              <button class="action secondary" id="skImpBtn" data-i18n="sk_import_btn">وارد کردن</button>
+            </div>
+            <textarea id="skImpText" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
+          </details>
+          <div id="skMsg" class="empty"></div>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="sk_list">کلیدها</div>
+          <div id="skList" class="empty" data-i18n="sk_none">هنوز کلیدی نیست.</div>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="sk_server">سرور</div>
+          <div class="row">
+            <select id="skUseKey" style="min-width:150px"></select>
+            <input id="skHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" style="min-width:160px" />
+            <input id="skPort" class="tftp-port" type="number" min="1" max="65535" value="22" title="port" />
+            <input id="skUser" value="root" style="min-width:110px" data-i18n-placeholder="term_user_placeholder" />
+          </div>
+          <div class="row">
+            <input id="skSrvPass" type="password" autocomplete="off" data-i18n-placeholder="sk_srv_pass_ph" placeholder="پسورد سرور (فقط برای نصب کلید)" style="min-width:220px" />
+            <button class="action secondary" id="skInstallBtn" data-i18n="sk_install">نصب کلید روی سرور</button>
+            <input id="skTestPass" type="password" autocomplete="off" data-i18n-placeholder="sk_test_pass_ph" placeholder="passphrase کلید (اگر دارد)" style="min-width:180px" />
+            <button class="action secondary" id="skTestBtn" data-i18n="sk_test">تست ورود با کلید</button>
+            <button class="action" id="skConnectBtn" data-i18n="sk_connect">اتصال در ترمینال</button>
+          </div>
+          <div class="hint" data-i18n="sk_srv_hint">«نصب کلید» یک بار با پسورد وصل می‌شود و کلید عمومی را به ~/.ssh/authorized_keys اضافه می‌کند (مثل ssh-copy-id). پسورد ذخیره نمی‌شود.</div>
+          <pre class="rawout" id="skOut" style="max-height:220px"></pre>
+        </div>
+
+        <div class="bezel">
+          <div class="bezel-label" data-i18n="sk_howto">راهنمای Hetzner</div>
+          <ol class="sk-steps">
+            <li data-i18n="sk_h1">یک کلید Ed25519 بسازید و «کپی کلید عمومی» را بزنید.</li>
+            <li data-i18n="sk_h2">در Hetzner Cloud Console: پروژه ← Security ← SSH Keys ← Add SSH key، کلید را paste کنید. یا موقع ساخت سرور در بخش SSH keys اضافه‌اش کنید.</li>
+            <li data-i18n="sk_h3">بعد از ساخته شدن سرور، IP را در بخش «سرور» بالا بزنید، یوزر root، و «اتصال در ترمینال».</li>
+            <li data-i18n="sk_h4">اثر انگشت MD5 که Hetzner نشان می‌دهد باید با MD5 همین کلید یکی باشد.</li>
+          </ol>
+        </div>
+      </section>
+
       <section id="terminal" class="panel">
         <div class="row">
           <select id="termProto">
@@ -1559,6 +1652,7 @@
           <input id="termHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" />
           <input id="termPort" data-i18n-placeholder="term_port_placeholder" placeholder="پورت (پیش‌فرض 22/23)" style="min-width:160px" />
           <input id="termUser" data-i18n-placeholder="term_user_placeholder" placeholder="یوزرنیم (فقط SSH)" />
+          <select id="termKey" title="SSH key"><option value="" data-i18n="sk_no_key">بدون کلید (پسورد)</option></select>
           <button class="action" id="termConnectBtn" data-i18n="term_connect_btn">اتصال</button>
           <button class="action secondary" id="termBlankBtn" data-i18n="term_blank_btn">ترمینال خالی</button>
         </div>
@@ -1754,6 +1848,52 @@ const translations = {
     share_no_files: "هنوز فایلی نیست.",
     share_remove: "حذف",
     share_uploading: "در حال آپلود...",
+    nav_sshkeys: "کلیدهای SSH",
+    sk_lede: "کلید SSH بسازید، کلید عمومی را به Hetzner یا هر سرور دیگری بدهید و بدون پسورد وصل شوید.",
+    sk_new: "کلید جدید",
+    sk_name_ph: "اسم کلید (مثلاً hetzner)",
+    sk_t_ed: "Ed25519 (پیشنهادی)",
+    sk_comment_ph: "توضیح (مثلاً ssp@laptop)",
+    sk_pass_ph: "passphrase (اختیاری)",
+    sk_gen: "ساخت کلید",
+    sk_gen_hint: "Ed25519 کوتاه، سریع و امن است و Hetzner، لینوکس‌های جدید، GitHub و MikroTik 7 همه قبولش دارند. RSA 4096 برای دستگاه‌های قدیمی. passphrase کلید خصوصی را رمز می‌کند؛ اگر کلید را دانلود یا جابه‌جا می‌کنید، بگذارید.",
+    sk_import: "وارد کردن کلید خصوصی موجود",
+    sk_imp_pass_ph: "passphrase (اگر دارد)",
+    sk_import_btn: "وارد کردن",
+    sk_list: "کلیدها",
+    sk_none: "هنوز کلیدی نیست.",
+    sk_server: "سرور",
+    sk_srv_pass_ph: "پسورد سرور (فقط برای نصب کلید)",
+    sk_install: "نصب کلید روی سرور",
+    sk_test_pass_ph: "passphrase کلید (اگر دارد)",
+    sk_test: "تست ورود با کلید",
+    sk_connect: "اتصال در ترمینال",
+    sk_srv_hint: "«نصب کلید» یک بار با پسورد وصل می‌شود و کلید عمومی را به ~/.ssh/authorized_keys اضافه می‌کند (مثل ssh-copy-id). پسورد ذخیره نمی‌شود.",
+    sk_howto: "راهنمای Hetzner",
+    sk_h1: "یک کلید Ed25519 بسازید و «کپی کلید عمومی» را بزنید.",
+    sk_h2: "در Hetzner Cloud Console: پروژه ← Security ← SSH Keys ← Add SSH key، کلید را paste کنید. یا موقع ساخت سرور در بخش SSH keys اضافه‌اش کنید.",
+    sk_h3: "بعد از ساخته شدن سرور، IP را در بخش «سرور» بالا بزنید، یوزر root، و «اتصال در ترمینال».",
+    sk_h4: "اثر انگشت MD5 که Hetzner نشان می‌دهد باید با MD5 همین کلید یکی باشد.",
+    sk_no_key: "بدون کلید (پسورد)",
+    sk_copy_pub: "کپی کلید عمومی",
+    sk_dl_pub: "دانلود .pub",
+    sk_dl_priv: "دانلود کلید خصوصی",
+    sk_delete: "حذف",
+    sk_confirm_del: "مطمئنید؟ حذف قطعی",
+    sk_use: "استفاده",
+    sk_encrypted: "passphrase دارد",
+    sk_plain: "بدون passphrase",
+    sk_imported: "وارد شده",
+    sk_installed_on: "نصب شده روی",
+    sk_created_ok: "کلید ساخته شد. کلید عمومی را کپی کنید و به سرور بدهید.",
+    sk_need_name: "اسم کلید را وارد کنید.",
+    sk_need_key: "اول یک کلید بسازید یا انتخاب کنید.",
+    sk_need_host: "host یا IP سرور را وارد کنید.",
+    sk_install_ok: "کلید نصب شد. حالا «تست ورود با کلید» را بزنید.",
+    sk_test_ok: "ورود با کلید موفق بود ✓",
+    sk_test_fail: "ورود با کلید ناموفق بود ✗",
+    sk_not_persistent: "هشدار: پوشه‌ی کلیدها ({dir}) روی هاست mount نشده؛ با پاک شدن یا آپدیت کانتینر کلیدها از بین می‌روند و ممکن است به سرور دسترسی نداشته باشید. کانتینر را با run.sh جدید اجرا کنید یا از کلید خصوصی نسخه‌ی پشتیبان دانلود کنید.",
+    sk_priv_warn: "کلید خصوصی را به کسی ندهید و جایی آپلود نکنید. فقط کلید عمومی (.pub) به سرور داده می‌شود.",
     cz_lede: "یک فایل یا متن را با هافمن، LZW، Deflate، bzip2، LZMA، Zstandard و Brotli فشرده کنید، نتیجه‌ها را کنار هم ببینید و خروجی را دانلود کنید.",
     nav_compress: "فشرده‌سازی",
     cz_drop: "فایل را بکشید اینجا یا کلیک کنید",
@@ -2203,6 +2343,52 @@ const translations = {
     share_no_files: "No files yet.",
     share_remove: "Remove",
     share_uploading: "Uploading...",
+    nav_sshkeys: "SSH keys",
+    sk_lede: "Create an SSH key, give the public key to Hetzner or any server, and log in without a password.",
+    sk_new: "New key",
+    sk_name_ph: "Key name (e.g. hetzner)",
+    sk_t_ed: "Ed25519 (recommended)",
+    sk_comment_ph: "Comment (e.g. ssp@laptop)",
+    sk_pass_ph: "Passphrase (optional)",
+    sk_gen: "Generate key",
+    sk_gen_hint: "Ed25519 is short, fast, and secure, and Hetzner, modern Linux, GitHub, and MikroTik 7 all accept it. Use RSA 4096 for older devices. A passphrase encrypts the private key; set one if you download or move the key.",
+    sk_import: "Import an existing private key",
+    sk_imp_pass_ph: "Passphrase (if any)",
+    sk_import_btn: "Import",
+    sk_list: "Keys",
+    sk_none: "No keys yet.",
+    sk_server: "Server",
+    sk_srv_pass_ph: "Server password (only to install the key)",
+    sk_install: "Install key on server",
+    sk_test_pass_ph: "Key passphrase (if any)",
+    sk_test: "Test key login",
+    sk_connect: "Connect in terminal",
+    sk_srv_hint: "\"Install key\" logs in once with the password and appends the public key to ~/.ssh/authorized_keys (like ssh-copy-id). The password is not stored.",
+    sk_howto: "Hetzner guide",
+    sk_h1: "Generate an Ed25519 key and click \"Copy public key\".",
+    sk_h2: "In Hetzner Cloud Console: project → Security → SSH Keys → Add SSH key, and paste it. Or add it in the SSH keys step when you create the server.",
+    sk_h3: "Once the server is up, enter its IP in the Server box above, user root, and click \"Connect in terminal\".",
+    sk_h4: "The MD5 fingerprint Hetzner shows should match this key's MD5.",
+    sk_no_key: "No key (password)",
+    sk_copy_pub: "Copy public key",
+    sk_dl_pub: "Download .pub",
+    sk_dl_priv: "Download private key",
+    sk_delete: "Delete",
+    sk_confirm_del: "Sure? Delete forever",
+    sk_use: "Use",
+    sk_encrypted: "passphrase set",
+    sk_plain: "no passphrase",
+    sk_imported: "imported",
+    sk_installed_on: "Installed on",
+    sk_created_ok: "Key created. Copy the public key and give it to the server.",
+    sk_need_name: "Enter a key name.",
+    sk_need_key: "Create or pick a key first.",
+    sk_need_host: "Enter the server host or IP.",
+    sk_install_ok: "Key installed. Now click \"Test key login\".",
+    sk_test_ok: "Key login works ✓",
+    sk_test_fail: "Key login failed ✗",
+    sk_not_persistent: "Warning: the key folder ({dir}) is not mounted from the host, so keys disappear when the container is removed or updated and you could lose access to servers. Restart the container with the new run.sh, or download a backup of the private key.",
+    sk_priv_warn: "Never share or upload the private key. Only the public key (.pub) goes to servers.",
     cz_lede: "Compress a file or text with Huffman, LZW, Deflate, bzip2, LZMA, Zstandard, and Brotli, compare them side by side, and download the result.",
     nav_compress: "Compression",
     cz_drop: "Drop a file here, or click",
@@ -2580,6 +2766,7 @@ function switchTab(id) {
   if (id !== "rdp") exitRdpFullscreen();
   if (id === "link") loadLinkStatus();
   if (id === "scripts" || id === "terminal" || id === "rdp") loadScripts();
+  if (id === "sshkeys" || id === "terminal") loadSshKeys();
   if (id === "report") paintReport();
   if (id === "speedtest") loadOpenSpeedTest();
   if (id === "fileshare") loadFileShare();
@@ -3673,6 +3860,159 @@ function shareMakeQr(text) {
     el.innerHTML = `<svg class="qr-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
   } catch (_) { el.innerHTML = ""; }
 }
+// ---------------------------------------------------------------- SSH keys
+let skKeys = [];
+function skMsg(text, bad) {
+  const el = document.getElementById("skMsg");
+  el.className = "empty";
+  el.style.color = bad ? "var(--down)" : "";
+  el.textContent = text || "";
+}
+function skOut(text) { document.getElementById("skOut").textContent = text || ""; }
+function skFillSelects(selectName) {
+  const opts = skKeys.map(k => `<option value="${esc(k.name)}">${esc(k.name)} · ${esc(k.type)}</option>`).join("");
+  const use = document.getElementById("skUseKey");
+  const prev = selectName || use.value;
+  use.innerHTML = opts || `<option value="">—</option>`;
+  if (prev && skKeys.some(k => k.name === prev)) use.value = prev;
+  const term = document.getElementById("termKey");
+  const prevT = term.value;
+  term.innerHTML = `<option value="">${esc(t("sk_no_key"))}</option>` + opts;
+  if (prevT && skKeys.some(k => k.name === prevT)) term.value = prevT;
+}
+function paintSshKeys(data, selectName) {
+  skKeys = data.keys || [];
+  const warn = document.getElementById("skPersistWarn");
+  warn.hidden = !!data.persistent;
+  if (!data.persistent) warn.textContent = t("sk_not_persistent").replace("{dir}", data.dir || "");
+  skFillSelects(selectName);
+  const list = document.getElementById("skList");
+  if (!skKeys.length) { list.className = "empty"; list.textContent = t("sk_none"); return; }
+  list.className = "";
+  list.innerHTML = skKeys.map(k => `
+    <div class="sk-card">
+      <h3><span class="nm">${esc(k.name)}</span>
+        <span class="pill up">${esc(k.type)}${k.bits ? " " + k.bits : ""}</span>
+        <span class="pill ${k.encrypted ? "up" : "warn"}">${esc(t(k.encrypted ? "sk_encrypted" : "sk_plain"))}</span>
+        ${k.imported ? `<span class="pill warn">${esc(t("sk_imported"))}</span>` : ""}</h3>
+      <div class="sk-meta">${esc(k.fp_sha256)}<br>MD5 ${esc(k.fp_md5)}${k.comment ? "<br>" + esc(k.comment) : ""}</div>
+      <div class="sk-pub">${esc(k.public)}</div>
+      ${(k.installed || []).length ? `<div class="sk-meta" style="margin-bottom:8px">${esc(t("sk_installed_on"))}: ${esc(k.installed.join(", "))}</div>` : ""}
+      <div class="sk-actions">
+        <button type="button" class="action sk-copy" data-name="${esc(k.name)}">${esc(t("sk_copy_pub"))}</button>
+        <button type="button" class="action secondary sk-use" data-name="${esc(k.name)}">${esc(t("sk_use"))}</button>
+        <a class="action secondary" href="/api/sshkeys/download?part=public&name=${encodeURIComponent(k.name)}">${esc(t("sk_dl_pub"))}</a>
+        <a class="action secondary" title="${esc(t("sk_priv_warn"))}" href="/api/sshkeys/download?part=private&name=${encodeURIComponent(k.name)}">${esc(t("sk_dl_priv"))}</a>
+        <button type="button" class="action secondary sk-del" data-name="${esc(k.name)}">${esc(t("sk_delete"))}</button>
+      </div>
+    </div>`).join("");
+  list.querySelectorAll(".sk-copy").forEach(btn => {
+    btn.onclick = async () => {
+      const key = skKeys.find(k => k.name === btn.dataset.name);
+      const prev = btn.textContent;
+      try { await navigator.clipboard.writeText(key.public); btn.textContent = t("copied"); }
+      catch (_) { btn.textContent = t("error_prefix"); }
+      setTimeout(() => { btn.textContent = prev; }, 1400);
+    };
+  });
+  list.querySelectorAll(".sk-use").forEach(btn => {
+    btn.onclick = () => {
+      document.getElementById("skUseKey").value = btn.dataset.name;
+      document.getElementById("skHost").focus();
+    };
+  });
+  list.querySelectorAll(".sk-del").forEach(btn => {
+    btn.onclick = () => {
+      if (!btn.dataset.armed) {
+        btn.dataset.armed = "1";
+        btn.textContent = t("sk_confirm_del");
+        btn.style.color = "var(--down)";
+        setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = t("sk_delete"); btn.style.color = ""; } }, 4000);
+        return;
+      }
+      skPost("/api/sshkeys/delete", {name: btn.dataset.name}, btn);
+    };
+  });
+}
+async function loadSshKeys() {
+  try {
+    const data = await (await fetch("/api/sshkeys")).json();
+    if (data.error) { skMsg(t("error_prefix") + data.error, true); return; }
+    paintSshKeys(data);
+  } catch (err) { skMsg(t("error_prefix") + (err.message || err), true); }
+}
+async function skPost(url, body, btn) {
+  if (btn) setLoading(btn, true);
+  try {
+    const res = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    const data = await res.json();
+    if (data.error) { skMsg(t("error_prefix") + data.error, true); return null; }
+    if (data.keys) paintSshKeys(data, data.created);
+    return data;
+  } catch (err) { skMsg(t("error_prefix") + (err.message || err), true); return null; }
+  finally { if (btn) setLoading(btn, false); }
+}
+document.getElementById("skGenBtn").onclick = async e => {
+  const name = document.getElementById("skName").value.trim();
+  if (!name) { skMsg(t("sk_need_name"), true); return; }
+  skMsg("");
+  const data = await skPost("/api/sshkeys/generate", {
+    name, type: document.getElementById("skType").value,
+    comment: document.getElementById("skComment").value.trim(),
+    passphrase: document.getElementById("skPass").value
+  }, e.currentTarget);
+  if (data) {
+    skMsg(t("sk_created_ok"));
+    document.getElementById("skName").value = "";
+    document.getElementById("skPass").value = "";
+  }
+};
+document.getElementById("skImpBtn").onclick = async e => {
+  const name = document.getElementById("skImpName").value.trim();
+  if (!name) { skMsg(t("sk_need_name"), true); return; }
+  skMsg("");
+  const data = await skPost("/api/sshkeys/import", {
+    name, private: document.getElementById("skImpText").value,
+    passphrase: document.getElementById("skImpPass").value
+  }, e.currentTarget);
+  if (data) {
+    skMsg(t("sk_created_ok"));
+    ["skImpName", "skImpPass", "skImpText"].forEach(id => { document.getElementById(id).value = ""; });
+  }
+};
+function skTarget() {
+  const name = document.getElementById("skUseKey").value;
+  const host = document.getElementById("skHost").value.trim();
+  if (!name) { skOut(t("sk_need_key")); return null; }
+  if (!host || host.startsWith("-")) { skOut(t("sk_need_host")); return null; }
+  return {name, host, port: Number(document.getElementById("skPort").value) || 22,
+          user: document.getElementById("skUser").value.trim() || "root"};
+}
+document.getElementById("skInstallBtn").onclick = async e => {
+  const tg = skTarget(); if (!tg) return;
+  skOut(t("running"));
+  const data = await skPost("/api/sshkeys/install", {...tg, password: document.getElementById("skSrvPass").value}, e.currentTarget);
+  document.getElementById("skSrvPass").value = "";
+  skOut(data ? t("sk_install_ok") + (data.output ? "\n\n" + data.output : "") : document.getElementById("skMsg").textContent);
+};
+document.getElementById("skTestBtn").onclick = async e => {
+  const tg = skTarget(); if (!tg) return;
+  skOut(t("running"));
+  const data = await skPost("/api/sshkeys/test", {...tg, passphrase: document.getElementById("skTestPass").value}, e.currentTarget);
+  if (!data) { skOut(document.getElementById("skMsg").textContent); return; }
+  skOut((data.ok ? t("sk_test_ok") : t("sk_test_fail")) + (data.output ? "\n\n" + data.output : ""));
+};
+document.getElementById("skConnectBtn").onclick = () => {
+  const tg = skTarget(); if (!tg) return;
+  document.getElementById("termProto").value = "ssh";
+  document.getElementById("termHost").value = tg.host;
+  document.getElementById("termPort").value = String(tg.port);
+  document.getElementById("termUser").value = tg.user;
+  switchTab("terminal");
+  document.getElementById("termKey").value = tg.name;
+  document.getElementById("termConnectBtn").click();
+};
+
 // ---------------------------------------------------------------- Compression lab
 let czFile = null;
 let czCodecsLoaded = false;
@@ -5153,11 +5493,12 @@ document.getElementById("termConnectBtn").onclick = () => {
   const port = document.getElementById("termPort").value.trim() || (proto === "ssh" ? "22" : "23");
   const user = document.getElementById("termUser").value.trim();
   if (!host || host.startsWith("-")) { alert(t("invalid_host")); return; }
+  const key = proto === "ssh" ? document.getElementById("termKey").value : "";
   lastTermConn = {proto, host, port, user};
   fillSessionScriptPick("terminal");
   termPlaceholder.style.display = "none";
   termFrame.style.display = "block";
-  termFrame.src = buildTermUrl([proto, host, port, user]);
+  termFrame.src = buildTermUrl(key ? [proto, host, port, user, key] : [proto, host, port, user]);
 };
 document.getElementById("termBlankBtn").onclick = () => {
   lastTermConn = {proto: "local"};
