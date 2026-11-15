@@ -39,6 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     python3-brotli \
     python3-zstandard \
+    python3-cryptography \
     && rm -rf /var/lib/apt/lists/*
 
 # ttyd: static binary, provides a browser-based terminal for ssh/telnet
@@ -76,6 +77,7 @@ COPY share_http.py /app/share_http.py
 COPY tftp.py /app/tftp.py
 COPY compress.py /app/compress.py
 COPY sshkeys.py /app/sshkeys.py
+COPY sslconv.py /app/sslconv.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh

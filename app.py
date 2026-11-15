@@ -25,6 +25,7 @@ from tftp import TftpError, tftp_get, tftp_put
 from tftp import resolve as tftp_resolve
 import compress as complab
 import sshkeys
+import sslconv
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
@@ -1826,6 +1827,43 @@ SECURITY_HEADER_NAMES = [
     "referrer-policy",
     "permissions-policy",
 ]
+
+
+@app.route("/api/tls/convert", methods=["POST"])
+def tls_convert():
+    """Upload cert / key / bundle / PFX / P7B -> fullchain.pem + privkey.pem. Nothing touches the disk."""
+    files = []
+    for f in request.files.getlist("files")[: sslconv.MAX_FILES + 1]:
+        data = f.read(sslconv.MAX_TOTAL + 1)
+        if data:
+            files.append((os.path.basename(f.filename or "upload"), data))
+    text = (request.form.get("text") or "").strip()
+    if text:
+        files.append(("pasted text", text.encode("utf-8", "replace")))
+    flag = lambda k, d: (request.form.get(k, "1" if d else "0") or "").lower() in ("1", "true", "on", "yes")
+    try:
+        result = sslconv.build(
+            files,
+            password=request.form.get("password") or "",
+            include_root=flag("include_root", False),
+            fetch_missing=flag("fetch", True),
+        )
+    except sslconv.NeedPassword as exc:
+        return jsonify({"error": str(exc), "need_password": True}), 400
+    except sslconv.SslConvError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:  # noqa: BLE001 - malformed input from a stranger's CA zip
+        return jsonify({"error": f"could not process the files: {exc}"[:400]}), 400
+    if flag("zip", False):
+        cn = re.sub(r"[^A-Za-z0-9._-]+", "_", (result["chain"][0]["subject"] or "cert").replace("*", "wildcard"))[:60]
+        return Response(
+            sslconv.zip_outputs(result),
+            mimetype="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{cn}-ssl.zip"', "Cache-Control": "no-store"},
+        )
+    resp = jsonify(result)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/api/headers", methods=["POST"])

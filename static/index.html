@@ -65,6 +65,7 @@
     font-family: inherit;
   }
   :root[dir="rtl"] .nav-group-title { font-size: 11.5px; }
+  :root[dir="rtl"] .bezel-label, :root[dir="rtl"] th, :root[dir="rtl"] .stat .l { text-transform: none; }
   :root[dir="rtl"] .bezel-label, :root[dir="rtl"] .stat .l, :root[dir="rtl"] th { font-size: 11.5px; }
   .ltr { direction: ltr; unicode-bidi: isolate; }
 
@@ -208,6 +209,7 @@
   textarea { width: 100%; min-height: 110px; resize: vertical; font-family: var(--mono); }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
   input { min-width: 220px; }
+  input[type="checkbox"], input[type="radio"] { min-width: 0; width: auto; }
   button.action {
     background: var(--grad); border: none; color: var(--on-accent); padding: 10px 20px;
     border-radius: 7px; cursor: pointer; font-size: 14px; font-weight: 600; letter-spacing: .01em;
@@ -701,6 +703,52 @@
   .sec-check { font-size: 20px; font-weight: 700; }
   .sec-check.yes { color: var(--up); }
   .sec-check.no { color: var(--down); }
+
+  .sc-lede { color: var(--ink-dim); font-size: 13px; line-height: 1.75; margin: 0 0 14px; max-width: 80ch; }
+  .sc-files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .sc-files:empty { display: none; }
+  .sc-chip {
+    display: inline-flex; align-items: center; gap: 8px; padding: 5px 6px 5px 11px; border-radius: 999px;
+    background: var(--surface-solid); border: 1px solid var(--line); font-size: 12.5px; max-width: 100%;
+  }
+  [dir="rtl"] .sc-chip { padding: 5px 11px 5px 6px; }
+  .sc-chip .nm { font-family: var(--mono); direction: ltr; unicode-bidi: isolate; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+  .sc-chip .sz { color: var(--ink-dim); font-family: var(--mono); font-size: 11px; }
+  .sc-chip button { background: none; border: none; color: var(--ink-dim); cursor: pointer; width: 22px; height: 22px; border-radius: 50%; font-size: 15px; line-height: 1; }
+  .sc-chip button:hover { color: var(--down); background: var(--surface-2); }
+  .sc-paste { margin-top: 12px; }
+  .sc-paste summary { cursor: pointer; color: var(--accent2); font-size: 13px; }
+  .sc-paste textarea { margin-top: 8px; direction: ltr; text-align: left; font-size: 12px; }
+  .sc-status { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 12px; }
+  .sc-chain { display: grid; margin-bottom: 14px; }
+  .sc-node { position: relative; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-solid); }
+  .sc-node + .sc-node { margin-top: 18px; }
+  .sc-node + .sc-node::before {
+    content: "↑"; position: absolute; top: -18px; inset-inline-start: 22px; height: 18px; line-height: 18px;
+    color: var(--ink-dim); font-size: 12px;
+  }
+  .sc-node.out { opacity: .62; border-style: dashed; }
+  .sc-node .top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .sc-node .role { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-dim); }
+  .sc-node .role.leaf { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .sc-node .role.intermediate { color: var(--accent2); background: color-mix(in srgb, var(--accent2) 14%, transparent); }
+  .sc-node .cn { font-weight: 700; font-family: var(--mono); direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere; }
+  .sc-node .meta { color: var(--ink-dim); font-size: 12px; margin-top: 5px; line-height: 1.7; }
+  .sc-node .meta .m { font-family: var(--mono); direction: ltr; unicode-bidi: isolate; color: var(--ink); overflow-wrap: anywhere; }
+  .sc-warn { border: 1px solid color-mix(in srgb, var(--warn) 50%, var(--line)); background: color-mix(in srgb, var(--warn) 9%, transparent); color: var(--ink); border-radius: 9px; padding: 10px 13px; font-size: 13px; line-height: 1.7; margin-bottom: 8px; }
+  .sc-warn.bad { border-color: color-mix(in srgb, var(--down) 55%, var(--line)); background: color-mix(in srgb, var(--down) 9%, transparent); }
+  .sc-notes { color: var(--ink-dim); font-size: 12px; line-height: 1.7; margin: 6px 0 12px; font-family: var(--mono); direction: ltr; text-align: left; overflow-wrap: anywhere; }
+  .sc-outs { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 12px; }
+  .sc-out { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface-solid); }
+  .sc-out.main { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .sc-out .fn { font-family: var(--mono); font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+  .sc-out .ds { color: var(--ink-dim); font-size: 12px; margin: 4px 0 10px; line-height: 1.6; }
+  .sc-out .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sc-out .acts button { background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); padding: 6px 11px; border-radius: 8px; font-size: 12px; font-family: inherit; cursor: pointer; min-height: 32px; }
+  .sc-out .acts button:hover { border-color: var(--accent); }
+  .sc-preview pre { max-height: 260px; overflow: auto; background: var(--surface-solid); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 11.5px; direction: ltr; text-align: left; font-family: var(--mono); margin: 12px 0 0; white-space: pre; }
+  .sc-snippet { margin-top: 16px; }
+  .sc-snippet pre { background: var(--surface-solid); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 12px; direction: ltr; text-align: left; font-family: var(--mono); margin: 6px 0 0; overflow-x: auto; }
 
   .home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .home-card {
@@ -1429,6 +1477,11 @@
       </section>
 
       <section id="tls" class="panel">
+        <header class="panel-head">
+          <div class="kicker">X.509 · PEM · PFX · P7B</div>
+          <h2 data-i18n="nav_tls">SSL/TLS</h2>
+          <p class="lede" data-i18n="tls_lede">گواهی یک سرور را بررسی کنید، یا فایل‌هایی که CA فرستاده را به fullchain.pem و privkey.pem برای nginx و آپاچی تبدیل کنید.</p>
+        </header>
         <div class="row">
           <input id="tlsInput" placeholder="example.com" />
           <input id="tlsPort" type="number" value="443" style="min-width:100px" />
@@ -1438,6 +1491,31 @@
         <div class="bezel">
           <div class="bezel-label" data-i18n="nav_tls">SSL/TLS</div>
           <div id="tlsResult" class="empty" data-i18n="empty_generic">هنوز بررسی نشده.</div>
+        </div>
+
+        <div class="bezel" style="margin-top:22px">
+          <div class="bezel-label" data-i18n="sc_title">ساخت fullchain.pem و privkey.pem</div>
+          <p class="sc-lede" data-i18n="sc_lede">هر چه CA یا مشتری فرستاده را یک‌جا بیندازید: crt، cer، ca-bundle، p7b، pfx/p12 و فایل key. ترتیب مهم نیست؛ زنجیره خودکار مرتب می‌شود و اگر intermediate جا افتاده باشد از CA دانلود می‌شود.</p>
+          <label class="share-drop" id="scDrop">
+            <input type="file" id="scFileInput" multiple hidden>
+            <strong data-i18n="sc_drop">فایل‌ها را بکشید اینجا یا کلیک کنید</strong>
+            <span data-i18n="sc_drop_sub">چند فایل با هم · PEM، DER، PFX، P7B · کلید خصوصی روی دیسک ذخیره نمی‌شود</span>
+          </label>
+          <div class="sc-files" id="scFiles"></div>
+          <details class="sc-paste">
+            <summary data-i18n="sc_paste">یا متن PEM را بچسبانید</summary>
+            <textarea id="scText" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----&#10;-----BEGIN PRIVATE KEY-----&#10;..."></textarea>
+          </details>
+          <div class="row" style="margin-top:12px">
+            <input id="scPassword" type="password" autocomplete="off" data-i18n-placeholder="sc_pw_ph" placeholder="رمز PFX یا کلید رمزدار (اگر دارد)" />
+            <label class="chk"><input type="checkbox" id="scFetch" checked> <span data-i18n="sc_fetch">دانلود intermediate جاافتاده</span></label>
+            <label class="chk"><input type="checkbox" id="scRoot"> <span data-i18n="sc_root">root هم در fullchain باشد</span></label>
+          </div>
+          <div class="row">
+            <button class="action" id="scBuildBtn" data-i18n="sc_build">ساختن</button>
+            <button class="action secondary" id="scClearBtn" data-i18n="sc_clear">پاک کردن</button>
+          </div>
+          <div id="scResult"></div>
         </div>
       </section>
 
@@ -2236,6 +2314,21 @@ const translations = {
     qr_no_wifi: "به وای‌فای وصل نیست، یا اینترفیس پیدا نشد.",
     qr_pass_manual: "SSID پر شد — رمز را دستی بگذار.",
     tls_btn: "بررسی گواهی",
+    tls_lede: "گواهی یک سرور را بررسی کنید، یا فایل‌هایی که CA فرستاده را به fullchain.pem و privkey.pem برای nginx و آپاچی تبدیل کنید.",
+    sc_title: "ساخت fullchain.pem و privkey.pem", sc_lede: "هر چه CA یا مشتری فرستاده را یک‌جا بیندازید: crt، cer، ca-bundle، p7b، pfx/p12 و فایل key. ترتیب مهم نیست؛ زنجیره خودکار مرتب می‌شود و اگر intermediate جا افتاده باشد از CA دانلود می‌شود.",
+    sc_drop: "فایل‌ها را بکشید اینجا یا کلیک کنید", sc_drop_sub: "چند فایل با هم · PEM، DER، PFX، P7B · کلید خصوصی روی دیسک ذخیره نمی‌شود",
+    sc_paste: "یا متن PEM را بچسبانید", sc_pw_ph: "رمز PFX یا کلید رمزدار (اگر دارد)", sc_fetch: "دانلود intermediate جاافتاده", sc_root: "root هم در fullchain باشد",
+    sc_build: "ساختن", sc_clear: "پاک کردن", sc_need_files: "اول فایل‌ها را اضافه کنید یا متن PEM را بچسبانید.", sc_need_pw: "رمز لازم است",
+    sc_ok_chain: "زنجیره کامل", sc_bad_chain: "زنجیره ناقص", sc_trusted: "به root معتبر می‌رسد", sc_key_ok: "کلید با گواهی می‌خواند", sc_key_none: "کلید خصوصی نیست",
+    sc_w_mismatch: "کلید خصوصی آپلودشده مال این گواهی نیست؛ privkey.pem ساخته نشد. کلیدی را بدهید که CSR با آن ساخته شده.",
+    sc_w_incomplete: "intermediate بعدی پیدا نشد (نه در فایل‌ها، نه از CA). اگر CA داخلی است طبیعی است؛ اگر عمومی است ca-bundle را هم اضافه کنید.",
+    sc_w_expired: "یکی از گواهی‌های زنجیره منقضی شده است.", sc_w_self: "گواهی self-signed است؛ مرورگرها به آن اعتماد نمی‌کنند.",
+    sc_w_nokey: "کلید خصوصی داده نشد؛ فقط fullchain.pem ساخته شد. کلید همان فایلی است که موقع ساخت CSR تولید شد.",
+    sc_role_leaf: "گواهی سایت", sc_role_intermediate: "Intermediate", sc_role_root: "Root", sc_issuer: "صادرکننده", sc_valid_to: "اعتبار تا", sc_days: "روز",
+    sc_expired: "منقضی شده", sc_not_in_full: "در fullchain نیست (کلاینت‌ها خودشان دارند)",
+    sc_d_full: "گواهی سایت + intermediate ها — برای ssl_certificate", sc_d_key: "کلید خصوصی بدون رمز (PKCS#8) — برای ssl_certificate_key",
+    sc_d_cert: "فقط گواهی سایت", sc_d_chain: "فقط intermediate ها",
+    sc_dl: "دانلود", sc_copy: "کپی", sc_show: "نمایش", sc_zip: "دانلود همه (zip)", sc_snippet: "نمونه تنظیم:",
     tls_hint: "اطلاعات گواهی SSL/TLS رو حتی اگه نامعتبر/self-signed باشه نشون می‌ده — برای چک‌کردن سرورهای داخلی هم کار می‌کنه.",
     tls_trusted: "معتبر ✓", tls_untrusted: "نامعتبر ✗",
     tls_subject: "Subject", tls_issuer: "Issuer", tls_valid_from: "معتبر از",
@@ -2740,6 +2833,21 @@ const translations = {
     qr_no_wifi: "Not connected to WiFi, or no wireless interface.",
     qr_pass_manual: "SSID filled — enter the password yourself.",
     tls_btn: "Check certificate",
+    tls_lede: "Inspect a server's certificate, or turn the files a CA sent into fullchain.pem and privkey.pem for nginx and Apache.",
+    sc_title: "Build fullchain.pem and privkey.pem", sc_lede: "Drop whatever the CA or customer sent: crt, cer, ca-bundle, p7b, pfx/p12 and the key file. Order does not matter; the chain is sorted automatically and a missing intermediate is downloaded from the CA.",
+    sc_drop: "Drop the files here or click", sc_drop_sub: "Several files at once · PEM, DER, PFX, P7B · the private key is never written to disk",
+    sc_paste: "or paste PEM text", sc_pw_ph: "PFX or encrypted-key password (if any)", sc_fetch: "Download missing intermediate", sc_root: "Include root in fullchain",
+    sc_build: "Build", sc_clear: "Clear", sc_need_files: "Add files or paste PEM text first.", sc_need_pw: "Password needed",
+    sc_ok_chain: "Chain complete", sc_bad_chain: "Chain incomplete", sc_trusted: "Reaches a trusted root", sc_key_ok: "Key matches certificate", sc_key_none: "No private key",
+    sc_w_mismatch: "The uploaded private key does not belong to this certificate, so privkey.pem was not built. Use the key the CSR was made with.",
+    sc_w_incomplete: "The next intermediate was not found (not in the files, not from the CA). Normal for an internal CA; for a public CA add the ca-bundle.",
+    sc_w_expired: "A certificate in the chain has expired.", sc_w_self: "The certificate is self-signed; browsers will not trust it.",
+    sc_w_nokey: "No private key given, so only fullchain.pem was built. The key is the file created together with the CSR.",
+    sc_role_leaf: "Site certificate", sc_role_intermediate: "Intermediate", sc_role_root: "Root", sc_issuer: "Issuer", sc_valid_to: "Valid until", sc_days: "days",
+    sc_expired: "expired", sc_not_in_full: "not in fullchain (clients already have it)",
+    sc_d_full: "Site cert + intermediates, for ssl_certificate", sc_d_key: "Unencrypted private key (PKCS#8), for ssl_certificate_key",
+    sc_d_cert: "Site certificate only", sc_d_chain: "Intermediates only",
+    sc_dl: "Download", sc_copy: "Copy", sc_show: "Show", sc_zip: "Download all (zip)", sc_snippet: "Example config:",
     tls_hint: "Shows SSL/TLS certificate info even if invalid/self-signed — works for checking internal servers too.",
     tls_trusted: "Trusted ✓", tls_untrusted: "Untrusted ✗",
     tls_subject: "Subject", tls_issuer: "Issuer", tls_valid_from: "Valid from",
@@ -3102,7 +3210,7 @@ const NAV_KEYWORDS = {
   bandwidth: "bandwidth traffic iftop پهنای",
   whois: "whois domain owner",
   hashtools: "hash base64 jwt md5 sha",
-  tls: "ssl tls certificate cert گواهی",
+  tls: "ssl tls certificate cert گواهی fullchain privkey pem pfx p12 p7b crt key bundle",
   geoip: "geo location ip country موقعیت",
   quickconnect: "quick connect bookmark server اتصال",
 };
@@ -5308,6 +5416,166 @@ document.getElementById("tlsBtn").onclick = async () => {
       </div>`;
   } finally { setLoading(btn, false); }
 };
+
+// ---------------------------------------------------------------- SSL files -> fullchain.pem / privkey.pem
+let scFiles = [];
+let scLast = null;
+function scPaintFiles() {
+  const box = document.getElementById("scFiles");
+  box.innerHTML = scFiles.map((f, i) =>
+    `<span class="sc-chip"><span class="nm" title="${esc(f.name)}">${esc(f.name)}</span><span class="sz">${esc(fmtBytes(f.size))}</span><button type="button" data-i="${i}" aria-label="remove">×</button></span>`).join("");
+  box.querySelectorAll("button[data-i]").forEach(b => b.onclick = () => { scFiles.splice(+b.dataset.i, 1); scPaintFiles(); });
+}
+function scAdd(list) {
+  for (const f of list || []) {
+    if (!scFiles.some(x => x.name === f.name && x.size === f.size)) scFiles.push(f);
+  }
+  scPaintFiles();
+}
+document.getElementById("scFileInput").onchange = e => { scAdd(e.target.files); e.target.value = ""; };
+(() => {
+  const el = document.getElementById("scDrop");
+  el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("drag"); });
+  el.addEventListener("dragleave", () => el.classList.remove("drag"));
+  el.addEventListener("drop", e => { e.preventDefault(); el.classList.remove("drag"); scAdd(e.dataTransfer.files); });
+})();
+function scForm(zip) {
+  const fd = new FormData();
+  scFiles.forEach(f => fd.append("files", f, f.name));
+  const txt = document.getElementById("scText").value.trim();
+  if (txt) fd.append("text", txt);
+  fd.append("password", document.getElementById("scPassword").value);
+  fd.append("fetch", document.getElementById("scFetch").checked ? "1" : "0");
+  fd.append("include_root", document.getElementById("scRoot").checked ? "1" : "0");
+  if (zip) fd.append("zip", "1");
+  return fd;
+}
+function scDownload(name, text) {
+  const blob = new Blob([text], { type: "application/x-pem-file" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const SC_DESC = {
+  "fullchain.pem": "sc_d_full", "privkey.pem": "sc_d_key", "cert.pem": "sc_d_cert", "chain.pem": "sc_d_chain",
+};
+function scRender(d) {
+  const out = document.getElementById("scResult");
+  const pills = [];
+  pills.push(d.complete
+    ? `<span class="pill up">${esc(t("sc_ok_chain"))}</span>`
+    : `<span class="pill down">${esc(t("sc_bad_chain"))}</span>`);
+  if (d.trusted) pills.push(`<span class="pill up">${esc(t("sc_trusted"))}</span>`);
+  pills.push(d.key.present
+    ? `<span class="pill up">${esc(t("sc_key_ok"))} · ${esc(d.key.type)}</span>`
+    : `<span class="pill warn">${esc(t("sc_key_none"))}</span>`);
+  const w = d.warnings || [];
+  const warns = [];
+  if (w.includes("key_mismatch")) warns.push(["bad", t("sc_w_mismatch")]);
+  if (w.includes("incomplete")) warns.push(["", t("sc_w_incomplete")]);
+  if (w.includes("expired")) warns.push(["bad", t("sc_w_expired")]);
+  if (w.includes("self_signed")) warns.push(["", t("sc_w_self")]);
+  if (w.includes("no_key") && !w.includes("key_mismatch")) warns.push(["", t("sc_w_nokey")]);
+  const chain = d.chain.map(c => {
+    const days = c.expired ? `<span style="color:var(--down)">${esc(t("sc_expired"))}</span>`
+      : `<span class="m">${esc(c.not_after)}</span> (${esc(c.days_left)} ${esc(t("sc_days"))})`;
+    const san = c.role === "leaf" && c.san.length ? `<br>SAN: <span class="m">${esc(c.san.slice(0, 12).join(", "))}${c.san.length > 12 ? " …" : ""}</span>` : "";
+    return `<div class="sc-node${c.in_fullchain ? "" : " out"}">
+      <div class="top"><span class="role ${esc(c.role)}">${esc(t("sc_role_" + c.role))}</span><span class="cn">${esc(c.subject)}</span></div>
+      <div class="meta">${esc(t("sc_issuer"))}: <span class="m">${esc(c.issuer)}</span> · <span class="m">${esc(c.key)}</span><br>
+        ${esc(t("sc_valid_to"))}: ${days}${san}${c.in_fullchain ? "" : `<br>${esc(t("sc_not_in_full"))}`}</div>
+    </div>`;
+  }).reverse().join("");
+  const order = ["fullchain.pem", "privkey.pem", "cert.pem", "chain.pem"].filter(n => d.outputs[n]);
+  const outs = order.map(n => `<div class="sc-out${n === "fullchain.pem" || n === "privkey.pem" ? " main" : ""}">
+      <div class="fn">${esc(n)}</div>
+      <div class="ds">${esc(t(SC_DESC[n]))}</div>
+      <div class="acts">
+        <button type="button" data-dl="${esc(n)}">${esc(t("sc_dl"))}</button>
+        <button type="button" data-cp="${esc(n)}">${esc(t("sc_copy"))}</button>
+        <button type="button" data-pv="${esc(n)}">${esc(t("sc_show"))}</button>
+      </div>
+    </div>`).join("");
+  const keyLine = d.outputs["privkey.pem"] ? "    ssl_certificate_key /etc/ssl/site/privkey.pem;\n" : "";
+  out.innerHTML = `
+    <div class="sc-status">${pills.join("")}</div>
+    ${warns.map(([cls, msg]) => `<div class="sc-warn ${cls}">${esc(msg)}</div>`).join("")}
+    <div class="sc-chain">${chain}</div>
+    ${(d.notes || []).length ? `<div class="sc-notes">${d.notes.map(esc).join("<br>")}</div>` : ""}
+    <div class="row" style="margin:0"><button class="action" type="button" id="scZipBtn">${esc(t("sc_zip"))}</button></div>
+    <div class="sc-outs">${outs}</div>
+    <div class="sc-preview" id="scPreview"></div>
+    <div class="sc-snippet"><div class="hint" style="margin:0">${esc(t("sc_snippet"))}</div><pre>server {
+    listen 443 ssl;
+    ssl_certificate     /etc/ssl/site/fullchain.pem;
+${keyLine}}
+
+# Apache 2.4.8+
+SSLCertificateFile    /etc/ssl/site/fullchain.pem
+${d.outputs["privkey.pem"] ? "SSLCertificateKeyFile /etc/ssl/site/privkey.pem\n" : ""}
+# HAProxy: cat fullchain.pem privkey.pem > site.pem</pre></div>`;
+  out.querySelectorAll("[data-dl]").forEach(b => b.onclick = () => scDownload(b.dataset.dl, d.outputs[b.dataset.dl]));
+  out.querySelectorAll("[data-cp]").forEach(b => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(d.outputs[b.dataset.cp]); b.textContent = t("copied"); setTimeout(() => b.textContent = t("sc_copy"), 1200); } catch {}
+  });
+  out.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
+    const pv = document.getElementById("scPreview");
+    const same = pv.dataset.file === b.dataset.pv;
+    pv.dataset.file = same ? "" : b.dataset.pv;
+    pv.innerHTML = same ? "" : `<pre>${esc(d.outputs[b.dataset.pv])}</pre>`;
+  });
+  document.getElementById("scZipBtn").onclick = async (ev) => {
+    const btn = ev.currentTarget;
+    setLoading(btn, true);
+    try {
+      const res = await fetch("/api/tls/convert", { method: "POST", body: scForm(true) });
+      if (!res.ok) throw new Error((await res.json()).error || res.status);
+      const blob = await res.blob();
+      const cd = res.headers.get("Content-Disposition") || "";
+      const m = cd.match(/filename="([^"]+)"/);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = m ? m[1] : "ssl.zip";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch (err) {
+      alert(t("error_prefix") + (err.message || err));
+    } finally { setLoading(btn, false); }
+  };
+}
+document.getElementById("scBuildBtn").onclick = async () => {
+  const btn = document.getElementById("scBuildBtn");
+  const out = document.getElementById("scResult");
+  if (!scFiles.length && !document.getElementById("scText").value.trim()) {
+    out.innerHTML = `<div class="sc-warn">${esc(t("sc_need_files"))}</div>`;
+    return;
+  }
+  setLoading(btn, true);
+  out.innerHTML = "";
+  try {
+    const res = await fetch("/api/tls/convert", { method: "POST", body: scForm(false) });
+    const d = await res.json();
+    if (d.error) {
+      out.innerHTML = `<div class="sc-warn bad">${esc(d.need_password ? t("sc_need_pw") + " — " : "")}${esc(d.error)}</div>`;
+      if (d.need_password) document.getElementById("scPassword").focus();
+      return;
+    }
+    scLast = d;
+    scRender(d);
+  } catch (err) {
+    out.innerHTML = `<div class="sc-warn bad">${esc(t("error_prefix") + (err.message || err))}</div>`;
+  } finally { setLoading(btn, false); }
+};
+document.getElementById("scClearBtn").onclick = () => {
+  scFiles = []; scLast = null; scPaintFiles();
+  document.getElementById("scText").value = "";
+  document.getElementById("scPassword").value = "";
+  document.getElementById("scResult").innerHTML = "";
+};
+document.addEventListener("ntb-lang", () => { if (scLast) scRender(scLast); });
+
 
 document.getElementById("headersBtn").onclick = async () => {
   const btn = document.getElementById("headersBtn");
