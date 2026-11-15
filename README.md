@@ -1,12 +1,12 @@
 # NetToolbox
 
-**v2.8.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
+**v2.9.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
 
 One Docker container. One web UI. Run it on your laptop, workstation, server, home lab, or client site.
 
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sajadprp/nettoolbox?logo=docker)](https://hub.docker.com/r/sajadprp/nettoolbox)
-[![Version](https://img.shields.io/badge/version-2.8.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
+[![Version](https://img.shields.io/badge/version-2.9.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)](https://www.docker.com/)
 [![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)](https://hub.docker.com/r/sajadprp/nettoolbox)
@@ -19,7 +19,7 @@ Demo walkthrough (sample lab data only — not a real customer network): This li
 
 Docker Hub: https://hub.docker.com/r/sajadprp/nettoolbox
 
-Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.8.0`
+Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.9.0`
 
 ### 1. Pull the Docker image
 
@@ -30,7 +30,7 @@ docker pull sajadprp/nettoolbox:latest
 Or pin a version:
 
 ```bash
-docker pull sajadprp/nettoolbox:v2.8.0
+docker pull sajadprp/nettoolbox:v2.9.0
 ```
 
 ### 2. Run NetToolbox
@@ -96,7 +96,7 @@ docker run -d \
   -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
   -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
   --name nettoolbox \
-  sajadprp/nettoolbox:v2.8.0
+  sajadprp/nettoolbox:v2.9.0
 ```
 
 ## Build from source
@@ -113,36 +113,37 @@ docker build -t nettoolbox .
 **Copy a pre-built image to another laptop (USB, no rebuild)**
 
 ```bash
-docker save nettoolbox:v2.8.0 nettoolbox:latest | gzip > nettoolbox-v2.8.0.tar.gz
-gzip -dc nettoolbox-v2.8.0.tar.gz | docker load
+docker save nettoolbox:v2.9.0 nettoolbox:latest | gzip > nettoolbox-v2.9.0.tar.gz
+gzip -dc nettoolbox-v2.9.0.tar.gz | docker load
 mkdir -p ~/.config/nettoolbox/ssh-keys && chmod 700 ~/.config/nettoolbox/ssh-keys
 docker run -d --restart unless-stopped --net=host \
   --cap-add=NET_ADMIN --cap-add=NET_RAW \
   -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
   -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
-  --name nettoolbox nettoolbox:v2.8.0
+  --name nettoolbox nettoolbox:v2.9.0
 ```
 
 ## Versions
 
 `main` is always **v2**. v1 stays as a git tag.
 
-| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | v2.6 | v2.7 | **v2.8** |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Compression lab (Huffman, LZW, Deflate, bzip2, LZMA, Zstd, Brotli), quick/full Whois | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| SSH key manager (generate, install on server, key login in terminal) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | v2.6 | v2.7 | v2.8 | **v2.9** |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Compression lab (Huffman, LZW, Deflate, bzip2, LZMA, Zstd, Brotli), quick/full Whois | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| SSH key manager (generate, install on server, key login in terminal) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Overview page, tool search (Ctrl+K), mobile layout, bookmarkable tabs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ```bash
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
@@ -240,7 +241,13 @@ If the host already runs a TFTP server on UDP 69 (`tftpd-hpa`, `dnsmasq`), stop 
 
 ### Interface
 
-Persian and English. Light and dark themes. Single HTML page, no CDN.
+Persian and English. Light and dark themes. Single HTML page, no CDN; the Vazirmatn font ships inside the image.
+
+- **Overview** (first page): link, gateway, public IP, and every service currently listening on the LAN (TFTP, file drop, OpenSpeedTest) with a stop button. Listening tools also get a green dot in the sidebar.
+- **Tool search**: press `Ctrl+K` or `/`, type part of a name (`tft`, `ssh`, `کلید`), Enter.
+- **Bookmarkable tabs**: every tool has its own URL (`http://127.0.0.1:8642/#tftp`), and refresh stays on it.
+- **Mobile**: on a phone the sidebar becomes a ☰ drawer, forms stack full-width, wide tables scroll sideways.
+- Sidebar groups fold; the fold state is remembered.
 
 ## Docker configuration
 
@@ -342,7 +349,7 @@ docker run -d `
 ```text
 sajadprp/nettoolbox:latest
 sajadprp/nettoolbox:v2
-sajadprp/nettoolbox:v2.8.0
+sajadprp/nettoolbox:v2.9.0
 ```
 
 ## How it compares

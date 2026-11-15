@@ -3569,6 +3569,27 @@ def rdp_status():
     )
 
 
+@app.route("/api/services")
+def services_status():
+    """Cheap summary of everything that may be listening on the LAN (home page + sidebar dots)."""
+    ips = [u["ip"] for u in _lan_http_urls(1)]
+    tftp_up = _tftp_up()
+    return jsonify(
+        {
+            "ips": ips,
+            "services": [
+                {"id": "tftp", "panel": "tftp", "name": "TFTP", "up": tftp_up, "proto": "udp",
+                 "port": _tftp_state["port"], "write": bool(_tftp_state["write"]) if tftp_up else False},
+                {"id": "share", "panel": "fileshare", "name": "File drop", "up": _tcp_up("127.0.0.1", SHARE_PORT),
+                 "proto": "http", "port": SHARE_PORT},
+                {"id": "ost", "panel": "speedtest", "name": "OpenSpeedTest", "up": _tcp_up("127.0.0.1", OST_PORT),
+                 "proto": "http", "port": OST_PORT},
+            ],
+            "rdp": _rdp_proc is not None and _rdp_proc.poll() is None,
+        }
+    )
+
+
 @app.route("/api/rdp/stop", methods=["POST"])
 def rdp_stop():
     _stop_rdp()
