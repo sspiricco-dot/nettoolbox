@@ -3941,7 +3941,10 @@ document.getElementById("cdpBtn").onclick = async () => {
         <div class="ip">${esc(nb.device_id)}</div>
         <div class="meta">
           ${esc(t("card_platform"))}: ${esc(nb.platform) || "—"}<br>
-          ${esc(t("card_port"))}: ${esc(nb.port_id) || "—"}
+          ${esc(t("card_port"))}: ${esc(nb.port_id) || "—"}${nb.port_desc ? ` (${esc(nb.port_desc)})` : ""}
+          ${(nb.addresses || []).length ? `<br>IP: ${esc(nb.addresses.join(", "))}` : ""}
+          ${nb.native_vlan != null ? `<br>VLAN: ${esc(nb.native_vlan)}` : ""}
+          ${nb.software ? `<br><span title="${esc(nb.software)}">${esc(nb.software.slice(0, 70))}</span>` : ""}
         </div>
       </div>`).join("");
   } finally { setLoading(btn, false); }

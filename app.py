@@ -26,6 +26,7 @@ from tftp import resolve as tftp_resolve
 import compress as complab
 import sshkeys
 import sslconv
+from neighbors import listen as neighbor_listen
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
@@ -667,16 +668,7 @@ def portscan():
     return jsonify({"ip": ip, "ports": result})
 
 
-NEIGHBOR_PROTOCOLS = {
-    "cdp": {
-        "filter": "cdp",
-        "fields": ["cdp.deviceid", "cdp.platform", "cdp.portid"],
-    },
-    "lldp": {
-        "filter": "lldp",
-        "fields": ["lldp.tlv.system.name", "lldp.chassis.id", "lldp.port.id"],
-    },
-}
+NEIGHBOR_PROTOCOLS = ("cdp", "lldp")
 
 
 @app.route("/api/neighbors", methods=["POST"])
@@ -695,24 +687,12 @@ def neighbors():
     except (TypeError, ValueError):
         duration = 15
 
-    spec = NEIGHBOR_PROTOCOLS[protocol]
-    cmd = ["tshark", "-i", iface, "-Y", spec["filter"], "-a", f"duration:{duration}", "-T", "fields"]
-    for f in spec["fields"]:
-        cmd += ["-e", f]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=duration + 15)
-
-    found = []
-    seen = set()
-    for line in proc.stdout.splitlines():
-        cols = line.split("\t")
-        if len(cols) < 3:
-            continue
-        device_id, platform, port_id = cols[0], cols[1], cols[2]
-        key = (device_id, port_id)
-        if not device_id or key in seen:
-            continue
-        seen.add(key)
-        found.append({"device_id": device_id, "platform": platform, "port_id": port_id})
+    try:
+        found = neighbor_listen(iface, protocol, duration)
+    except PermissionError:
+        return jsonify({"error": "raw capture needs CAP_NET_RAW (run the container with --cap-add=NET_RAW)"}), 500
+    except OSError as exc:
+        return jsonify({"error": f"capture failed on {iface}: {exc.strerror or exc}"}), 500
 
     return jsonify({"iface": iface, "duration": duration, "protocol": protocol, "neighbors": found})
 
@@ -1208,10 +1188,34 @@ def openspeedtest_info():
     return jsonify(_ost_payload())
 
 
+OST_BLOB = "/usr/share/openspeedtest/downloading"
+OST_BLOB_SIZE = 30 * 1024 * 1024
+
+
+def _ost_blob():
+    """The 30 MB random download payload is made on first start instead of shipping in the image
+    (random bytes do not compress, so it would add 30 MB to every pull)."""
+    try:
+        if os.path.getsize(OST_BLOB) == OST_BLOB_SIZE:
+            return
+    except OSError:
+        pass
+    tmp = OST_BLOB + ".tmp"
+    with open(tmp, "wb") as fh:
+        for _ in range(OST_BLOB_SIZE // (1024 * 1024)):
+            fh.write(os.urandom(1024 * 1024))
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, OST_BLOB)
+
+
 @app.route("/api/openspeedtest/start", methods=["POST"])
 def openspeedtest_start():
     if _tcp_up("127.0.0.1", OST_PORT):
         return jsonify(_ost_payload())
+    try:
+        _ost_blob()
+    except OSError as exc:
+        return jsonify({"error": f"could not prepare the speed-test payload: {exc}"}), 500
     chk = subprocess.run(["nginx", "-t"], capture_output=True, text=True, timeout=8)
     if chk.returncode != 0:
         err = ((chk.stderr or "") + "\n" + (chk.stdout or "")).strip()
