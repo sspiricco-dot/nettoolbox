@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <title>NetToolbox</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#000000">
+<link rel="preload" href="fonts/Vazirmatn-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="fonts/Aldrich-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="icon" href="/brand/favicon.png" type="image/png">
 <link rel="icon" href="/favicon.ico">
 <style>
@@ -34,7 +36,7 @@
     --bg: #f4f6fa; --surface: rgba(255,255,255,0.78); --surface-solid: #ffffff; --surface-2: #eceff4;
     --line: rgba(10, 13, 20, 0.10); --ink: #0b0d12; --ink-dim: #5b6270;
     --accent: #1366e8; --accent2: #00a89e;
-    --up: #1a8a58; --down: #c63d3d; --closed: #5b6b80; --warn: #b8860b;
+    --up: #0e9f6e; --down: #d92d20; --closed: #6b7079; --warn: #b7791f;
     --glow: rgba(22, 119, 255, .10); --glow-cyan: rgba(0, 168, 158, .06);
     --on-accent: #ffffff;
     color-scheme: light;
@@ -81,6 +83,9 @@
   ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--ink-dim) 55%, transparent); }
 
   button, .tab, #langToggle, #themeToggle { cursor: pointer; }
+  a, button, input, select, textarea, label, summary { touch-action: manipulation; }
+  body { -webkit-tap-highlight-color: transparent; }
+  .side-nav { overscroll-behavior: contain; }
   :focus-visible {
     outline: 2px solid var(--accent2); outline-offset: 2px;
   }
@@ -137,14 +142,14 @@
   .nav-group-title .chev { width: 13px; height: 13px; stroke: currentColor; transition: transform .18s ease; opacity: .7; }
   .nav-group.collapsed .nav-group-title .chev { transform: rotate(-90deg); }
   [dir="rtl"] .nav-group.collapsed .nav-group-title .chev { transform: rotate(90deg); }
-  .nav-group.collapsed button.tab { display: none; }
-  .nav-group.collapsed button.tab.active, .nav-group.collapsed button.tab.live { display: flex; }
-  .side-nav.searching .nav-group button.tab { display: none; }
-  .side-nav.searching .nav-group button.tab.match { display: flex; }
+  .nav-group.collapsed .tab { display: none; }
+  .nav-group.collapsed .tab.active, .nav-group.collapsed .tab.live { display: flex; }
+  .side-nav.searching .nav-group .tab { display: none; }
+  .side-nav.searching .nav-group .tab.match { display: flex; }
   .side-nav.searching .nav-group:not(.has-match) { display: none; }
-  .side-nav.searching > button.tab:not(.match) { display: none; }
+  .side-nav.searching > .tab:not(.match) { display: none; }
   .side-nav.searching .nav-group-title .chev { display: none; }
-  nav.side-nav button.tab.kbd-sel { outline: 1px solid var(--accent2); outline-offset: -1px; }
+  nav.side-nav .tab.kbd-sel { outline: 1px solid var(--accent2); outline-offset: -1px; }
   .nav-empty { display: none; color: var(--ink-dim); font-size: 13px; padding: 14px 10px; }
   .side-nav.searching.no-match .nav-empty { display: block; }
 
@@ -173,22 +178,25 @@
     background: var(--surface-solid); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); cursor: pointer;
   }
   .icon-btn svg { width: 19px; height: 19px; stroke: currentColor; }
-  nav.side-nav button.tab {
-    display: flex; align-items: center; gap: 10px; width: 100%; position: relative;
+  nav.side-nav .tab {
+    text-decoration: none; display: flex; align-items: center; gap: 10px; width: 100%; position: relative;
     background: none; border: none; color: var(--ink-dim); padding: 9px 10px 9px 14px;
     cursor: pointer; font-size: 13.5px; border-radius: 6px; white-space: nowrap;
     transition: color .15s, background .15s; text-align: inherit; margin-bottom: 1px;
   }
-  [dir="rtl"] nav.side-nav button.tab { padding: 9px 14px 9px 10px; }
-  nav.side-nav button.tab svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.75; flex-shrink: 0; }
-  nav.side-nav button.tab:hover { color: var(--ink); background: var(--surface-2); }
-  nav.side-nav button.tab.active { color: var(--ink); background: var(--surface-2); font-weight: 600; }
-  nav.side-nav button.tab.active::before {
+  [dir="rtl"] nav.side-nav .tab { padding: 9px 14px 9px 10px; }
+  nav.side-nav .tab svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.75; flex-shrink: 0; }
+  nav.side-nav .tab:hover { color: var(--ink); background: var(--surface-2); }
+  nav.side-nav .tab.active { color: var(--ink); background: var(--surface-2); font-weight: 600; }
+  nav.side-nav .tab.active::before {
     content: ""; position: absolute; inset-inline-start: 0; top: 6px; bottom: 6px;
     width: 3px; border-radius: 2px; background: var(--grad);
   }
 
   .main-wrap { flex: 1; min-width: 0; }
+  .skip-link { position: absolute; inset-inline-start: 12px; top: -48px; z-index: 100; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 8px; text-decoration: none; }
+  .skip-link:focus { top: 12px; }
+  main:focus { outline: none; }
   .statusbar {
     position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;
     padding: 9px 32px; border-bottom: 1px solid var(--line); font-size: 12px;
@@ -336,7 +344,7 @@
   .hint { color: var(--ink-dim); font-size: 12.5px; margin-top: -8px; margin-bottom: 14px; }
   iframe.ost-frame {
     width: 100%; height: min(78vh, 820px); min-height: 560px; border: 0;
-    display: block; background: #0b1220; border-radius: 8px;
+    display: block; background: #000; border-radius: 8px;
   }
   .ost-urls { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 14px; }
   .ost-url {
@@ -987,7 +995,7 @@
     body.nav-open { overflow: hidden; }
     .nav-search kbd { display: none; }
     .nav-search input { font-size: 16px; padding-inline-end: 12px; }
-    nav.side-nav button.tab { padding-block: 12px; font-size: 14.5px; }
+    nav.side-nav .tab { padding-block: 12px; font-size: 14.5px; }
     main { padding: 16px 16px 56px; }
     .statusbar { position: static; padding: 8px 16px; gap: 4px 14px; font-size: 11.5px; }
     .sb-hide-m { display: none; }
@@ -1009,15 +1017,16 @@
 </head>
 <body>
 
+<a class="skip-link" href="#" id="skipLink" data-i18n="skip_main">رفتن به محتوای اصلی</a>
 <div class="app-shell">
   <header class="mobile-bar">
     <button type="button" id="navMenuBtn" class="icon-btn" aria-label="Menu" aria-controls="sideNav" aria-expanded="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
     </button>
     <img class="mb-mark" src="brand/mark.png" width="26" height="27" alt="Santix">
     <div class="mb-title"><span class="mb-brand" translate="no">NetToolbox</span><span id="mbTab"></span></div>
     <button type="button" id="mbSearchBtn" class="icon-btn" aria-label="Search">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     </button>
   </header>
   <div class="nav-backdrop" id="navBackdrop"></div>
@@ -1037,200 +1046,200 @@
         </div>
         <div id="themeToggle">
           <button data-theme-choice="dark" title="Dark" aria-label="Dark theme">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           </button>
           <button data-theme-choice="light" title="Light" aria-label="Light theme">
-            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
           </button>
         </div>
       </div>
       <div class="nav-search">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         <input id="navSearch" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="nav_search_ph" placeholder="جستجوی ابزار…" />
         <kbd>Ctrl K</kbd>
       </div>
     </div>
 
     <nav class="side-nav">
-      <button class="tab active" data-panel="home">
-        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+      <a class="tab active" href="#home" data-panel="home">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
         <span data-i18n="nav_home">خلاصه</span>
-      </button>
+      </a>
       <div class="nav-empty" id="navEmpty" data-i18n="nav_search_none">ابزاری پیدا نشد</div>
       <div class="nav-group">
-        <button type="button" class="nav-group-title" aria-expanded="true"><span data-i18n="cat_network">شبکه</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-        <button class="tab" data-panel="link">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+        <button type="button" class="nav-group-title" aria-expanded="true"><span data-i18n="cat_network">شبکه</span><svg aria-hidden="true" class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        <a class="tab" href="#link" data-panel="link">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
           <span data-i18n="nav_link">این لینک</span>
-        </button>
-        <button class="tab" data-panel="discover">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+        </a>
+        <a class="tab" href="#discover" data-panel="discover">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
           <span data-i18n="nav_discover">کشف شبکه</span>
-        </button>
-        <button class="tab" data-panel="lancheck">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"></path><rect x="4" y="8" width="16" height="6" rx="1"></rect><path d="M7 14v3M12 14v3M17 14v3"></path><circle cx="7" cy="19" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle><circle cx="17" cy="19" r="1.5"></circle></svg>
+        </a>
+        <a class="tab" href="#lancheck" data-panel="lancheck">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"></path><rect x="4" y="8" width="16" height="6" rx="1"></rect><path d="M7 14v3M12 14v3M17 14v3"></path><circle cx="7" cy="19" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle><circle cx="17" cy="19" r="1.5"></circle></svg>
           <span data-i18n="nav_lancheck">بررسی LAN</span>
-        </button>
-        <button class="tab" data-panel="report">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        </a>
+        <a class="tab" href="#report" data-panel="report">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
           <span data-i18n="nav_report">گزارش جلسه</span>
-        </button>
-        <button class="tab" data-panel="portscan">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </a>
+        <a class="tab" href="#portscan" data-panel="portscan">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <span data-i18n="nav_portscan">اسکن پورت</span>
-        </button>
-        <button class="tab" data-panel="ping">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        </a>
+        <a class="tab" href="#ping" data-panel="ping">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           <span data-i18n="nav_ping">پینگ</span>
-        </button>
-        <button class="tab" data-panel="pingmon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><polyline points="5 13 8 13 10 9 13 16 15 12 19 12"></polyline></svg>
+        </a>
+        <a class="tab" href="#pingmon" data-panel="pingmon">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><polyline points="5 13 8 13 10 9 13 16 15 12 19 12"></polyline></svg>
           <span data-i18n="nav_pingmon">مانیتور پینگ</span>
-        </button>
-        <button class="tab" data-panel="traceroute">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+        </a>
+        <a class="tab" href="#traceroute" data-panel="traceroute">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
           <span data-i18n="nav_traceroute">Traceroute</span>
-        </button>
-        <button class="tab" data-panel="mtr">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline><circle cx="20" cy="12" r="2"></circle></svg>
+        </a>
+        <a class="tab" href="#mtr" data-panel="mtr">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline><circle cx="20" cy="12" r="2"></circle></svg>
           <span data-i18n="nav_mtr">MTR</span>
-        </button>
-        <button class="tab" data-panel="subnet">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </a>
+        <a class="tab" href="#subnet" data-panel="subnet">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span data-i18n="nav_subnet">سابنت</span>
-        </button>
-        <button class="tab" data-panel="cdp">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        </a>
+        <a class="tab" href="#cdp" data-panel="cdp">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           <span data-i18n="nav_neighbors">همسایه‌ها</span>
-        </button>
-        <button class="tab" data-panel="netmap">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><path d="M10 6.5h4.5A3.5 3.5 0 0 1 18 10v4"></path></svg>
+        </a>
+        <a class="tab" href="#netmap" data-panel="netmap">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><path d="M10 6.5h4.5A3.5 3.5 0 0 1 18 10v4"></path></svg>
           <span data-i18n="nav_netmap">نقشه شبکه</span>
-        </button>
-        <button class="tab" data-panel="snmp">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg>
+        </a>
+        <a class="tab" href="#snmp" data-panel="snmp">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"></path></svg>
           <span data-i18n="nav_snmp">SNMP</span>
-        </button>
-        <button class="tab" data-panel="wifi">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+        </a>
+        <a class="tab" href="#wifi" data-panel="wifi">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
           <span data-i18n="nav_wifi">WiFi</span>
-        </button>
-        <button class="tab" data-panel="speedtest">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </a>
+        <a class="tab" href="#speedtest" data-panel="speedtest">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           <span data-i18n="nav_speedtest">Speed Test</span>
-        </button>
-        <button class="tab" data-panel="iperf">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>
+        </a>
+        <a class="tab" href="#iperf" data-panel="iperf">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>
           <span>iperf3</span>
-        </button>
-        <button class="tab" data-panel="wol">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+        </a>
+        <a class="tab" href="#wol" data-panel="wol">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
           <span data-i18n="nav_wol">Wake-on-LAN</span>
-        </button>
-        <button class="tab" data-panel="pcap">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3.5" fill="currentColor"></circle></svg>
+        </a>
+        <a class="tab" href="#pcap" data-panel="pcap">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3.5" fill="currentColor"></circle></svg>
           <span data-i18n="nav_pcap">ضبط پکت</span>
-        </button>
-        <button class="tab" data-panel="arp">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </a>
+        <a class="tab" href="#arp" data-panel="arp">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span data-i18n="nav_arp">ARP Table</span>
-        </button>
-        <button class="tab" data-panel="bandwidth">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+        </a>
+        <a class="tab" href="#bandwidth" data-panel="bandwidth">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
           <span data-i18n="nav_bandwidth">پهنای‌باند</span>
-        </button>
+        </a>
       </div>
 
       <div class="nav-group">
-        <button type="button" class="nav-group-title" aria-expanded="true"><span data-i18n="cat_security">امنیت</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-        <button class="tab" data-panel="dns">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"></path></svg>
+        <button type="button" class="nav-group-title" aria-expanded="true"><span data-i18n="cat_security">امنیت</span><svg aria-hidden="true" class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        <a class="tab" href="#dns" data-panel="dns">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"></path></svg>
           <span data-i18n="nav_dns">DNS</span>
-        </button>
-        <button class="tab" data-panel="whois">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        </a>
+        <a class="tab" href="#whois" data-panel="whois">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
           <span data-i18n="nav_whois">Whois</span>
-        </button>
-        <button class="tab" data-panel="audit">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </a>
+        <a class="tab" href="#audit" data-panel="audit">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <span data-i18n="nav_audit">ممیزی روتر</span>
-        </button>
-        <button class="tab" data-panel="whatismyip">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        </a>
+        <a class="tab" href="#whatismyip" data-panel="whatismyip">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           <span data-i18n="nav_whatismyip">IP من</span>
-        </button>
-        <button class="tab" data-panel="domain">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+        </a>
+        <a class="tab" href="#domain" data-panel="domain">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
           <span data-i18n="nav_domain">دامنه</span>
-        </button>
-        <button class="tab" data-panel="tls">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </a>
+        <a class="tab" href="#tls" data-panel="tls">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           <span data-i18n="nav_tls">SSL/TLS</span>
-        </button>
-        <button class="tab" data-panel="headers">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </a>
+        <a class="tab" href="#headers" data-panel="headers">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
           <span data-i18n="nav_headers">HTTP Headers</span>
-        </button>
-        <button class="tab" data-panel="hashtools">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+        </a>
+        <a class="tab" href="#hashtools" data-panel="hashtools">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
           <span data-i18n="nav_hashtools">Hash/Base64/JWT</span>
-        </button>
-        <button class="tab" data-panel="geoip">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        </a>
+        <a class="tab" href="#geoip" data-panel="geoip">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
           <span data-i18n="nav_geoip">موقعیت IP</span>
-        </button>
+        </a>
       </div>
 
       <div class="nav-group">
-        <button type="button" class="nav-group-title" aria-expanded="true"><span data-i18n="cat_utility">ابزار</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-        <button class="tab" data-panel="fileshare">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <button type="button" class="nav-group-title" aria-expanded="true"><span data-i18n="cat_utility">ابزار</span><svg aria-hidden="true" class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        <a class="tab" href="#fileshare" data-panel="fileshare">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           <span data-i18n="nav_fileshare">اشتراک فایل</span>
-        </button>
-        <button class="tab" data-panel="compress">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+        </a>
+        <a class="tab" href="#compress" data-panel="compress">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
           <span data-i18n="nav_compress">فشرده‌سازی</span>
-        </button>
-        <button class="tab" data-panel="tftp">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+        </a>
+        <a class="tab" href="#tftp" data-panel="tftp">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
           <span>TFTP</span>
-        </button>
-        <button class="tab" data-panel="syslog">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"></path><circle cx="18" cy="17" r="3"></circle></svg>
+        </a>
+        <a class="tab" href="#syslog" data-panel="syslog">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"></path><circle cx="18" cy="17" r="3"></circle></svg>
           <span>Syslog</span>
-        </button>
-        <button class="tab" data-panel="qrcode">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><line x1="14" y1="14" x2="14" y2="21"></line><line x1="21" y1="14" x2="21" y2="21"></line><line x1="14" y1="17.5" x2="21" y2="17.5"></line></svg>
+        </a>
+        <a class="tab" href="#qrcode" data-panel="qrcode">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><line x1="14" y1="14" x2="14" y2="21"></line><line x1="21" y1="14" x2="21" y2="21"></line><line x1="14" y1="17.5" x2="21" y2="17.5"></line></svg>
           <span data-i18n="nav_qrcode">QR Code</span>
-        </button>
-        <button class="tab" data-panel="quickconnect">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path><path d="M9 21v-4h6v4"></path><path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01"></path></svg>
+        </a>
+        <a class="tab" href="#quickconnect" data-panel="quickconnect">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path><path d="M9 21v-4h6v4"></path><path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01"></path></svg>
           <span data-i18n="nav_quickconnect">اتصال سریع</span>
-        </button>
-        <button class="tab" data-panel="scripts">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+        </a>
+        <a class="tab" href="#scripts" data-panel="scripts">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
           <span data-i18n="nav_scripts">اسکریپت‌ها</span>
-        </button>
-        <button class="tab" data-panel="configs">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"></path><path d="M8 4v5h7V4"></path><path d="M8 14h8M8 17h5"></path></svg>
+        </a>
+        <a class="tab" href="#configs" data-panel="configs">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"></path><path d="M8 4v5h7V4"></path><path d="M8 14h8M8 17h5"></path></svg>
           <span data-i18n="nav_configs">بکاپ کانفیگ</span>
-        </button>
-        <button class="tab" data-panel="sshkeys">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+        </a>
+        <a class="tab" href="#sshkeys" data-panel="sshkeys">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
           <span data-i18n="nav_sshkeys">کلیدهای SSH</span>
-        </button>
-        <button class="tab" data-panel="terminal">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+        </a>
+        <a class="tab" href="#terminal" data-panel="terminal">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
           <span data-i18n="nav_terminal">SSH/Telnet</span>
-        </button>
-        <button class="tab" data-panel="serial">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v4M15 2v4"></path><rect x="6" y="6" width="12" height="8" rx="2"></rect><path d="M12 14v3a3 3 0 0 1-3 3H6"></path></svg>
+        </a>
+        <a class="tab" href="#serial" data-panel="serial">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v4M15 2v4"></path><rect x="6" y="6" width="12" height="8" rx="2"></rect><path d="M12 14v3a3 3 0 0 1-3 3H6"></path></svg>
           <span data-i18n="nav_serial">کنسول سریال</span>
-        </button>
-        <button class="tab" data-panel="rdp">
-          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </a>
+        <a class="tab" href="#rdp" data-panel="rdp">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
           <span data-i18n="nav_rdp">RDP</span>
-        </button>
+        </a>
       </div>
     </nav>
   </aside>
@@ -1244,7 +1253,7 @@
       <span class="sb-item sb-hide-m"><span class="sb-k" data-i18n="sb_public">عمومی</span><b id="sbPub">—</b></span>
       <button type="button" class="sb-item sb-svc" id="sbSvc"><span class="sb-k" data-i18n="sb_exposed">روی LAN</span><b id="sbSvcN">0</b></button>
     </div>
-    <main>
+    <main id="mainContent" tabindex="-1">
 
       <section id="home" class="panel active">
         <header class="panel-head">
@@ -1318,12 +1327,12 @@
           <p class="lede" data-i18n="report_lede">اسکن کشف + همسایه‌ها + لینک + یک پاراگراف یادداشت — برای چسباندن به تیکت.</p>
         </header>
         <div class="row">
-          <input id="reportSite" data-i18n-placeholder="report_site_ph" placeholder="سایت / شعبه" style="min-width:160px" />
+          <input id="reportSite" data-i18n-placeholder="report_site_ph" placeholder="سایت / شعبه…" style="min-width:160px" />
           <input id="reportCustomer" data-i18n-placeholder="report_customer_ph" placeholder="مشتری" style="min-width:140px" />
           <input id="reportTech" data-i18n-placeholder="report_tech_ph" placeholder="تکنسین" style="min-width:140px" />
         </div>
         <div class="row">
-          <textarea id="reportNotes" data-i18n-placeholder="report_notes_ph" placeholder="یک پاراگراف: چه دیدی، چه کردی، چه ماند."></textarea>
+          <textarea id="reportNotes" data-i18n-placeholder="report_notes_ph" placeholder="یک پاراگراف: چه دیدی، چه کردی، چه ماند.…"></textarea>
         </div>
         <div class="row">
           <button class="action" id="reportPreviewBtn" data-i18n="report_preview">پیش‌نمایش</button>
@@ -1345,7 +1354,7 @@
         </header>
         <div class="row">
           <input id="ipInput" placeholder="192.168.1.10" />
-          <input id="portsInput" data-i18n-placeholder="ports_placeholder" placeholder="22,80,443 یا 1-1000 (خالی = 1000 پورت پرکاربرد)" style="min-width:320px" />
+          <input id="portsInput" data-i18n-placeholder="ports_placeholder" placeholder="22,80,443 یا 1-1000 (خالی = 1000 پورت پرکاربرد)…" style="min-width:320px" />
           <label class="chk"><input type="checkbox" id="allPortsChk"> <span data-i18n="allports_label">همه 65535 پورت (کند)</span></label>
           <button class="action" id="portscanBtn" data-i18n="portscan_btn">اسکن پورت</button>
         </div>
@@ -1362,7 +1371,7 @@
           <p class="lede" data-i18n="ping_lede">یک شات برای سلامت لینک، یا مانیتور زنده برای دیدن نوسان تأخیر.</p>
         </header>
         <div class="row">
-          <input id="pingInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com" />
+          <input id="pingInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com…" />
           <button class="action" id="pingBtn" data-i18n="ping_btn">پینگ</button>
           <button class="action secondary" id="pingMonitorBtn" data-i18n="start_monitor">شروع مانیتور زنده</button>
         </div>
@@ -1380,7 +1389,7 @@
           <p class="lede" data-i18n="traceroute_lede">مسیر بسته تا مقصد، هاپ‌به‌هاپ، با تأخیر هر گام.</p>
         </header>
         <div class="row">
-          <input id="tracerouteInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com" />
+          <input id="tracerouteInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com…" />
           <button class="action" id="tracerouteBtn" data-i18n="nav_traceroute">Traceroute</button>
         </div>
         <div class="bezel">
@@ -1396,7 +1405,7 @@
           <p class="lede" data-i18n="mtr_lede">پینگ و تریس با هم، زنده — افت لینک روی کدام هاپ است مشخص می‌شود.</p>
         </header>
         <div class="row">
-          <input id="mtrInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com" />
+          <input id="mtrInput" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com…" />
           <button class="action" id="mtrStartBtn" data-i18n="start_monitor">شروع مانیتور زنده</button>
         </div>
         <div class="bezel">
@@ -1427,6 +1436,10 @@
       </section>
 
       <section id="cdp" class="panel">
+        <header class="panel-head">
+          <div class="kicker">CDP · LLDP</div>
+          <h2 data-i18n="nav_neighbors">همسایه‌ها</h2>
+        </header>
         <div class="row">
           <select id="neighborProto">
             <option value="cdp">CDP (Cisco)</option>
@@ -1450,7 +1463,7 @@
           <p class="lede" data-i18n="netmap_lede">رانینگ‌کانفیگ و CDP/neighbor را بچسبان؛ نقشه فنی و فایل اکسل برای ارائه به مشتری ساخته می‌شود.</p>
         </header>
         <div class="row">
-          <input id="netmapSite" data-i18n-placeholder="report_site_ph" placeholder="سایت / شعبه" style="min-width:160px" />
+          <input id="netmapSite" data-i18n-placeholder="report_site_ph" placeholder="سایت / شعبه…" style="min-width:160px" />
           <input id="netmapCustomer" data-i18n-placeholder="report_customer_ph" placeholder="مشتری" style="min-width:140px" />
         </div>
         <div id="netmapDrop" class="netmap-drop" tabindex="0">
@@ -1486,7 +1499,7 @@
           <p class="lede" data-i18n="snmp_lede">نام میزبان، آپ‌تایم، پورت، VLAN، دوربین، Dahua و Hikvision — community v1/v2c.</p>
         </header>
         <div class="row">
-          <input id="snmpHost" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com" />
+          <input id="snmpHost" data-i18n-placeholder="host_placeholder" placeholder="192.168.1.1 یا example.com…" />
           <input id="snmpCommunity" value="public" style="min-width:140px" />
           <select id="snmpVersion">
             <option value="2c">v2c</option>
@@ -1520,6 +1533,10 @@
       </section>
 
       <section id="wifi" class="panel">
+        <header class="panel-head">
+          <div class="kicker">802.11 · SCAN</div>
+          <h2 data-i18n="nav_wifi">WiFi</h2>
+        </header>
         <div class="row">
           <select id="wifiIfaceSelect"></select>
           <button class="action" id="wifiScanBtn" data-i18n="wifi_scan_btn">اسکن WiFi</button>
@@ -1562,6 +1579,10 @@
       </section>
 
       <section id="wol" class="panel">
+        <header class="panel-head">
+          <div class="kicker">MAGIC PACKET · UDP 9</div>
+          <h2 data-i18n="nav_wol">Wake-on-LAN</h2>
+        </header>
         <div class="row">
           <input id="wolMac" placeholder="AA:BB:CC:DD:EE:FF" />
           <input id="wolBroadcast" placeholder="255.255.255.255" value="255.255.255.255" />
@@ -1575,6 +1596,10 @@
       </section>
 
       <section id="arp" class="panel">
+        <header class="panel-head">
+          <div class="kicker">L2 · NEIGHBOR CACHE</div>
+          <h2 data-i18n="nav_arp">ARP Table</h2>
+        </header>
         <div class="row">
           <button class="action" id="arpBtn" data-i18n="arp_btn">نمایش ARP Cache</button>
         </div>
@@ -1602,6 +1627,10 @@
       </section>
 
       <section id="dns" class="panel">
+        <header class="panel-head">
+          <div class="kicker">A · AAAA · MX · NS · TXT</div>
+          <h2 data-i18n="nav_dns">DNS</h2>
+        </header>
         <div class="row">
           <input id="dnsInput" placeholder="example.com" />
           <button class="action" id="dnsBtn" data-i18n="dns_btn">جستجوی DNS</button>
@@ -1620,7 +1649,7 @@
           <p class="lede" data-i18n="whois_lede">مالک دامنه/IP، abuse، لیست سیاه، پینگ و حدس سیستم‌عامل.</p>
         </header>
         <div class="row">
-          <input id="whoisInput" placeholder="example.com یا 8.8.8.8" />
+          <input id="whoisInput" placeholder="example.com یا 8.8.8.8…" />
           <label class="chk"><input type="checkbox" id="whoisFull"> <span data-i18n="whois_full">اطلاعات کامل</span></label>
           <button class="action" id="whoisBtn" data-i18n="whois_btn">Whois</button>
         </div>
@@ -1661,6 +1690,10 @@
       </section>
 
       <section id="whatismyip" class="panel">
+        <header class="panel-head">
+          <div class="kicker">WAN · GEO</div>
+          <h2 data-i18n="nav_whatismyip">IP من</h2>
+        </header>
         <div class="row">
           <button class="action" id="whatismyipBtn" data-i18n="whatismyip_btn">دریافت IP عمومی من</button>
         </div>
@@ -1671,6 +1704,10 @@
       </section>
 
       <section id="domain" class="panel">
+        <header class="panel-head">
+          <div class="kicker">CT LOGS · DNS</div>
+          <h2 data-i18n="nav_domain">دامنه</h2>
+        </header>
         <div class="row">
           <input id="domainInput" placeholder="example.com" />
           <button class="action" id="domainBtn" data-i18n="domain_btn">بررسی دامنه</button>
@@ -1713,7 +1750,7 @@
             <textarea id="scText" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----&#10;-----BEGIN PRIVATE KEY-----&#10;…"></textarea>
           </details>
           <div class="row" style="margin-top:12px">
-            <input id="scPassword" type="password" autocomplete="off" data-i18n-placeholder="sc_pw_ph" placeholder="رمز PFX یا کلید رمزدار (اگر دارد)" />
+            <input id="scPassword" type="password" autocomplete="off" data-i18n-placeholder="sc_pw_ph" placeholder="رمز PFX یا کلید رمزدار (اگر دارد)…" />
             <label class="chk"><input type="checkbox" id="scFetch" checked> <span data-i18n="sc_fetch">دانلود intermediate جاافتاده</span></label>
             <label class="chk"><input type="checkbox" id="scRoot"> <span data-i18n="sc_root">root هم در fullchain باشد</span></label>
           </div>
@@ -1726,6 +1763,10 @@
       </section>
 
       <section id="headers" class="panel">
+        <header class="panel-head">
+          <div class="kicker">HTTP · SECURITY</div>
+          <h2 data-i18n="nav_headers">HTTP Headers</h2>
+        </header>
         <div class="row">
           <input id="headersInput" placeholder="example.com" />
           <button class="action" id="headersBtn" data-i18n="headers_btn">بررسی هدرها</button>
@@ -1738,6 +1779,10 @@
       </section>
 
       <section id="hashtools" class="panel">
+        <header class="panel-head">
+          <div class="kicker">HASH · BASE64 · JWT</div>
+          <h2 data-i18n="nav_hashtools">Hash/Base64/JWT</h2>
+        </header>
         <div class="row">
           <select id="hashMode">
             <option value="md5">MD5</option>
@@ -1764,6 +1809,10 @@
       </section>
 
       <section id="geoip" class="panel">
+        <header class="panel-head">
+          <div class="kicker">IP · ASN · GEO</div>
+          <h2 data-i18n="nav_geoip">موقعیت IP</h2>
+        </header>
         <div class="row">
           <input id="geoipInput" placeholder="1.1.1.1" />
           <button class="action" id="geoipBtn" data-i18n="geoip_btn">پیدا کردن موقعیت</button>
@@ -1891,7 +1940,7 @@
               <option value="get" data-i18n="tftp_get">دریافت (get) از سرور</option>
               <option value="put" data-i18n="tftp_put">ارسال (put) به سرور</option>
             </select>
-            <input id="tftpHost" data-i18n-placeholder="tftp_host_ph" placeholder="IP سرور TFTP" style="min-width:160px" />
+            <input id="tftpHost" data-i18n-placeholder="tftp_host_ph" placeholder="IP سرور TFTP…" style="min-width:160px" />
             <input id="tftpCPort" class="tftp-port" type="number" min="1" max="65535" value="69" title="UDP port" />
             <select id="tftpBlk" title="block size">
               <option value="1468">blksize 1468</option>
@@ -1900,8 +1949,8 @@
             </select>
           </div>
           <div class="row">
-            <input id="tftpRemote" data-i18n-placeholder="tftp_remote_ph" placeholder="نام فایل روی سرور" style="min-width:200px" />
-            <input id="tftpLocal" list="tftpLocalList" data-i18n-placeholder="tftp_local_ph" placeholder="نام فایل در پوشه‌ی TFTP (اختیاری)" style="min-width:200px" />
+            <input id="tftpRemote" data-i18n-placeholder="tftp_remote_ph" placeholder="نام فایل روی سرور…" style="min-width:200px" />
+            <input id="tftpLocal" list="tftpLocalList" data-i18n-placeholder="tftp_local_ph" placeholder="نام فایل در پوشه‌ی TFTP (اختیاری)…" style="min-width:200px" />
             <datalist id="tftpLocalList"></datalist>
             <button class="action" id="tftpRunBtn" data-i18n="tftp_run">اجرا</button>
           </div>
@@ -1930,7 +1979,7 @@
           <input id="qrInput" data-i18n-placeholder="qr_input_placeholder" placeholder="IP، URL یا هر متنی…" style="min-width:320px" />
         </div>
         <div class="row" id="qrWifiRow">
-          <input id="qrWifiSsid" data-i18n-placeholder="qr_wifi_ssid" placeholder="نام شبکه (SSID)" style="min-width:180px" />
+          <input id="qrWifiSsid" data-i18n-placeholder="qr_wifi_ssid" placeholder="نام شبکه (SSID)…" style="min-width:180px" />
           <input id="qrWifiPass" type="password" autocomplete="off" data-i18n-placeholder="qr_wifi_pass" placeholder="رمز" style="min-width:160px" />
           <select id="qrWifiSec">
             <option value="WPA">WPA/WPA2/WPA3</option>
@@ -1964,8 +2013,8 @@
           <p class="lede" data-i18n="qc_lede">هاست، پروتکل، پورت، یوزر و یادداشت سایت. رمز ذخیره نمی‌شود.</p>
         </header>
         <div class="row qc-form">
-          <input id="qcName" data-i18n-placeholder="qc_name_placeholder" placeholder="اسم (مثلاً سوییچ اصلی)" style="min-width:160px" />
-          <input id="qcHost" data-i18n-placeholder="qc_host_placeholder" placeholder="IP یا host" style="min-width:160px" />
+          <input id="qcName" data-i18n-placeholder="qc_name_placeholder" placeholder="اسم (مثلاً سوییچ اصلی)…" style="min-width:160px" />
+          <input id="qcHost" data-i18n-placeholder="qc_host_placeholder" placeholder="IP یا host…" style="min-width:160px" />
           <select id="qcProto">
             <option value="ssh">SSH</option>
             <option value="telnet">Telnet</option>
@@ -1973,10 +2022,10 @@
           </select>
           <input id="qcPort" data-i18n-placeholder="qc_port_placeholder" placeholder="پورت" style="min-width:90px" />
           <input id="qcUser" data-i18n-placeholder="qc_user_placeholder" placeholder="یوزرنیم" style="min-width:120px" />
-          <input id="qcSite" data-i18n-placeholder="qc_site_placeholder" placeholder="سایت / مشتری" style="min-width:140px" />
+          <input id="qcSite" data-i18n-placeholder="qc_site_placeholder" placeholder="سایت / مشتری…" style="min-width:140px" />
         </div>
         <div class="row qc-form">
-          <textarea id="qcNotes" data-i18n-placeholder="qc_notes_placeholder" placeholder="یادداشت (رک، VLAN، تماس…)"></textarea>
+          <textarea id="qcNotes" data-i18n-placeholder="qc_notes_placeholder" placeholder="یادداشت (رک، VLAN، تماس…)…"></textarea>
           <button class="action" id="qcAddBtn" data-i18n="qc_add_btn">افزودن</button>
         </div>
         <div class="hint" data-i18n="qc_hint">فقط در همین مرورگر ذخیره می‌شود. رمز را اینجا نگذارید — هنگام اتصال وارد کنید.</div>
@@ -2026,7 +2075,7 @@
               </select>
             </div>
             <div class="row">
-              <input id="scriptHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" />
+              <input id="scriptHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP…" />
               <input id="scriptUser" data-i18n-placeholder="qc_user_placeholder" placeholder="یوزرنیم" style="min-width:120px" />
               <input id="scriptPass" type="password" autocomplete="off" data-i18n-placeholder="rdp_pass_placeholder" placeholder="رمز" />
               <input id="scriptPort" value="22" style="min-width:80px" />
@@ -2038,7 +2087,7 @@
         <div class="bezel" id="scriptEditor">
           <div class="bezel-label" id="edTitle" data-i18n="scripts_new">اسکریپت جدید</div>
           <div class="row">
-            <input id="edName" data-i18n-placeholder="scripts_name_ph" placeholder="نام اسکریپت" style="min-width:180px" />
+            <input id="edName" data-i18n-placeholder="scripts_name_ph" placeholder="نام اسکریپت…" style="min-width:180px" />
             <select id="edOs">
               <option value="linux">Linux</option>
               <option value="windows">Windows</option>
@@ -2052,13 +2101,13 @@
             </select>
           </div>
           <div class="row">
-            <input id="edDesc" data-i18n-placeholder="scripts_desc_ph" placeholder="توضیح کوتاه" style="min-width:280px;flex:1" />
+            <input id="edDesc" data-i18n-placeholder="scripts_desc_ph" placeholder="توضیح کوتاه…" style="min-width:280px;flex:1" />
           </div>
           <div class="row">
-            <textarea id="edVars" data-i18n-placeholder="scripts_vars_ph" placeholder="هر خط: NTP_SERVER=192.168.1.1" style="min-height:72px"></textarea>
+            <textarea id="edVars" data-i18n-placeholder="scripts_vars_ph" placeholder="هر خط: NTP_SERVER=192.168.1.1…" style="min-height:72px"></textarea>
           </div>
           <div class="row">
-            <textarea id="edBody" data-i18n-placeholder="scripts_body_ph" placeholder="متن اسکریپت. متغیرها را با {{NTP_SERVER}} بنویسید." style="min-height:180px"></textarea>
+            <textarea id="edBody" data-i18n-placeholder="scripts_body_ph" placeholder="متن اسکریپت. متغیرها را با {{NTP_SERVER}} بنویسید.…" style="min-height:180px"></textarea>
           </div>
           <div class="row">
             <button class="action" id="edSaveBtn" data-i18n="scripts_save">ذخیره</button>
@@ -2078,23 +2127,23 @@
         <div class="bezel">
           <div class="bezel-label" data-i18n="sk_new">کلید جدید</div>
           <div class="row">
-            <input id="skName" data-i18n-placeholder="sk_name_ph" placeholder="اسم کلید (مثلاً hetzner)" style="min-width:170px" />
+            <input id="skName" data-i18n-placeholder="sk_name_ph" placeholder="اسم کلید (مثلاً hetzner)…" style="min-width:170px" />
             <select id="skType">
               <option value="ed25519" data-i18n="sk_t_ed">Ed25519 (پیشنهادی)</option>
               <option value="rsa4096">RSA 4096</option>
               <option value="rsa3072">RSA 3072</option>
               <option value="ecdsa521">ECDSA P-521</option>
             </select>
-            <input id="skComment" data-i18n-placeholder="sk_comment_ph" placeholder="توضیح (مثلاً ssp@laptop)" style="min-width:170px" />
-            <input id="skPass" type="password" autocomplete="new-password" data-i18n-placeholder="sk_pass_ph" placeholder="passphrase (اختیاری)" style="min-width:170px" />
+            <input id="skComment" data-i18n-placeholder="sk_comment_ph" placeholder="توضیح (مثلاً ssp@laptop)…" style="min-width:170px" />
+            <input id="skPass" type="password" autocomplete="new-password" data-i18n-placeholder="sk_pass_ph" placeholder="passphrase (اختیاری)…" style="min-width:170px" />
             <button class="action" id="skGenBtn" data-i18n="sk_gen">ساخت کلید</button>
           </div>
           <div class="hint" data-i18n="sk_gen_hint">Ed25519 کوتاه، سریع و امن است و Hetzner، لینوکس‌های جدید، GitHub و MikroTik 7 همه قبولش دارند. RSA 4096 برای دستگاه‌های قدیمی. passphrase کلید خصوصی را رمز می‌کند؛ اگر کلید را دانلود یا جابه‌جا می‌کنید، بگذارید.</div>
           <details class="sk-import">
             <summary data-i18n="sk_import">وارد کردن کلید خصوصی موجود</summary>
             <div class="row" style="margin-top:10px">
-              <input id="skImpName" data-i18n-placeholder="sk_name_ph" placeholder="اسم کلید" style="min-width:170px" />
-              <input id="skImpPass" type="password" autocomplete="off" data-i18n-placeholder="sk_imp_pass_ph" placeholder="passphrase (اگر دارد)" style="min-width:170px" />
+              <input id="skImpName" data-i18n-placeholder="sk_name_ph" placeholder="اسم کلید…" style="min-width:170px" />
+              <input id="skImpPass" type="password" autocomplete="off" data-i18n-placeholder="sk_imp_pass_ph" placeholder="passphrase (اگر دارد)…" style="min-width:170px" />
               <button class="action secondary" id="skImpBtn" data-i18n="sk_import_btn">وارد کردن</button>
             </div>
             <textarea id="skImpText" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
@@ -2111,14 +2160,14 @@
           <div class="bezel-label" data-i18n="sk_server">سرور</div>
           <div class="row">
             <select id="skUseKey" style="min-width:150px"></select>
-            <input id="skHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" style="min-width:160px" />
+            <input id="skHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP…" style="min-width:160px" />
             <input id="skPort" class="tftp-port" type="number" min="1" max="65535" value="22" title="port" />
             <input id="skUser" value="root" style="min-width:110px" data-i18n-placeholder="term_user_placeholder" />
           </div>
           <div class="row">
-            <input id="skSrvPass" type="password" autocomplete="off" data-i18n-placeholder="sk_srv_pass_ph" placeholder="پسورد سرور (فقط برای نصب کلید)" style="min-width:220px" />
+            <input id="skSrvPass" type="password" autocomplete="off" data-i18n-placeholder="sk_srv_pass_ph" placeholder="پسورد سرور (فقط برای نصب کلید)…" style="min-width:220px" />
             <button class="action secondary" id="skInstallBtn" data-i18n="sk_install">نصب کلید روی سرور</button>
-            <input id="skTestPass" type="password" autocomplete="off" data-i18n-placeholder="sk_test_pass_ph" placeholder="passphrase کلید (اگر دارد)" style="min-width:180px" />
+            <input id="skTestPass" type="password" autocomplete="off" data-i18n-placeholder="sk_test_pass_ph" placeholder="passphrase کلید (اگر دارد)…" style="min-width:180px" />
             <button class="action secondary" id="skTestBtn" data-i18n="sk_test">تست ورود با کلید</button>
             <button class="action" id="skConnectBtn" data-i18n="sk_connect">اتصال در ترمینال</button>
           </div>
@@ -2138,14 +2187,18 @@
       </section>
 
       <section id="terminal" class="panel">
+        <header class="panel-head">
+          <div class="kicker">SSH · TELNET</div>
+          <h2 data-i18n="nav_terminal">SSH/Telnet</h2>
+        </header>
         <div class="row">
           <select id="termProto">
             <option value="ssh">SSH</option>
             <option value="telnet">Telnet</option>
           </select>
-          <input id="termHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" />
-          <input id="termPort" data-i18n-placeholder="term_port_placeholder" placeholder="پورت (پیش‌فرض 22/23)" style="min-width:160px" />
-          <input id="termUser" data-i18n-placeholder="term_user_placeholder" placeholder="یوزرنیم (فقط SSH)" />
+          <input id="termHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP…" />
+          <input id="termPort" data-i18n-placeholder="term_port_placeholder" placeholder="پورت (پیش‌فرض 22/23)…" style="min-width:160px" />
+          <input id="termUser" data-i18n-placeholder="term_user_placeholder" placeholder="یوزرنیم (فقط SSH)…" />
           <select id="termKey" title="SSH key"><option value="" data-i18n="sk_no_key">بدون کلید (پسورد)</option></select>
           <button class="action" id="termConnectBtn" data-i18n="term_connect_btn">اتصال</button>
           <button class="action secondary" id="termBlankBtn" data-i18n="term_blank_btn">ترمینال خالی</button>
@@ -2158,7 +2211,7 @@
             <select id="termScriptPick" style="min-width:220px">
               <option value="" data-i18n="session_pick">انتخاب اسکریپت…</option>
             </select>
-            <input id="termScriptPass" type="password" autocomplete="off" data-i18n-placeholder="session_pass_ph" placeholder="رمز SSH (اسکریپت بزرگ / ویندوز)" />
+            <input id="termScriptPass" type="password" autocomplete="off" data-i18n-placeholder="session_pass_ph" placeholder="رمز SSH (اسکریپت بزرگ / ویندوز)…" />
             <button class="action" id="termScriptRunBtn" data-i18n="session_run_term">اجرا در همین جلسه</button>
           </div>
           <div id="termScriptVars" class="row"></div>
@@ -2261,7 +2314,7 @@
         <div class="bezel">
           <div class="bezel-label" data-i18n="lc_dhcp_title">سرورهای DHCP و تست VLAN</div>
           <div class="row">
-            <input id="lcVlans" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="lc_vlans_ph" placeholder="VLANها (اختیاری): 10,20,30-40" />
+            <input id="lcVlans" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="lc_vlans_ph" placeholder="VLANها (اختیاری): 10,20,30-40…" />
             <label class="chk"><input type="checkbox" id="lcUntagged" checked> <span data-i18n="lc_untagged">بدون تگ هم تست شود</span></label>
             <button class="action" id="lcDhcpBtn" data-i18n="lc_dhcp_btn">جستجوی DHCP</button>
           </div>
@@ -2271,7 +2324,7 @@
         <div class="bezel" style="margin-top:18px">
           <div class="bezel-label" data-i18n="lc_arp_title">IP تکراری</div>
           <div class="row">
-            <input id="lcCidr" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="lc_cidr_ph" placeholder="سابنت (اختیاری، پیش‌فرض: شبکه‌ی همین اینترفیس)" />
+            <input id="lcCidr" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="lc_cidr_ph" placeholder="سابنت (اختیاری، پیش‌فرض: شبکه‌ی همین اینترفیس)…" />
             <button class="action" id="lcArpBtn" data-i18n="lc_arp_btn">جستجوی IP تکراری</button>
           </div>
           <div id="lcArpResult"></div>
@@ -2309,7 +2362,7 @@
               <select id="ipProto"><option value="tcp">TCP</option><option value="udp">UDP</option></select>
               <select id="ipDur" dir="ltr"><option value="5">5s</option><option value="10" selected>10s</option><option value="30">30s</option><option value="60">60s</option></select>
               <select id="ipPar" dir="ltr"><option value="1">1 stream</option><option value="4">4 streams</option><option value="8">8 streams</option></select>
-              <input id="ipRate" class="ltr" dir="ltr" placeholder="UDP 100M" style="max-width:110px" />
+              <input id="ipRate" class="ltr" dir="ltr" placeholder="UDP 100M…" style="max-width:110px" />
               <button class="action" id="ipRunBtn" data-i18n="ip_run">شروع تست</button>
             </div>
             <div id="ipProgress"></div>
@@ -2330,7 +2383,7 @@
         </header>
         <div class="row">
           <select id="pcIface"></select>
-          <input id="pcFilter" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="pc_filter_ph" placeholder="فیلتر BPF، مثلاً host 10.0.0.1 and port 443" />
+          <input id="pcFilter" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="pc_filter_ph" placeholder="فیلتر BPF، مثلاً host 10.0.0.1 and port 443…" />
         </div>
         <div class="pc-chips" id="pcChips"></div>
         <div class="row">
@@ -2387,18 +2440,18 @@
         <details class="cf-add" id="cfAdd">
           <summary data-i18n="cf_add">+ افزودن دستگاه</summary>
           <div class="row" style="margin-top:12px">
-            <input id="cfName" data-i18n-placeholder="cf_name_ph" placeholder="نام (مثلاً Core-SW1)" />
+            <input id="cfName" data-i18n-placeholder="cf_name_ph" placeholder="نام (مثلاً Core-SW1)…" />
             <input id="cfHost" class="ltr" dir="ltr" spellcheck="false" placeholder="10.0.0.1" />
             <select id="cfVendor"></select>
           </div>
           <div class="row">
             <select id="cfProto"><option value="ssh">SSH</option><option value="telnet">Telnet</option></select>
             <input id="cfPort" type="number" placeholder="22" style="max-width:100px" />
-            <input id="cfUser" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="cf_user_ph" placeholder="نام کاربری" />
+            <input id="cfUser" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="cf_user_ph" placeholder="نام کاربری…" />
             <select id="cfKey"></select>
           </div>
           <div class="row">
-            <input id="cfCmd" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="cf_cmd_ph" placeholder="دستور دلخواه (اختیاری؛ پیش‌فرض بر اساس برند)" />
+            <input id="cfCmd" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="cf_cmd_ph" placeholder="دستور دلخواه (اختیاری؛ پیش‌فرض بر اساس برند)…" />
             <button class="action" id="cfSaveBtn" data-i18n="cf_save">ذخیره‌ی دستگاه</button>
             <button class="action secondary" id="cfCancelBtn" data-i18n="cf_cancel" hidden>انصراف</button>
           </div>
@@ -2416,10 +2469,10 @@
           <p class="lede" data-i18n="rdp_lede">دسکتاپ ویندوز را داخل همین مرورگر باز می‌کند — مثل SSH، فقط روی localhost.</p>
         </header>
         <div class="row">
-          <input id="rdpHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP" />
+          <input id="rdpHost" data-i18n-placeholder="term_host_placeholder" placeholder="host یا IP…" />
           <input id="rdpPort" placeholder="3389" style="min-width:90px" />
           <input id="rdpUser" data-i18n-placeholder="rdp_user_placeholder" placeholder="یوزرنیم" />
-          <input id="rdpDomain" data-i18n-placeholder="rdp_domain_placeholder" placeholder="دامین (اختیاری)" />
+          <input id="rdpDomain" data-i18n-placeholder="rdp_domain_placeholder" placeholder="دامین (اختیاری)…" />
           <input id="rdpPass" type="password" autocomplete="off" data-i18n-placeholder="rdp_pass_placeholder" placeholder="رمز" />
           <button class="action" id="rdpConnectBtn" data-i18n="term_connect_btn">اتصال</button>
           <button class="action secondary" id="rdpDisconnectBtn" data-i18n="rdp_disconnect">قطع</button>
@@ -2473,7 +2526,7 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "همسایه‌ها", nav_netmap: "نقشه شبکه", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "پهنای‌باند",
-    confirm_del_file: "«{n}» حذف شود؟", sb_link: "لینک", sb_public: "عمومی", sb_exposed: "روی LAN",
+    confirm_del_file: "«{n}» حذف شود؟", skip_main: "رفتن به محتوای اصلی", sb_link: "لینک", sb_public: "عمومی", sb_exposed: "روی LAN",
     ctl_iface: "اینترفیس", ctl_proto: "پروتکل", ctl_duration: "مدت (ثانیه)", ctl_community: "SNMP community", ctl_version: "نسخه",
     ctl_profile: "پروفایل", ctl_mode: "حالت", ctl_vendor: "برند دستگاه", ctl_port: "پورت", ctl_algo: "الگوریتم", ctl_action: "عملیات",
     ctl_security: "نوع امنیت", ctl_host_pick: "میزبان ذخیره‌شده", ctl_os: "سیستم‌عامل", ctl_run: "نحوه‌ی اجرا", ctl_key_type: "نوع کلید",
@@ -2481,9 +2534,9 @@ const translations = {
     ctl_streams: "تعداد جریان", ctl_max_size: "سقف حجم", ctl_max_time: "سقف زمان", ctl_severity: "سطح", ctl_source: "دستگاه",
     nav_lancheck: "بررسی LAN", nav_pcap: "ضبط پکت", nav_configs: "بکاپ کانفیگ",
     lc_lede: "سرورهای DHCP روی شبکه را پیدا کنید (DHCP غیرمجاز)، روی پورت trunk تست کنید کدام VLANها واقعاً IP می‌دهند، و IPهای تکراری را پیدا کنید. فقط DISCOVER فرستاده می‌شود؛ هیچ IPای گرفته نمی‌شود.",
-    lc_dhcp_title: "سرورهای DHCP و تست VLAN", lc_vlans_ph: "VLANها (اختیاری): 10,20,30-40", lc_untagged: "بدون تگ هم تست شود", lc_dhcp_btn: "جستجوی DHCP",
+    lc_dhcp_title: "سرورهای DHCP و تست VLAN", lc_vlans_ph: "VLANها (اختیاری): 10,20,30-40…", lc_untagged: "بدون تگ هم تست شود", lc_dhcp_btn: "جستجوی DHCP",
     lc_vlan_hint: "برای تست VLAN، لپ‌تاپ را به پورت trunk بزنید. بدون VLAN فقط شبکه‌ی فعلی بررسی می‌شود. روی وای‌فای تست VLAN کار نمی‌کند.",
-    lc_arp_title: "IP تکراری", lc_cidr_ph: "سابنت (اختیاری، پیش‌فرض: شبکه‌ی همین اینترفیس)", lc_arp_btn: "جستجوی IP تکراری",
+    lc_arp_title: "IP تکراری", lc_cidr_ph: "سابنت (اختیاری، پیش‌فرض: شبکه‌ی همین اینترفیس)…", lc_arp_btn: "جستجوی IP تکراری",
     lc_no_dhcp: "هیچ سرور DHCPای جواب نداد.", lc_multi_dhcp: "{n} سرور DHCP جواب دادند — احتمالاً یکی غیرمجاز (rogue) است!", lc_one_dhcp: "فقط یک سرور DHCP — درست است",
     lc_no_offer: "جوابی نیامد (این VLAN روی پورت نیست یا DHCP ندارد)", lc_offered: "IP پیشنهادی", lc_gateway: "گیت‌وی", lc_server: "سرور", lc_lease: "اجاره",
     lc_subnet: "سابنت", lc_probed: "بررسی‌شده", lc_answered: "جواب‌داده", lc_conflicts: "{n} IP تکراری پیدا شد!", lc_own: "IP همین لپ‌تاپ",
@@ -2495,19 +2548,19 @@ const translations = {
     ip_srv_hint: "روی دستگاه دیگر این را اجرا کنید:", ip_up: "آپلود", ip_down: "دانلود", ip_retr: "ارسال مجدد (retransmit)",
     ip_result: "نتیجه", ip_running: "در حال تست…", ip_when: "زمان", ip_target: "مقصد", ip_modecol: "حالت", ip_speed: "سرعت",
     pc_lede: "ترافیک یک اینترفیس را با فیلتر ضبط کنید و فایل pcap را برای Wireshark دانلود کنید. خلاصه‌ی پکت‌ها همان لحظه این‌جا دیده می‌شود.",
-    pc_filter_ph: "فیلتر BPF، مثلاً host 10.0.0.1 and port 443", pc_start: "شروع ضبط", pc_stop: "توقف", pc_files: "فایل‌های ضبط‌شده", pc_no_files: "فایلی نیست.",
+    pc_filter_ph: "فیلتر BPF، مثلاً host 10.0.0.1 and port 443…", pc_start: "شروع ضبط", pc_stop: "توقف", pc_files: "فایل‌های ضبط‌شده", pc_no_files: "فایلی نیست.",
     pc_recording: "در حال ضبط", pc_done: "ضبط تمام شد", pc_packets: "پکت", pc_reason_stopped: "دستی", pc_reason_size_limit: "سقف حجم", pc_reason_time_limit: "سقف زمان",
     sl_lede: "سوییچ‌ها، روترها و فایروال‌ها لاگشان را به این لپ‌تاپ بفرستند و همین‌جا زنده ببینید، فیلتر کنید و ذخیره کنید.",
     sl_start: "روشن کردن سرور", sl_stop: "خاموش", sl_clear: "پاک کردن", sl_download: "دانلود لاگ", sl_sev_all: "همه‌ی سطح‌ها", sl_src_all: "همه‌ی دستگاه‌ها",
     sl_text_ph: "جستجو در پیام‌ها…", sl_pause: "مکث", sl_empty: "پیامی نیامده. سرور را روشن کنید و دستگاه‌ها را به IP این لپ‌تاپ بفرستید.",
     sl_on: "سرور روشن", sl_off: "سرور خاموش است.", sl_msgs: "پیام", sl_howto: "دستور تنظیم روی دستگاه‌ها",
     cf_lede: "کانفیگ سوییچ‌ها و روترها را با SSH یا Telnet بگیرید، نسخه‌ها را نگه دارید و ببینید از دفعه‌ی قبل چه چیزی عوض شده. نسخه‌ی جدید فقط وقتی ذخیره می‌شود که کانفیگ واقعاً تغییر کرده باشد.",
-    cf_add: "+ افزودن دستگاه", cf_name_ph: "نام (مثلاً Core-SW1)", cf_user_ph: "نام کاربری", cf_cmd_ph: "دستور دلخواه (اختیاری؛ پیش‌فرض بر اساس برند)",
+    cf_add: "+ افزودن دستگاه", cf_name_ph: "نام (مثلاً Core-SW1)…", cf_user_ph: "نام کاربری…", cf_cmd_ph: "دستور دلخواه (اختیاری؛ پیش‌فرض بر اساس برند)…",
     cf_save: "ذخیره‌ی دستگاه", cf_cancel: "انصراف", cf_pw_hint: "رمز ذخیره نمی‌شود؛ هر بار موقع بکاپ پرسیده می‌شود. با کلید SSH (از تب کلیدها) نیازی به رمز نیست.",
     cf_no_key: "بدون کلید (رمز)", cf_not_persistent: "پوشه‌ی بکاپ‌ها روی سیستم میزبان mount نشده؛ با پاک شدن کانتینر بکاپ‌ها از بین می‌روند. با run.sh جدید اجرا کنید (‎-v ~/.config/nettoolbox/configs:/data/configs).",
     cf_empty: "دستگاهی اضافه نشده.", cf_last: "آخرین بکاپ", cf_versions: "نسخه", cf_never: "هنوز بکاپی گرفته نشده.",
     cf_backup: "بکاپ", cf_history: "تاریخچه", cf_edit: "ویرایش", cf_confirm_del: "دستگاه «{n}» و همه‌ی بکاپ‌هایش حذف شود؟", cf_confirm_delv: "این نسخه حذف شود؟",
-    cf_pw_ph: "رمز SSH / Telnet", cf_pp_ph: "passphrase کلید (اگر دارد)", cf_enable_ph: "رمز enable (اگر لازم است)", cf_go: "گرفتن کانفیگ",
+    cf_pw_ph: "رمز SSH / Telnet…", cf_pp_ph: "passphrase کلید (اگر دارد)…", cf_enable_ph: "رمز enable (اگر لازم است)…", cf_go: "گرفتن کانفیگ",
     cf_nochange: "تغییری نکرده (آخرین نسخه: {t})", cf_first: "اولین بکاپ ذخیره شد ({n} خط)", cf_changed: "کانفیگ تغییر کرده: +{a} / −{r} خط — نسخه‌ی جدید ذخیره شد",
     cf_lines: "خط", cf_pick_two: "دو نسخه را تیک بزنید و «مقایسه» را بزنید.", cf_compare: "مقایسه", cf_first_short: "اولین", cf_identical: "دو نسخه یکسان‌اند",
     nav_pingmon: "مانیتور پینگ", nav_serial: "کنسول سریال",
@@ -2570,11 +2623,11 @@ const translations = {
     error_prefix: "خطا: ",
     card_mac: "MAC", card_vendor: "Vendor", card_host: "Host",
     badge_online: "آنلاین",
-    ports_placeholder: "22,80,443 یا 1-1000 (خالی = 1000 پورت پرکاربرد)",
+    ports_placeholder: "22,80,443 یا 1-1000 (خالی = 1000 پورت پرکاربرد)…",
     allports_label: "همه 65535 پورت (کند)",
     portscan_btn: "اسکن پورت",
     th_port: "پورت", th_protocol: "پروتکل", th_state: "وضعیت", th_service: "سرویس",
-    host_placeholder: "192.168.1.1 یا example.com",
+    host_placeholder: "192.168.1.1 یا example.com…",
     ping_btn: "پینگ", ping_empty: "هنوز پینگی نزدید.",
     ping_lede: "یک شات برای سلامت لینک، یا مانیتور زنده برای دیدن نوسان تأخیر.",
     status_online: "آنلاین", status_offline: "آفلاین",
@@ -2603,7 +2656,7 @@ const translations = {
     domain_found: "مورد پیدا شد",
     th_host: "میزبان",
     domain_list_name: "اسم address-list",
-    domain_list_placeholder: "مثلا Cursor-API",
+    domain_list_placeholder: "مثلا Cursor-API…",
     domain_export_txt: "خروجی نوت‌پد",
     domain_export_rsc: "خروجی میکروتیک",
     domain_copy_rsc: "کپی اسکریپت میکروتیک",
@@ -2646,21 +2699,21 @@ const translations = {
     nav_sshkeys: "کلیدهای SSH",
     sk_lede: "کلید SSH بسازید، کلید عمومی را به Hetzner یا هر سرور دیگری بدهید و بدون پسورد وصل شوید.",
     sk_new: "کلید جدید",
-    sk_name_ph: "اسم کلید (مثلاً hetzner)",
+    sk_name_ph: "اسم کلید (مثلاً hetzner)…",
     sk_t_ed: "Ed25519 (پیشنهادی)",
-    sk_comment_ph: "توضیح (مثلاً ssp@laptop)",
-    sk_pass_ph: "passphrase (اختیاری)",
+    sk_comment_ph: "توضیح (مثلاً ssp@laptop)…",
+    sk_pass_ph: "passphrase (اختیاری)…",
     sk_gen: "ساخت کلید",
     sk_gen_hint: "Ed25519 کوتاه، سریع و امن است و Hetzner، لینوکس‌های جدید، GitHub و MikroTik 7 همه قبولش دارند. RSA 4096 برای دستگاه‌های قدیمی. passphrase کلید خصوصی را رمز می‌کند؛ اگر کلید را دانلود یا جابه‌جا می‌کنید، بگذارید.",
     sk_import: "وارد کردن کلید خصوصی موجود",
-    sk_imp_pass_ph: "passphrase (اگر دارد)",
+    sk_imp_pass_ph: "passphrase (اگر دارد)…",
     sk_import_btn: "وارد کردن",
     sk_list: "کلیدها",
     sk_none: "هنوز کلیدی نیست.",
     sk_server: "سرور",
-    sk_srv_pass_ph: "پسورد سرور (فقط برای نصب کلید)",
+    sk_srv_pass_ph: "پسورد سرور (فقط برای نصب کلید)…",
     sk_install: "نصب کلید روی سرور",
-    sk_test_pass_ph: "passphrase کلید (اگر دارد)",
+    sk_test_pass_ph: "passphrase کلید (اگر دارد)…",
     sk_test: "تست ورود با کلید",
     sk_connect: "اتصال در ترمینال",
     sk_srv_hint: "«نصب کلید» یک بار با پسورد وصل می‌شود و کلید عمومی را به ~/.ssh/authorized_keys اضافه می‌کند (مثل ssh-copy-id). پسورد ذخیره نمی‌شود.",
@@ -2752,9 +2805,9 @@ const translations = {
     tftp_client: "کلاینت",
     tftp_get: "دریافت (get) از سرور",
     tftp_put: "ارسال (put) به سرور",
-    tftp_host_ph: "IP سرور TFTP",
-    tftp_remote_ph: "نام فایل روی سرور",
-    tftp_local_ph: "نام فایل در پوشه‌ی TFTP (اختیاری)",
+    tftp_host_ph: "IP سرور TFTP…",
+    tftp_remote_ph: "نام فایل روی سرور…",
+    tftp_local_ph: "نام فایل در پوشه‌ی TFTP (اختیاری)…",
     tftp_run: "اجرا",
     tftp_client_hint: "get فایل را در پوشه‌ی TFTP ذخیره می‌کند (از لیست بالا دانلودش کنید). put یکی از فایل‌های همین پوشه را می‌فرستد.",
     tftp_log: "لاگ انتقال‌ها",
@@ -2811,7 +2864,7 @@ const translations = {
     tls_lede: "گواهی یک سرور را بررسی کنید، یا فایل‌هایی که CA فرستاده را به fullchain.pem و privkey.pem برای nginx و آپاچی تبدیل کنید.",
     sc_title: "ساخت fullchain.pem و privkey.pem", sc_lede: "هر چه CA یا مشتری فرستاده را یک‌جا بیندازید: crt، cer، ca-bundle، p7b، pfx/p12 و فایل key. ترتیب مهم نیست؛ زنجیره خودکار مرتب می‌شود و اگر intermediate جا افتاده باشد از CA دانلود می‌شود.",
     sc_drop: "فایل‌ها را بکشید اینجا یا کلیک کنید", sc_drop_sub: "چند فایل با هم · PEM، DER، PFX، P7B · کلید خصوصی روی دیسک ذخیره نمی‌شود",
-    sc_paste: "یا متن PEM را بچسبانید", sc_pw_ph: "رمز PFX یا کلید رمزدار (اگر دارد)", sc_fetch: "دانلود intermediate جاافتاده", sc_root: "root هم در fullchain باشد",
+    sc_paste: "یا متن PEM را بچسبانید", sc_pw_ph: "رمز PFX یا کلید رمزدار (اگر دارد)…", sc_fetch: "دانلود intermediate جاافتاده", sc_root: "root هم در fullchain باشد",
     sc_build: "ساختن", sc_clear: "پاک کردن", sc_need_files: "اول فایل‌ها را اضافه کنید یا متن PEM را بچسبانید.", sc_need_pw: "رمز لازم است",
     sc_ok_chain: "زنجیره کامل", sc_bad_chain: "زنجیره ناقص", sc_trusted: "به root معتبر می‌رسد", sc_key_ok: "کلید با گواهی می‌خواند", sc_key_none: "کلید خصوصی نیست",
     sc_w_mismatch: "کلید خصوصی آپلودشده مال این گواهی نیست؛ privkey.pem ساخته نشد. کلیدی را بدهید که CSR با آن ساخته شده.",
@@ -2832,21 +2885,21 @@ const translations = {
     hash_input_placeholder: "متن یا توکن رو اینجا وارد کنید…",
     hash_run_btn: "اجرا",
     hash_hint: "همه‌چیز توی همین مرورگر انجام می‌شه، هیچی به سرور فرستاده نمی‌شه.",
-    qc_name_placeholder: "اسم (مثلاً سوییچ اصلی)", qc_host_placeholder: "IP یا host",
+    qc_name_placeholder: "اسم (مثلاً سوییچ اصلی)…", qc_host_placeholder: "IP یا host…",
     qc_add_btn: "افزودن",
     qc_hint: "میزبان‌های پرکاربردتون رو ذخیره کنید و با یه کلیک پینگ/اسکن/SSH/Telnet بزنید. فقط توی همین مرورگر ذخیره می‌شه.",
     qc_empty: "هنوز میزبانی ذخیره نشده.",
-    term_host_placeholder: "host یا IP", term_port_placeholder: "پورت (پیش‌فرض 22/23)",
-    term_user_placeholder: "یوزرنیم (فقط SSH)", term_connect_btn: "اتصال", term_blank_btn: "ترمینال خالی",
+    term_host_placeholder: "host یا IP…", term_port_placeholder: "پورت (پیش‌فرض 22/23)…",
+    term_user_placeholder: "یوزرنیم (فقط SSH)…", term_connect_btn: "اتصال", term_blank_btn: "ترمینال خالی",
     term_hint: "پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید. برای تغییر اندازه، گوشه‌ی پایین ترمینال رو بکشید، یا «بزرگ‌تر» / «تمام‌صفحه» (F11) رو بزنید.",
-    term_placeholder: "فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.",
+    term_placeholder: "فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.…",
     rdp_lede: "دسکتاپ ویندوز را داخل همین مرورگر باز می‌کند — مثل SSH، فقط روی localhost.",
     rdp_hint: "برای سرورهای داخلی گواهی نامعتبر نادیده گرفته می‌شود. جلسه قبلی با اتصال جدید جایگزین می‌شود. تمام‌صفحه تصویر را بزرگ می‌کند.",
     rdp_user_placeholder: "یوزرنیم",
-    rdp_domain_placeholder: "دامین (اختیاری)",
+    rdp_domain_placeholder: "دامین (اختیاری)…",
     rdp_pass_placeholder: "رمز",
     rdp_disconnect: "قطع",
-    rdp_placeholder: "میزبان، یوزر و رمز را بزنید و وصل شوید.",
+    rdp_placeholder: "میزبان، یوزر و رمز را بزنید و وصل شوید.…",
     rdp_connecting: "در حال اتصال RDP…",
     rdp_connected: "متصل",
     rdp_need_auth: "یوزرنیم و رمز لازم است.",
@@ -2942,8 +2995,8 @@ const translations = {
     qc_lede: "هاست، پروتکل، پورت، یوزر و یادداشت سایت. رمز ذخیره نمی‌شود.",
     qc_port_placeholder: "پورت",
     qc_user_placeholder: "یوزرنیم",
-    qc_site_placeholder: "سایت / مشتری",
-    qc_notes_placeholder: "یادداشت (رک، VLAN، تماس…)",
+    qc_site_placeholder: "سایت / مشتری…",
+    qc_notes_placeholder: "یادداشت (رک، VLAN، تماس…)…",
     qc_connect: "اتصال",
     qc_hint: "فقط در همین مرورگر ذخیره می‌شود. رمز را اینجا نگذارید — هنگام اتصال وارد کنید.",
     nav_snmp: "SNMP",
@@ -2963,10 +3016,10 @@ const translations = {
     snmp_prof_custom: "OID سفارشی",
     th_oid: "OID", th_label: "نام", th_value: "مقدار",
     report_lede: "اسکن کشف + همسایه‌ها + لینک + یک پاراگراف یادداشت — برای چسباندن به تیکت.",
-    report_site_ph: "سایت / شعبه",
+    report_site_ph: "سایت / شعبه…",
     report_customer_ph: "مشتری",
     report_tech_ph: "تکنسین",
-    report_notes_ph: "یک پاراگراف: چه دیدی، چه کردی، چه ماند.",
+    report_notes_ph: "یک پاراگراف: چه دیدی، چه کردی، چه ماند.…",
     report_preview: "پیش‌نمایش",
     report_md: "دانلود Markdown",
     report_txt: "دانلود متن",
@@ -2987,7 +3040,7 @@ const translations = {
     netmap_svg: "دانلود SVG",
     netmap_png: "دانلود PNG",
     netmap_html: "برگه HTML مشتری",
-    netmap_label_ph: "نام دستگاه (اختیاری)",
+    netmap_label_ph: "نام دستگاه (اختیاری)…",
     netmap_vendor_auto: "تشخیص خودکار",
     netmap_cfg: "Running-config / export",
     netmap_nb: "CDP / LLDP / ip neighbor",
@@ -3017,10 +3070,10 @@ const translations = {
     scripts_copyonly: "فقط کپی/دانلود",
     scripts_save: "ذخیره",
     scripts_cancel: "انصراف",
-    scripts_name_ph: "نام اسکریپت",
-    scripts_desc_ph: "توضیح کوتاه",
-    scripts_vars_ph: "هر خط: NTP_SERVER=192.168.1.1",
-    scripts_body_ph: "متن اسکریپت. متغیرها را با {{NTP_SERVER}} بنویسید.",
+    scripts_name_ph: "نام اسکریپت…",
+    scripts_desc_ph: "توضیح کوتاه…",
+    scripts_vars_ph: "هر خط: NTP_SERVER=192.168.1.1…",
+    scripts_body_ph: "متن اسکریپت. متغیرها را با {{NTP_SERVER}} بنویسید.…",
     scripts_builtin: "آماده",
     scripts_custom: "سفارشی",
     scripts_need_auth: "میزبان، یوزر و رمز لازم است.",
@@ -3031,7 +3084,7 @@ const translations = {
     session_run_rdp: "اجرا روی دسکتاپ",
     session_hint_term: "اول وصل شوید و لاگین کنید. اسکریپت داخل همین ترمینال اجرا می‌شود. اسکریپت بزرگ یا ویندوز رمز SSH می‌خواهد.",
     session_hint_rdp: "بعد از وصل شدن، اسکریپت ویندوز از درایو \\\\tsclient\\nettoolbox اجرا می‌شود. اگر UAC آمد تأیید کنید. روی دسکتاپ کلیک کنید تا فوکوس داشته باشد.",
-    session_pass_ph: "رمز SSH (اسکریپت بزرگ / ویندوز)",
+    session_pass_ph: "رمز SSH (اسکریپت بزرگ / ویندوز)…",
     session_need_term: "اول SSH یا Telnet وصل شوید و لاگین کنید.",
     session_need_rdp: "اول RDP وصل شوید.",
     session_sent_term: "به جلسه فرستاده شد — خروجی را در ترمینال ببینید.",
@@ -3045,7 +3098,7 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "Neighbors", nav_netmap: "Network map", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "Bandwidth",
-    confirm_del_file: "Delete \"{n}\"?", sb_link: "Link", sb_public: "Public", sb_exposed: "On LAN",
+    confirm_del_file: "Delete \"{n}\"?", skip_main: "Skip to main content", sb_link: "Link", sb_public: "Public", sb_exposed: "On LAN",
     ctl_iface: "Interface", ctl_proto: "Protocol", ctl_duration: "Duration (seconds)", ctl_community: "SNMP community", ctl_version: "Version",
     ctl_profile: "Profile", ctl_mode: "Mode", ctl_vendor: "Device vendor", ctl_port: "Port", ctl_algo: "Algorithm", ctl_action: "Action",
     ctl_security: "Security type", ctl_host_pick: "Saved host", ctl_os: "Operating system", ctl_run: "Run as", ctl_key_type: "Key type",
@@ -3053,9 +3106,9 @@ const translations = {
     ctl_streams: "Parallel streams", ctl_max_size: "Size limit", ctl_max_time: "Time limit", ctl_severity: "Severity", ctl_source: "Device",
     nav_lancheck: "LAN check", nav_pcap: "Packet capture", nav_configs: "Config backup",
     lc_lede: "Find DHCP servers on the wire (rogue DHCP), test which VLANs on a trunk port really hand out addresses, and find duplicate IPs. Only DISCOVER is sent; no lease is taken.",
-    lc_dhcp_title: "DHCP servers & VLAN test", lc_vlans_ph: "VLANs (optional): 10,20,30-40", lc_untagged: "Also test untagged", lc_dhcp_btn: "Find DHCP servers",
+    lc_dhcp_title: "DHCP servers & VLAN test", lc_vlans_ph: "VLANs (optional): 10,20,30-40…", lc_untagged: "Also test untagged", lc_dhcp_btn: "Find DHCP servers",
     lc_vlan_hint: "For the VLAN test plug the laptop into a trunk port. Without VLANs only the current network is checked. VLAN tests do not work over WiFi.",
-    lc_arp_title: "Duplicate IPs", lc_cidr_ph: "Subnet (optional, default: this interface's network)", lc_arp_btn: "Find duplicate IPs",
+    lc_arp_title: "Duplicate IPs", lc_cidr_ph: "Subnet (optional, default: this interface's network)…", lc_arp_btn: "Find duplicate IPs",
     lc_no_dhcp: "No DHCP server answered.", lc_multi_dhcp: "{n} DHCP servers answered — one of them is probably rogue!", lc_one_dhcp: "Exactly one DHCP server — good",
     lc_no_offer: "No answer (VLAN not on this port, or no DHCP there)", lc_offered: "Offered IP", lc_gateway: "Gateway", lc_server: "Server", lc_lease: "Lease",
     lc_subnet: "Subnet", lc_probed: "probed", lc_answered: "answered", lc_conflicts: "{n} duplicate IP(s) found!", lc_own: "this laptop's IP",
@@ -3067,19 +3120,19 @@ const translations = {
     ip_srv_hint: "Run this on the other machine:", ip_up: "Upload", ip_down: "Download", ip_retr: "Retransmits",
     ip_result: "Result", ip_running: "Testing…", ip_when: "When", ip_target: "Target", ip_modecol: "Mode", ip_speed: "Speed",
     pc_lede: "Capture an interface with a filter and download the pcap for Wireshark. A packet summary shows up here live.",
-    pc_filter_ph: "BPF filter, e.g. host 10.0.0.1 and port 443", pc_start: "Start capture", pc_stop: "Stop", pc_files: "Captures", pc_no_files: "No captures.",
+    pc_filter_ph: "BPF filter, e.g. host 10.0.0.1 and port 443…", pc_start: "Start capture", pc_stop: "Stop", pc_files: "Captures", pc_no_files: "No captures.",
     pc_recording: "Recording", pc_done: "Capture finished", pc_packets: "packets", pc_reason_stopped: "stopped", pc_reason_size_limit: "size limit", pc_reason_time_limit: "time limit",
     sl_lede: "Point switches, routers and firewalls at this laptop and watch their logs live: filter, search and save.",
     sl_start: "Start server", sl_stop: "Stop", sl_clear: "Clear", sl_download: "Download log", sl_sev_all: "All levels", sl_src_all: "All devices",
     sl_text_ph: "Search messages…", sl_pause: "Pause", sl_empty: "No messages yet. Start the server and point devices at this laptop's IP.",
     sl_on: "Server on", sl_off: "Server is off.", sl_msgs: "messages", sl_howto: "Device configuration commands",
     cf_lede: "Pull switch and router configs over SSH or Telnet, keep versions and see what changed since last time. A new version is stored only when the config really changed.",
-    cf_add: "+ Add device", cf_name_ph: "Name (e.g. Core-SW1)", cf_user_ph: "Username", cf_cmd_ph: "Custom command (optional; default per vendor)",
+    cf_add: "+ Add device", cf_name_ph: "Name (e.g. Core-SW1)…", cf_user_ph: "Username", cf_cmd_ph: "Custom command (optional; default per vendor)…",
     cf_save: "Save device", cf_cancel: "Cancel", cf_pw_hint: "Passwords are never stored; you are asked at backup time. With an SSH key (SSH keys tab) no password is needed.",
     cf_no_key: "No key (password)", cf_not_persistent: "The backup folder is not mounted from the host, so backups are lost with the container. Re-run with the new run.sh (-v ~/.config/nettoolbox/configs:/data/configs).",
     cf_empty: "No devices yet.", cf_last: "Last backup", cf_versions: "versions", cf_never: "No backup yet.",
     cf_backup: "Back up", cf_history: "History", cf_edit: "Edit", cf_confirm_del: "Delete device \"{n}\" and all its backups?", cf_confirm_delv: "Delete this version?",
-    cf_pw_ph: "SSH / Telnet password", cf_pp_ph: "Key passphrase (if any)", cf_enable_ph: "Enable password (if needed)", cf_go: "Get config",
+    cf_pw_ph: "SSH / Telnet password…", cf_pp_ph: "Key passphrase (if any)…", cf_enable_ph: "Enable password (if needed)…", cf_go: "Get config",
     cf_nochange: "No change (latest version: {t})", cf_first: "First backup saved ({n} lines)", cf_changed: "Config changed: +{a} / −{r} lines — new version saved",
     cf_lines: "lines", cf_pick_two: "Tick two versions and press Compare.", cf_compare: "Compare", cf_first_short: "first", cf_identical: "The two versions are identical",
     nav_pingmon: "Ping monitor", nav_serial: "Serial console",
@@ -3142,11 +3195,11 @@ const translations = {
     error_prefix: "Error: ",
     card_mac: "MAC", card_vendor: "Vendor", card_host: "Host",
     badge_online: "Online",
-    ports_placeholder: "22,80,443 or 1-1000 (empty = top 1000 ports)",
+    ports_placeholder: "22,80,443 or 1-1000 (empty = top 1000 ports)…",
     allports_label: "All 65535 ports (slow)",
     portscan_btn: "Scan ports",
     th_port: "Port", th_protocol: "Protocol", th_state: "State", th_service: "Service",
-    host_placeholder: "192.168.1.1 or example.com",
+    host_placeholder: "192.168.1.1 or example.com…",
     ping_btn: "Ping", ping_empty: "No ping yet.",
     ping_lede: "One-shot check for link health, or a live monitor to watch latency drift.",
     status_online: "Online", status_offline: "Offline",
@@ -3175,7 +3228,7 @@ const translations = {
     domain_found: "found",
     th_host: "Host",
     domain_list_name: "Address-list name",
-    domain_list_placeholder: "e.g. Cursor-API",
+    domain_list_placeholder: "e.g. Cursor-API…",
     domain_export_txt: "Notepad export",
     domain_export_rsc: "MikroTik export",
     domain_copy_rsc: "Copy MikroTik script",
@@ -3218,21 +3271,21 @@ const translations = {
     nav_sshkeys: "SSH keys",
     sk_lede: "Create an SSH key, give the public key to Hetzner or any server, and log in without a password.",
     sk_new: "New key",
-    sk_name_ph: "Key name (e.g. hetzner)",
+    sk_name_ph: "Key name (e.g. hetzner)…",
     sk_t_ed: "Ed25519 (recommended)",
-    sk_comment_ph: "Comment (e.g. ssp@laptop)",
-    sk_pass_ph: "Passphrase (optional)",
+    sk_comment_ph: "Comment (e.g. ssp@laptop)…",
+    sk_pass_ph: "Passphrase (optional)…",
     sk_gen: "Generate key",
     sk_gen_hint: "Ed25519 is short, fast, and secure, and Hetzner, modern Linux, GitHub, and MikroTik 7 all accept it. Use RSA 4096 for older devices. A passphrase encrypts the private key; set one if you download or move the key.",
     sk_import: "Import an existing private key",
-    sk_imp_pass_ph: "Passphrase (if any)",
+    sk_imp_pass_ph: "Passphrase (if any)…",
     sk_import_btn: "Import",
     sk_list: "Keys",
     sk_none: "No keys yet.",
     sk_server: "Server",
-    sk_srv_pass_ph: "Server password (only to install the key)",
+    sk_srv_pass_ph: "Server password (only to install the key)…",
     sk_install: "Install key on server",
-    sk_test_pass_ph: "Key passphrase (if any)",
+    sk_test_pass_ph: "Key passphrase (if any)…",
     sk_test: "Test key login",
     sk_connect: "Connect in terminal",
     sk_srv_hint: "\"Install key\" logs in once with the password and appends the public key to ~/.ssh/authorized_keys (like ssh-copy-id). The password is not stored.",
@@ -3324,9 +3377,9 @@ const translations = {
     tftp_client: "Client",
     tftp_get: "Get from server",
     tftp_put: "Put to server",
-    tftp_host_ph: "TFTP server IP",
-    tftp_remote_ph: "File name on the server",
-    tftp_local_ph: "File name in the TFTP folder (optional)",
+    tftp_host_ph: "TFTP server IP…",
+    tftp_remote_ph: "File name on the server…",
+    tftp_local_ph: "File name in the TFTP folder (optional)…",
     tftp_run: "Run",
     tftp_client_hint: "Get saves into the TFTP folder (download it from the list above). Put sends a file from that folder.",
     tftp_log: "Transfer log",
@@ -3383,7 +3436,7 @@ const translations = {
     tls_lede: "Inspect a server's certificate, or turn the files a CA sent into fullchain.pem and privkey.pem for nginx and Apache.",
     sc_title: "Build fullchain.pem and privkey.pem", sc_lede: "Drop whatever the CA or customer sent: crt, cer, ca-bundle, p7b, pfx/p12 and the key file. Order does not matter; the chain is sorted automatically and a missing intermediate is downloaded from the CA.",
     sc_drop: "Drop the files here or click", sc_drop_sub: "Several files at once · PEM, DER, PFX, P7B · the private key is never written to disk",
-    sc_paste: "or paste PEM text", sc_pw_ph: "PFX or encrypted-key password (if any)", sc_fetch: "Download missing intermediate", sc_root: "Include root in fullchain",
+    sc_paste: "or paste PEM text", sc_pw_ph: "PFX or encrypted-key password (if any)…", sc_fetch: "Download missing intermediate", sc_root: "Include root in fullchain",
     sc_build: "Build", sc_clear: "Clear", sc_need_files: "Add files or paste PEM text first.", sc_need_pw: "Password needed",
     sc_ok_chain: "Chain complete", sc_bad_chain: "Chain incomplete", sc_trusted: "Reaches a trusted root", sc_key_ok: "Key matches certificate", sc_key_none: "No private key",
     sc_w_mismatch: "The uploaded private key does not belong to this certificate, so privkey.pem was not built. Use the key the CSR was made with.",
@@ -3404,21 +3457,21 @@ const translations = {
     hash_input_placeholder: "Enter text or a token here…",
     hash_run_btn: "Run",
     hash_hint: "Everything runs in this browser, nothing is sent to the server.",
-    qc_name_placeholder: "Name (e.g. Core switch)", qc_host_placeholder: "IP or host",
+    qc_name_placeholder: "Name (e.g. Core switch)…", qc_host_placeholder: "IP or host…",
     qc_add_btn: "Add",
     qc_hint: "Save frequently-used hosts and ping/scan/SSH/Telnet them in one click. Stored only in this browser.",
     qc_empty: "No saved hosts yet.",
-    term_host_placeholder: "host or IP", term_port_placeholder: "port (default 22/23)",
-    term_user_placeholder: "username (SSH only)", term_connect_btn: "Connect", term_blank_btn: "Blank shell",
+    term_host_placeholder: "host or IP…", term_port_placeholder: "port (default 22/23)…",
+    term_user_placeholder: "username (SSH only)…", term_connect_btn: "Connect", term_blank_btn: "Blank shell",
     term_hint: "Type your password inside the terminal after connecting. Drag the bottom corner to resize, or use Taller / Fullscreen (F11).",
     term_placeholder: "Fill the form above and hit \"Connect\", or \"Blank shell\" for a plain shell.",
     rdp_lede: "Opens a Windows desktop in this browser — same as SSH, loopback only.",
     rdp_hint: "Internal/self-signed certificates are ignored. A new connect replaces the previous session. Use fullscreen for a larger desktop.",
     rdp_user_placeholder: "username",
-    rdp_domain_placeholder: "domain (optional)",
+    rdp_domain_placeholder: "domain (optional)…",
     rdp_pass_placeholder: "password",
     rdp_disconnect: "Disconnect",
-    rdp_placeholder: "Enter host, username and password, then connect.",
+    rdp_placeholder: "Enter host, username and password, then connect.…",
     rdp_connecting: "Connecting RDP…",
     rdp_connected: "Connected",
     rdp_need_auth: "Username and password are required.",
@@ -3514,8 +3567,8 @@ const translations = {
     qc_lede: "Host, protocol, port, username, and a site note. Passwords are not stored.",
     qc_port_placeholder: "port",
     qc_user_placeholder: "username",
-    qc_site_placeholder: "site / customer",
-    qc_notes_placeholder: "Notes (rack, VLAN, contact…)",
+    qc_site_placeholder: "site / customer…",
+    qc_notes_placeholder: "Notes (rack, VLAN, contact…)…",
     qc_connect: "Connect",
     qc_hint: "Stored only in this browser. Do not put a password here — enter it when you connect.",
     nav_snmp: "SNMP",
@@ -3535,10 +3588,10 @@ const translations = {
     snmp_prof_custom: "Custom OID",
     th_oid: "OID", th_label: "Label", th_value: "Value",
     report_lede: "Discover scan + neighbors + link status + a notes paragraph — download for the ticket.",
-    report_site_ph: "site / branch",
+    report_site_ph: "site / branch…",
     report_customer_ph: "customer",
     report_tech_ph: "technician",
-    report_notes_ph: "One paragraph: what you saw, what you did, what remains.",
+    report_notes_ph: "One paragraph: what you saw, what you did, what remains.…",
     report_preview: "Preview",
     report_md: "Download Markdown",
     report_txt: "Download text",
@@ -3559,7 +3612,7 @@ const translations = {
     netmap_svg: "Download SVG",
     netmap_png: "Download PNG",
     netmap_html: "Customer HTML brief",
-    netmap_label_ph: "Device name (optional)",
+    netmap_label_ph: "Device name (optional)…",
     netmap_vendor_auto: "Auto-detect",
     netmap_cfg: "Running-config / export",
     netmap_nb: "CDP / LLDP / ip neighbor",
@@ -3589,10 +3642,10 @@ const translations = {
     scripts_copyonly: "Copy/download only",
     scripts_save: "Save",
     scripts_cancel: "Cancel",
-    scripts_name_ph: "Script name",
-    scripts_desc_ph: "Short description",
-    scripts_vars_ph: "One per line: NTP_SERVER=192.168.1.1",
-    scripts_body_ph: "Script body. Use {{NTP_SERVER}} for variables.",
+    scripts_name_ph: "Script name…",
+    scripts_desc_ph: "Short description…",
+    scripts_vars_ph: "One per line: NTP_SERVER=192.168.1.1…",
+    scripts_body_ph: "Script body. Use {{NTP_SERVER}} for variables.…",
     scripts_builtin: "Built-in",
     scripts_custom: "Custom",
     scripts_need_auth: "Host, username, and password are required.",
@@ -3603,7 +3656,7 @@ const translations = {
     session_run_rdp: "Run on desktop",
     session_hint_term: "Connect and log in first. The script is typed into this terminal. Large or Windows scripts need the SSH password.",
     session_hint_rdp: "After you connect, the Windows script runs from \\\\tsclient\\nettoolbox. Confirm UAC if it appears. Click the desktop so it has focus.",
-    session_pass_ph: "SSH password (large / Windows scripts)",
+    session_pass_ph: "SSH password (large / Windows scripts)…",
     session_need_term: "Connect SSH or Telnet and log in first.",
     session_need_rdp: "Connect RDP first.",
     session_sent_term: "Sent to the session — watch the terminal for output.",
@@ -3650,7 +3703,7 @@ let theme = localStorage.getItem("nettoolbox_theme") ||
   (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
 function applyTheme() {
   document.documentElement.setAttribute("data-theme", theme);
-  document.querySelector('meta[name="theme-color"]').content = theme === "light" ? "#e9eef5" : "#0b1220";
+  document.querySelector('meta[name="theme-color"]').content = theme === "light" ? "#f4f6fa" : "#000000";
   document.querySelectorAll("#themeToggle button").forEach(b => {
     b.classList.toggle("active", b.dataset.themeChoice === theme);
   });
@@ -3710,7 +3763,12 @@ function switchTab(id) {
   if (id === "syslog") loadSyslog();
   if (id === "configs") loadConfigs();
 }
-tabs.forEach(tb => tb.onclick = () => { switchTab(tb.dataset.panel); if (sideNav.classList.contains("searching")) clearNavSearch(); });
+tabs.forEach(tb => tb.onclick = e => {
+  if (e.ctrlKey || e.metaKey || e.shiftKey) return; // let the browser open it in a new tab/window
+  e.preventDefault();
+  switchTab(tb.dataset.panel);
+  if (sideNav.classList.contains("searching")) clearNavSearch();
+});
 // panels carry the same id as the hash, so the browser would jump to them; tabs always start at the top instead
 window.addEventListener("hashchange", () => { switchTab(location.hash.slice(1) || "home"); window.scrollTo(0, 0); });
 
@@ -5475,7 +5533,7 @@ function paintTftp(data) {
   } else {
     logEl.className = "";
     logEl.innerHTML = log.map(r => {
-      const when = new Date((r.ts || 0) * 1000).toLocaleTimeString();
+      const when = fmtClock((r.ts || 0) * 1000);
       const op = r.op === "write" ? "⬆ " + t("tftp_write") : "⬇ " + t("tftp_read");
       const res = r.ok ? `<span class="ok">✓</span> <span class="dim">${esc(fmtBytes(r.bytes || 0))}${r.secs != null ? " · " + r.secs + "s" : ""}</span>`
                        : `<span class="bad">✗ ${esc(r.error || "")}</span>`;
@@ -7989,8 +8047,8 @@ function clipTxt(s, n) {
 }
 function netmapPalette(forPrint) {
   return {
-    ink: forPrint ? "#152033" : cssVar("--ink"),
-    dim: forPrint ? "#5b6b80" : cssVar("--ink-dim"),
+    ink: forPrint ? "#0b0d12" : cssVar("--ink"),
+    dim: forPrint ? "#5b6270" : cssVar("--ink-dim"),
     copper: forPrint ? "#1677ff" : cssVar("--accent"),
     cyan: forPrint ? "#00a89e" : cssVar("--accent2"),
     up: forPrint ? "#1a8a58" : cssVar("--up"),
@@ -8721,7 +8779,7 @@ function pmFmtDur(ms) {
   if (s < 3600) return Math.floor(s / 60) + "m " + (s % 60) + "s";
   return Math.floor(s / 3600) + "h " + Math.floor((s % 3600) / 60) + "m";
 }
-function pmClock(ts) { return new Date(ts).toLocaleTimeString("en-GB"); }
+function pmClock(ts) { return fmtClock(ts); }
 function pmBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -8990,7 +9048,9 @@ async function apiJSON(url, body) {
   if (!r.ok && !d.error) d.error = `HTTP ${r.status}`;
   return d;
 }
-function fmtTime(ts) { return new Date(ts * 1000).toLocaleString("en-GB", { hour12: false }); }
+function uiLocale() { return lang === "fa" ? "fa-IR-u-nu-latn" : "en-GB"; }
+function fmtTime(ts) { return new Intl.DateTimeFormat(uiLocale(), { dateStyle: "medium", timeStyle: "short", hour12: false }).format(new Date(ts * 1000)); }
+function fmtClock(ms) { return new Intl.DateTimeFormat(uiLocale(), { timeStyle: "medium", hour12: false }).format(new Date(ms)); }
 function warnBox(el, msg, bad) { el.innerHTML = msg ? `<div class="sc-warn${bad ? " bad" : ""}">${esc(msg)}</div>` : ""; }
 let ifaceCache = null;
 async function fillIfaces(sel, withAny) {
@@ -9207,7 +9267,7 @@ function slFiltered() {
     (!q || (e.msg + " " + e.host + " " + e.app + " " + e.mnemonic).toLowerCase().includes(q)));
 }
 function slRow(e, isNew) {
-  const tm = new Date(e.t * 1000).toLocaleTimeString("en-GB", { hour12: false });
+  const tm = fmtClock(e.t * 1000);
   const msg = esc(e.msg).replace(/(%[A-Z0-9_]+-\d-[A-Z0-9_]+)/, '<span class="mn">$1</span>');
   return `<div class="sl-row${isNew ? " new" : ""}"><span class="tm">${tm}</span><span><span class="sev sev-${e.sev}">${SL_SEV[e.sev]}</span></span>
     <span class="src" title="${esc(e.src)}">${esc(e.host !== e.src ? e.host + " (" + e.src + ")" : e.src)}</span>
@@ -9431,6 +9491,10 @@ const CONTROL_LABELS = {
 };
 const CONTROL_SEL = 'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea';
 function labelControl(el) {
+  if (el.tagName === "INPUT" && el.type !== "password") {
+    if (!el.hasAttribute("autocomplete")) el.setAttribute("autocomplete", "off");
+    el.spellcheck = false;
+  }
   if (el.labels && el.labels.length) return;
   if (el.hasAttribute("aria-label") && !("autoLabel" in el.dataset)) return;
   const key = CONTROL_LABELS[el.id] || [...el.classList].map(c => CONTROL_LABELS[c]).find(Boolean);
@@ -9456,6 +9520,7 @@ new MutationObserver(muts => {
 switchTab(location.hash.slice(1) || "home");
 refreshLinkBar();
 refreshServices();
+document.getElementById("skipLink").onclick = e => { e.preventDefault(); document.getElementById("mainContent").focus(); };
 liveLatency(!document.hidden);
 // result areas announce updates to screen readers
 document.querySelectorAll('[id$="Result"], [id$="Status"], #pmGrid, #slTable').forEach(el => el.setAttribute("aria-live", "polite"));
