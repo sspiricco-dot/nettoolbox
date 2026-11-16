@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>NetToolbox</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1220">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico">
 <style>
@@ -41,6 +42,7 @@
     margin: 0; background: var(--bg); color: var(--ink);
     font-family: "Vazirmatn", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
     min-height: 100vh; position: relative; transition: background .25s ease, color .25s ease;
+    font-variant-numeric: tabular-nums;
   }
   body::before, body::after {
     content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
@@ -110,15 +112,16 @@
     display: flex; background: var(--surface-solid); border: 1px solid var(--line);
     border-radius: 999px; padding: 3px; cursor: pointer; gap: 2px; font-size: 12px;
   }
-  #langToggle span {
-    padding: 6px 13px; border-radius: 999px; color: var(--ink-dim); transition: all .15s;
+  #langToggle [data-lang] {
+    background: none; border: none; font: inherit; cursor: pointer;
+    padding: 6px 13px; border-radius: 999px; color: var(--ink-dim); transition: background-color .15s, color .15s, border-color .15s;
     font-family: var(--mono); font-weight: 700; letter-spacing: .02em;
   }
-  #langToggle span.active { background: var(--grad); color: var(--on-accent); }
+  #langToggle [data-lang].active { background: var(--grad); color: var(--on-accent); }
   #themeToggle button {
     background: none; border: none; width: 27px; height: 27px; border-radius: 999px;
     display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--ink-dim);
-    transition: all .15s;
+    transition: background-color .15s, color .15s, border-color .15s;
   }
   #themeToggle button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
   #themeToggle button.active { background: var(--grad); color: var(--on-accent); }
@@ -188,6 +191,20 @@
   }
 
   .main-wrap { flex: 1; min-width: 0; }
+  .statusbar {
+    position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;
+    padding: 9px 32px; border-bottom: 1px solid var(--line); font-size: 12px;
+    background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .sb-item { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+  .sb-k { color: var(--ink-dim); }
+  .sb-item b { font-family: var(--mono); font-weight: 600; direction: ltr; unicode-bidi: isolate; }
+  .sb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--closed); align-self: center; }
+  #sbLink.up .sb-dot { background: var(--up); } #sbLink.down .sb-dot { background: var(--down); }
+  #sbLat.slow b { color: var(--warn); } #sbLat.dead b { color: var(--down); }
+  .sb-svc { margin-inline-start: auto; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; color: inherit; font: inherit; cursor: pointer; }
+  .sb-svc.on { border-color: color-mix(in srgb, var(--warn) 60%, var(--line)); color: var(--warn); }
+  .sb-svc.on .sb-k { color: var(--warn); }
   main { padding: 28px 32px 72px; max-width: 1180px; margin: 0 auto; }
   .panel { display: none; animation: fade .22s ease; }
   .panel.active { display: block; }
@@ -649,7 +666,7 @@
   .qc-actions button {
     background: var(--surface-solid); border: 1px solid var(--line); color: var(--ink-dim);
     width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 13px;
-    display: flex; align-items: center; justify-content: center; transition: all .15s;
+    display: flex; align-items: center; justify-content: center; transition: background-color .15s, color .15s, border-color .15s;
   }
   .qc-actions button:hover { color: var(--ink); border-color: var(--accent); }
   .qc-actions button.qc-del:hover { color: var(--down); border-color: var(--down); }
@@ -978,6 +995,8 @@
     .nav-search input { font-size: 16px; padding-inline-end: 12px; }
     nav.side-nav button.tab { padding-block: 12px; font-size: 14.5px; }
     main { padding: 16px 16px 56px; }
+    .statusbar { position: static; padding: 8px 16px; gap: 4px 14px; font-size: 11.5px; }
+    .sb-hide-m { display: none; }
     .panel-head h2 { font-size: 21px; }
     .panel-head .lede { font-size: 13px; }
     input, select { min-width: 0; max-width: 100%; }
@@ -1018,8 +1037,8 @@
       </div>
       <div class="toggles">
         <div id="langToggle">
-          <span data-lang="fa">FA</span>
-          <span data-lang="en">EN</span>
+          <button type="button" data-lang="fa" lang="fa" aria-label="فارسی">FA</button>
+          <button type="button" data-lang="en" lang="en" aria-label="English">EN</button>
         </div>
         <div id="themeToggle">
           <button data-theme-choice="dark" title="Dark" aria-label="Dark theme">
@@ -1222,6 +1241,14 @@
   </aside>
 
   <div class="main-wrap">
+    <div class="statusbar" id="statusBar" role="status">
+      <span class="sb-item" id="sbLink"><i class="sb-dot"></i><span class="sb-k" data-i18n="sb_link">لینک</span><b id="sbIface">—</b></span>
+      <span class="sb-item"><span class="sb-k">IP</span><b id="sbIp">—</b></span>
+      <span class="sb-item"><span class="sb-k">GW</span><b id="sbGw">—</b></span>
+      <span class="sb-item" id="sbLat"><span class="sb-k">1.1.1.1</span><b id="sbRtt">—</b></span>
+      <span class="sb-item sb-hide-m"><span class="sb-k" data-i18n="sb_public">عمومی</span><b id="sbPub">—</b></span>
+      <button type="button" class="sb-item sb-svc" id="sbSvc"><span class="sb-k" data-i18n="sb_exposed">روی LAN</span><b id="sbSvcN">0</b></button>
+    </div>
     <main>
 
       <section id="home" class="panel active">
@@ -1688,7 +1715,7 @@
           <div class="sc-files" id="scFiles"></div>
           <details class="sc-paste">
             <summary data-i18n="sc_paste">یا متن PEM را بچسبانید</summary>
-            <textarea id="scText" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----&#10;-----BEGIN PRIVATE KEY-----&#10;..."></textarea>
+            <textarea id="scText" spellcheck="false" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----&#10;-----BEGIN PRIVATE KEY-----&#10;…"></textarea>
           </details>
           <div class="row" style="margin-top:12px">
             <input id="scPassword" type="password" autocomplete="off" data-i18n-placeholder="sc_pw_ph" placeholder="رمز PFX یا کلید رمزدار (اگر دارد)" />
@@ -1708,7 +1735,7 @@
           <input id="headersInput" placeholder="example.com" />
           <button class="action" id="headersBtn" data-i18n="headers_btn">بررسی هدرها</button>
         </div>
-        <div class="hint" data-i18n="headers_hint">هدرهای امنیتی مهم (HSTS، CSP، X-Frame-Options و...) رو چک می‌کنه و کل هدرهای HTTP رو نشون می‌ده.</div>
+        <div class="hint" data-i18n="headers_hint">هدرهای امنیتی مهم (HSTS، CSP، X-Frame-Options و…) رو چک می‌کنه و کل هدرهای HTTP رو نشون می‌ده.</div>
         <div class="bezel">
           <div class="bezel-label" data-i18n="nav_headers">HTTP Headers</div>
           <div id="headersResult" class="empty" data-i18n="empty_generic">هنوز بررسی نشده.</div>
@@ -1729,7 +1756,7 @@
           </select>
         </div>
         <div class="row">
-          <textarea id="hashInput" data-i18n-placeholder="hash_input_placeholder" placeholder="متن یا توکن رو اینجا وارد کنید..."></textarea>
+          <textarea id="hashInput" data-i18n-placeholder="hash_input_placeholder" placeholder="متن یا توکن رو اینجا وارد کنید…"></textarea>
         </div>
         <div class="row">
           <button class="action" id="hashRunBtn" data-i18n="hash_run_btn">اجرا</button>
@@ -1796,7 +1823,7 @@
             <strong data-i18n="cz_drop">فایل را بکشید اینجا یا کلیک کنید</strong>
             <span id="czFileName" data-i18n="cz_drop_sub">هافمن و LZW تا ۱۶ مگ، بقیه تا ۶۴ مگ برای مقایسه.</span>
           </label>
-          <textarea id="czText" data-i18n-placeholder="cz_text_ph" placeholder="یا متن را اینجا بچسبانید..."></textarea>
+          <textarea id="czText" data-i18n-placeholder="cz_text_ph" placeholder="یا متن را اینجا بچسبانید…"></textarea>
         </div>
         <div class="row">
           <select id="czLevel" title="level">
@@ -1905,7 +1932,7 @@
           <button type="button" class="os-chip" data-qrmode="wifi" id="qrModeWifi" data-i18n="qr_mode_wifi">وای‌فای</button>
         </div>
         <div class="row" id="qrTextRow">
-          <input id="qrInput" data-i18n-placeholder="qr_input_placeholder" placeholder="IP، URL یا هر متنی..." style="min-width:320px" />
+          <input id="qrInput" data-i18n-placeholder="qr_input_placeholder" placeholder="IP، URL یا هر متنی…" style="min-width:320px" />
         </div>
         <div class="row" id="qrWifiRow">
           <input id="qrWifiSsid" data-i18n-placeholder="qr_wifi_ssid" placeholder="نام شبکه (SSID)" style="min-width:180px" />
@@ -1954,7 +1981,7 @@
           <input id="qcSite" data-i18n-placeholder="qc_site_placeholder" placeholder="سایت / مشتری" style="min-width:140px" />
         </div>
         <div class="row qc-form">
-          <textarea id="qcNotes" data-i18n-placeholder="qc_notes_placeholder" placeholder="یادداشت (رک، VLAN، تماس...)"></textarea>
+          <textarea id="qcNotes" data-i18n-placeholder="qc_notes_placeholder" placeholder="یادداشت (رک، VLAN، تماس…)"></textarea>
           <button class="action" id="qcAddBtn" data-i18n="qc_add_btn">افزودن</button>
         </div>
         <div class="hint" data-i18n="qc_hint">فقط در همین مرورگر ذخیره می‌شود. رمز را اینجا نگذارید — هنگام اتصال وارد کنید.</div>
@@ -2451,7 +2478,7 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "همسایه‌ها", nav_netmap: "نقشه شبکه", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "پهنای‌باند",
-    confirm_del_file: "«{n}» حذف شود؟",
+    confirm_del_file: "«{n}» حذف شود؟", sb_link: "لینک", sb_public: "عمومی", sb_exposed: "روی LAN",
     ctl_iface: "اینترفیس", ctl_proto: "پروتکل", ctl_duration: "مدت (ثانیه)", ctl_community: "SNMP community", ctl_version: "نسخه",
     ctl_profile: "پروفایل", ctl_mode: "حالت", ctl_vendor: "برند دستگاه", ctl_port: "پورت", ctl_algo: "الگوریتم", ctl_action: "عملیات",
     ctl_security: "نوع امنیت", ctl_host_pick: "میزبان ذخیره‌شده", ctl_os: "سیستم‌عامل", ctl_run: "نحوه‌ی اجرا", ctl_key_type: "نوع کلید",
@@ -2523,8 +2550,8 @@ const translations = {
     profile_common: "پورت‌های معروف",
     profile_top100: "۱۰۰ پورت پرکاربرد",
     profile_none: "فقط میزبان زنده",
-    phase_sweep: "در حال پیدا کردن میزبان‌های زنده...",
-    phase_ports: "در حال بررسی پورت‌های معروف روی هر IP...",
+    phase_sweep: "در حال پیدا کردن میزبان‌های زنده…",
+    phase_ports: "در حال بررسی پورت‌های معروف روی هر IP…",
     stat_hosts: "میزبان زنده",
     stat_with_ports: "با پورت باز",
     stat_open_ports: "پورت باز",
@@ -2532,7 +2559,7 @@ const translations = {
     filter_all: "همه",
     filter_open: "با پورت باز",
     filter_closed: "بدون پورت باز",
-    search_hosts: "جستجوی IP، MAC، vendor...",
+    search_hosts: "جستجوی IP، MAC، vendor…",
     no_open_ports: "پورت معروفی باز نیست",
     ports_label: "پورت‌های باز",
     act_copy: "کپی IP",
@@ -2544,7 +2571,7 @@ const translations = {
     portscan_lede: "اسکن عمیق یک میزبان — پورت دلخواه، بازه، یا کل ۶۵۵۳۵ پورت.",
     empty_generic: "هنوز اجرا نشده.",
     none_found: "چیزی پیدا نشد.",
-    running: "در حال اجرا...",
+    running: "در حال اجرا…",
     error_prefix: "خطا: ",
     card_mac: "MAC", card_vendor: "Vendor", card_host: "Host",
     badge_online: "آنلاین",
@@ -2560,7 +2587,7 @@ const translations = {
     min_label: "کمینه", max_label: "بیشینه", jitter_label: "نوسان",
     q_excellent: "عالی", q_good: "خوب", q_fair: "متوسط", q_poor: "ضعیف", q_down: "قطع",
     start_monitor: "شروع مانیتور زنده", stop_monitor: "توقف مانیتور",
-    traceroute_running: "در حال ردیابی مسیر...",
+    traceroute_running: "در حال ردیابی مسیر…",
     traceroute_lede: "مسیر بسته تا مقصد، هاپ‌به‌هاپ، با تأخیر هر گام.",
     hop_timeout: "بدون پاسخ",
     dest_label: "مقصد",
@@ -2575,7 +2602,7 @@ const translations = {
     info_ip: "IP", info_city: "شهر", info_region: "منطقه", info_country: "کشور", info_isp: "ISP/Org", info_source: "منبع",
     domain_btn: "بررسی دامنه",
     domain_hint: "آی‌پی دامنه و زیردامنه‌ها از DNS، زیردامنه‌ها از گواهی SSL عمومی (crt.sh). خروجی نوت‌پد و address-list میکروتیک با اسم لیستی که خودت می‌دهی.",
-    domain_checking: "در حال یافتن زیردامنه و آی‌پی...",
+    domain_checking: "در حال یافتن زیردامنه و آی‌پی…",
     info_domain: "دامنه", info_mainip: "IP اصلی", info_subdomains: "زیردامنه‌ها",
     info_unique_ip: "آی‌پی یکتا", info_ipv6: "IPv6",
     domain_found: "مورد پیدا شد",
@@ -2596,7 +2623,7 @@ const translations = {
     speedtest_wan: "اینترنت",
     speedtest_lan: "شبکه داخلی (OpenSpeedTest)",
     speedtest_hint: "حدود ۲۰–۳۰ ثانیه. اگر Cloudflare در دسترس نباشد از سرورهای دیگر استفاده می‌شود.",
-    speedtest_running: "در حال تست...",
+    speedtest_running: "در حال تست…",
     ost_lede: "سرور روی همین دستگاه است. وقتی روشن کنید، موبایل یا لپ‌تاپ دیگر در همین LAN لینک را باز کند.",
     ost_hint: "تا وقتی خاموش است پورت ۳۰۰۰ روی شبکه باز نیست. بعد از تست خاموش کنید.",
     ost_start: "روشن کردن سرور",
@@ -2620,7 +2647,7 @@ const translations = {
     share_files: "فایل‌های این صفحه",
     share_no_files: "هنوز فایلی نیست.",
     share_remove: "حذف",
-    share_uploading: "در حال آپلود...",
+    share_uploading: "در حال آپلود…",
     nav_sshkeys: "کلیدهای SSH",
     sk_lede: "کلید SSH بسازید، کلید عمومی را به Hetzner یا هر سرور دیگری بدهید و بدون پسورد وصل شوید.",
     sk_new: "کلید جدید",
@@ -2671,7 +2698,7 @@ const translations = {
     nav_compress: "فشرده‌سازی",
     cz_drop: "فایل را بکشید اینجا یا کلیک کنید",
     cz_drop_sub: "هافمن و LZW تا ۱۶ مگ، بقیه تا ۶۴ مگ برای مقایسه.",
-    cz_text_ph: "یا متن را اینجا بچسبانید...",
+    cz_text_ph: "یا متن را اینجا بچسبانید…",
     cz_lv_fast: "سریع",
     cz_lv_default: "متعادل",
     cz_lv_max: "حداکثر فشرده‌سازی",
@@ -2684,7 +2711,7 @@ const translations = {
     cz_unpack_drop: "فایل .huff .lzw .gz .bz2 .xz .zst .br را بکشید اینجا",
     cz_unpack_sub: "نوع فایل خودکار تشخیص داده می‌شود و فایل اصلی دانلود می‌شود.",
     cz_need: "اول یک فایل انتخاب کنید یا متن وارد کنید.",
-    cz_running: "در حال فشرده‌سازی با همه‌ی الگوریتم‌ها...",
+    cz_running: "در حال فشرده‌سازی با همه‌ی الگوریتم‌ها…",
     cz_size: "حجم اصلی",
     cz_entropy: "آنتروپی (بیت/بایت)",
     cz_floor: "کف هافمن (آنتروپی)",
@@ -2767,7 +2794,7 @@ const translations = {
     bw_local: "IPهای این اینترفیس",
     bw_pkts: "پکت",
     geoip_btn: "پیدا کردن موقعیت",
-    qr_btn: "ساخت QR", qr_input_placeholder: "IP، URL یا هر متنی...",
+    qr_btn: "ساخت QR", qr_input_placeholder: "IP، URL یا هر متنی…",
     qr_hint: "متن در همین مرورگر ساخته می‌شود. رمز وای‌فای ذخیره نمی‌شود. از سیستم SSID را می‌خواند؛ رمز فقط اگر در NetworkManager باشد.",
     qr_lede: "متن، لینک، یا وای‌فای برای اسکن با موبایل. کپی و دانلود PNG.",
     qr_mode_text: "متن / لینک",
@@ -2806,8 +2833,8 @@ const translations = {
     tls_subject: "Subject", tls_issuer: "Issuer", tls_valid_from: "معتبر از",
     tls_valid_until: "معتبر تا", tls_days_left: "روز مونده",
     headers_btn: "بررسی هدرها",
-    headers_hint: "هدرهای امنیتی مهم (HSTS، CSP، X-Frame-Options و...) رو چک می‌کنه و کل هدرهای HTTP رو نشون می‌ده.",
-    hash_input_placeholder: "متن یا توکن رو اینجا وارد کنید...",
+    headers_hint: "هدرهای امنیتی مهم (HSTS، CSP، X-Frame-Options و…) رو چک می‌کنه و کل هدرهای HTTP رو نشون می‌ده.",
+    hash_input_placeholder: "متن یا توکن رو اینجا وارد کنید…",
     hash_run_btn: "اجرا",
     hash_hint: "همه‌چیز توی همین مرورگر انجام می‌شه، هیچی به سرور فرستاده نمی‌شه.",
     qc_name_placeholder: "اسم (مثلاً سوییچ اصلی)", qc_host_placeholder: "IP یا host",
@@ -2825,7 +2852,7 @@ const translations = {
     rdp_pass_placeholder: "رمز",
     rdp_disconnect: "قطع",
     rdp_placeholder: "میزبان، یوزر و رمز را بزنید و وصل شوید.",
-    rdp_connecting: "در حال اتصال RDP...",
+    rdp_connecting: "در حال اتصال RDP…",
     rdp_connected: "متصل",
     rdp_need_auth: "یوزرنیم و رمز لازم است.",
     rdp_fullscreen: "تمام‌صفحه",
@@ -2864,11 +2891,11 @@ const translations = {
     whois_lede: "مالک دامنه/IP، abuse، لیست سیاه، پینگ و حدس سیستم‌عامل.",
     whois_hint: "بدون تیک «اطلاعات کامل» فقط IP، موقعیت و ISP نشان داده می‌شود (سریع). با تیک: whois خام، مالک/سازمان، DNSBL abuse، پینگ و OS. بعضی TLDها whois کامل نمی‌دهند.",
     whois_full: "اطلاعات کامل",
-    whois_quick_checking: "در حال پیدا کردن IP و موقعیت...",
+    whois_quick_checking: "در حال پیدا کردن IP و موقعیت…",
     whois_private: "IP خصوصی / داخلی — موقعیت ندارد",
     whois_no_geo: "موقعیت پیدا نشد",
     whois_btn: "Whois",
-    whois_checking: "در حال whois، abuse، پینگ و OS...",
+    whois_checking: "در حال whois، abuse، پینگ و OS…",
     whois_registrar: "رجیسترار",
     whois_org: "سازمان / مالک",
     whois_person: "شخص / نقش",
@@ -2899,7 +2926,7 @@ const translations = {
     audit_hint: "همان یوزر Winbox روی SSH کافی است. Winbox به‌عنوان پروتکل وصل پشتیبانی نمی‌شود. رمز ذخیره نمی‌شود.",
     audit_btn: "بررسی",
     audit_auto: "تشخیص خودکار",
-    audit_checking: "در حال خواندن کانفیگ...",
+    audit_checking: "در حال خواندن کانفیگ…",
     audit_need: "host، یوزر و رمز لازم است.",
     audit_high: "بحرانی",
     audit_medium: "متوسط",
@@ -2921,7 +2948,7 @@ const translations = {
     qc_port_placeholder: "پورت",
     qc_user_placeholder: "یوزرنیم",
     qc_site_placeholder: "سایت / مشتری",
-    qc_notes_placeholder: "یادداشت (رک، VLAN، تماس...)",
+    qc_notes_placeholder: "یادداشت (رک، VLAN، تماس…)",
     qc_connect: "اتصال",
     qc_hint: "فقط در همین مرورگر ذخیره می‌شود. رمز را اینجا نگذارید — هنگام اتصال وارد کنید.",
     nav_snmp: "SNMP",
@@ -3023,7 +3050,7 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "Neighbors", nav_netmap: "Network map", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "Bandwidth",
-    confirm_del_file: "Delete \"{n}\"?",
+    confirm_del_file: "Delete \"{n}\"?", sb_link: "Link", sb_public: "Public", sb_exposed: "On LAN",
     ctl_iface: "Interface", ctl_proto: "Protocol", ctl_duration: "Duration (seconds)", ctl_community: "SNMP community", ctl_version: "Version",
     ctl_profile: "Profile", ctl_mode: "Mode", ctl_vendor: "Device vendor", ctl_port: "Port", ctl_algo: "Algorithm", ctl_action: "Action",
     ctl_security: "Security type", ctl_host_pick: "Saved host", ctl_os: "Operating system", ctl_run: "Run as", ctl_key_type: "Key type",
@@ -3095,8 +3122,8 @@ const translations = {
     profile_common: "Well-known ports",
     profile_top100: "Top 100 ports",
     profile_none: "Live hosts only",
-    phase_sweep: "Finding live hosts...",
-    phase_ports: "Probing well-known ports on each IP...",
+    phase_sweep: "Finding live hosts…",
+    phase_ports: "Probing well-known ports on each IP…",
     stat_hosts: "Live hosts",
     stat_with_ports: "With open ports",
     stat_open_ports: "Open ports",
@@ -3104,7 +3131,7 @@ const translations = {
     filter_all: "All",
     filter_open: "Has open ports",
     filter_closed: "No open ports",
-    search_hosts: "Search IP, MAC, vendor...",
+    search_hosts: "Search IP, MAC, vendor…",
     no_open_ports: "No well-known ports open",
     ports_label: "Open ports",
     act_copy: "Copy IP",
@@ -3116,7 +3143,7 @@ const translations = {
     portscan_lede: "Deep-scan a single host — custom ports, a range, or the full 65535.",
     empty_generic: "Nothing run yet.",
     none_found: "Nothing found.",
-    running: "Running...",
+    running: "Running…",
     error_prefix: "Error: ",
     card_mac: "MAC", card_vendor: "Vendor", card_host: "Host",
     badge_online: "Online",
@@ -3132,7 +3159,7 @@ const translations = {
     min_label: "min", max_label: "max", jitter_label: "jitter",
     q_excellent: "Excellent", q_good: "Good", q_fair: "Fair", q_poor: "Poor", q_down: "Down",
     start_monitor: "Start live monitor", stop_monitor: "Stop monitor",
-    traceroute_running: "Tracing route...",
+    traceroute_running: "Tracing route…",
     traceroute_lede: "The packet path to the destination, hop by hop, with latency at each step.",
     hop_timeout: "No reply",
     dest_label: "Destination",
@@ -3147,7 +3174,7 @@ const translations = {
     info_ip: "IP", info_city: "City", info_region: "Region", info_country: "Country", info_isp: "ISP/Org", info_source: "Source",
     domain_btn: "Check domain",
     domain_hint: "DNS A/AAAA for the domain and subdomains from public SSL certificates (crt.sh). Export as notepad text or a MikroTik address-list with a name you choose.",
-    domain_checking: "Finding subdomains and IPs...",
+    domain_checking: "Finding subdomains and IPs…",
     info_domain: "Domain", info_mainip: "Main IP", info_subdomains: "Subdomains",
     info_unique_ip: "Unique IPs", info_ipv6: "IPv6",
     domain_found: "found",
@@ -3168,7 +3195,7 @@ const translations = {
     speedtest_wan: "Internet",
     speedtest_lan: "LAN (OpenSpeedTest)",
     speedtest_hint: "Takes about 20–30s. If Cloudflare is blocked, other servers are tried.",
-    speedtest_running: "Testing...",
+    speedtest_running: "Testing…",
     ost_lede: "This box is the server. Turn it on, then other phones or laptops on the same LAN open the link.",
     ost_hint: "Port 3000 stays closed until you start the server. Turn it off when you are done.",
     ost_start: "Start server",
@@ -3192,7 +3219,7 @@ const translations = {
     share_files: "Files on this page",
     share_no_files: "No files yet.",
     share_remove: "Remove",
-    share_uploading: "Uploading...",
+    share_uploading: "Uploading…",
     nav_sshkeys: "SSH keys",
     sk_lede: "Create an SSH key, give the public key to Hetzner or any server, and log in without a password.",
     sk_new: "New key",
@@ -3243,7 +3270,7 @@ const translations = {
     nav_compress: "Compression",
     cz_drop: "Drop a file here, or click",
     cz_drop_sub: "Huffman and LZW up to 16 MB, the rest up to 64 MB for comparison.",
-    cz_text_ph: "Or paste text here...",
+    cz_text_ph: "Or paste text here…",
     cz_lv_fast: "Fast",
     cz_lv_default: "Balanced",
     cz_lv_max: "Max compression",
@@ -3256,7 +3283,7 @@ const translations = {
     cz_unpack_drop: "Drop a .huff .lzw .gz .bz2 .xz .zst .br file here",
     cz_unpack_sub: "The format is detected automatically and the original file downloads.",
     cz_need: "Pick a file or enter some text first.",
-    cz_running: "Compressing with every algorithm...",
+    cz_running: "Compressing with every algorithm…",
     cz_size: "Original size",
     cz_entropy: "Entropy (bits/byte)",
     cz_floor: "Huffman floor (entropy)",
@@ -3339,7 +3366,7 @@ const translations = {
     bw_local: "IPs on this interface",
     bw_pkts: "pkts",
     geoip_btn: "Locate IP",
-    qr_btn: "Generate QR", qr_input_placeholder: "IP, URL, or any text...",
+    qr_btn: "Generate QR", qr_input_placeholder: "IP, URL, or any text…",
     qr_hint: "Built in this browser. WiFi password is not stored. “From this system” fills the SSID; the password is filled only if NetworkManager secrets are readable.",
     qr_lede: "Text, URL, or a WiFi join code for a phone. Copy or download PNG.",
     qr_mode_text: "Text / URL",
@@ -3378,8 +3405,8 @@ const translations = {
     tls_subject: "Subject", tls_issuer: "Issuer", tls_valid_from: "Valid from",
     tls_valid_until: "Valid until", tls_days_left: "days left",
     headers_btn: "Check headers",
-    headers_hint: "Checks key security headers (HSTS, CSP, X-Frame-Options...) and shows all HTTP headers.",
-    hash_input_placeholder: "Enter text or a token here...",
+    headers_hint: "Checks key security headers (HSTS, CSP, X-Frame-Options…) and shows all HTTP headers.",
+    hash_input_placeholder: "Enter text or a token here…",
     hash_run_btn: "Run",
     hash_hint: "Everything runs in this browser, nothing is sent to the server.",
     qc_name_placeholder: "Name (e.g. Core switch)", qc_host_placeholder: "IP or host",
@@ -3397,7 +3424,7 @@ const translations = {
     rdp_pass_placeholder: "password",
     rdp_disconnect: "Disconnect",
     rdp_placeholder: "Enter host, username and password, then connect.",
-    rdp_connecting: "Connecting RDP...",
+    rdp_connecting: "Connecting RDP…",
     rdp_connected: "Connected",
     rdp_need_auth: "Username and password are required.",
     rdp_fullscreen: "Fullscreen",
@@ -3436,11 +3463,11 @@ const translations = {
     whois_lede: "Domain/IP owner, abuse, blocklists, ping, and OS guess.",
     whois_hint: "Without \"Full details\" you get IP, location, and ISP only (fast). With it: raw whois, owner/org, abuse DNSBLs, ping, and OS. Some TLDs no longer return full whois.",
     whois_full: "Full details",
-    whois_quick_checking: "Finding IP and location...",
+    whois_quick_checking: "Finding IP and location…",
     whois_private: "Private / internal IP — no location",
     whois_no_geo: "Location not found",
     whois_btn: "Whois",
-    whois_checking: "Whois, abuse lists, ping, and OS...",
+    whois_checking: "Whois, abuse lists, ping, and OS…",
     whois_registrar: "Registrar",
     whois_org: "Org / owner",
     whois_person: "Person / role",
@@ -3471,7 +3498,7 @@ const translations = {
     audit_hint: "The Winbox user on SSH is enough. Winbox itself is not a login protocol here. Password is not stored.",
     audit_btn: "Audit",
     audit_auto: "Auto-detect",
-    audit_checking: "Reading the device...",
+    audit_checking: "Reading the device…",
     audit_need: "Host, username, and password are required.",
     audit_high: "High",
     audit_medium: "Medium",
@@ -3493,7 +3520,7 @@ const translations = {
     qc_port_placeholder: "port",
     qc_user_placeholder: "username",
     qc_site_placeholder: "site / customer",
-    qc_notes_placeholder: "Notes (rack, VLAN, contact...)",
+    qc_notes_placeholder: "Notes (rack, VLAN, contact…)",
     qc_connect: "Connect",
     qc_hint: "Stored only in this browser. Do not put a password here — enter it when you connect.",
     nav_snmp: "SNMP",
@@ -3610,15 +3637,16 @@ function applyLang() {
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
     el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
   });
-  document.querySelectorAll("#langToggle span").forEach(s => {
+  document.querySelectorAll("#langToggle [data-lang]").forEach(s => {
     s.classList.toggle("active", s.dataset.lang === lang);
+    s.setAttribute("aria-pressed", String(s.dataset.lang === lang));
   });
   localStorage.setItem("nettoolbox_lang", lang);
   // ports / counts stay Latin digits (Firefox localises number inputs by lang)
   document.querySelectorAll('input[type="number"]').forEach(i => { i.lang = "en"; });
   document.dispatchEvent(new Event("ntb-lang"));
 }
-document.querySelectorAll("#langToggle span").forEach(s => {
+document.querySelectorAll("#langToggle [data-lang]").forEach(s => {
   s.onclick = () => { lang = s.dataset.lang; applyLang(); };
 });
 applyLang();
@@ -3627,6 +3655,7 @@ let theme = localStorage.getItem("nettoolbox_theme") ||
   (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
 function applyTheme() {
   document.documentElement.setAttribute("data-theme", theme);
+  document.querySelector('meta[name="theme-color"]').content = theme === "light" ? "#e9eef5" : "#0b1220";
   document.querySelectorAll("#themeToggle button").forEach(b => {
     b.classList.toggle("active", b.dataset.themeChoice === theme);
   });
@@ -3822,11 +3851,38 @@ function paintLiveDots(data) {
     if (!on && dot) dot.remove();
   });
 }
+let sbLinkData = null;
+function paintStatusBar() {
+  const d = sbLinkData, gw = (d && d.default_route) || {};
+  const ifc = d && ((d.interfaces || []).find(i => i.name === gw.iface) || (d.interfaces || []).find(i => i.up && (i.ipv4 || []).length));
+  const v4 = ifc && (ifc.ipv4 || [])[0];
+  const link = document.getElementById("sbLink");
+  link.classList.toggle("up", !!v4); link.classList.toggle("down", !!d && !v4);
+  document.getElementById("sbIface").textContent = ifc ? ifc.name : "—";
+  document.getElementById("sbIp").textContent = v4 ? `${v4.address}/${v4.prefix}` : "—";
+  document.getElementById("sbGw").textContent = gw.gateway || "—";
+  const rtt = svcState ? svcState.latency_ms : undefined;
+  const lat = document.getElementById("sbLat");
+  document.getElementById("sbRtt").textContent = rtt == null ? (svcState ? "timeout" : "—") : rtt.toFixed(rtt < 10 ? 1 : 0) + " ms";
+  lat.classList.toggle("dead", !!svcState && rtt == null); lat.classList.toggle("slow", rtt != null && rtt > 150);
+  if (homePublic && homePublic.ip) document.getElementById("sbPub").textContent = homePublic.ip;
+  const n = svcState ? svcState.services.filter(x => x.up).length : 0;
+  document.getElementById("sbSvcN").textContent = n;
+  document.getElementById("sbSvc").classList.toggle("on", n > 0);
+}
+async function refreshLinkBar() {
+  try { sbLinkData = await (await fetch("/api/link")).json(); } catch (_) {}
+  if (!homePublic) { try { const p = await (await fetch("/api/whatismyip")).json(); if (!p.error) homePublic = p; } catch (_) {} }
+  paintStatusBar();
+}
+document.getElementById("sbSvc").onclick = () => switchTab("home");
+setInterval(() => { if (!document.hidden) refreshLinkBar(); }, 30000);
 async function refreshServices() {
   try {
     const r = await fetch("/api/services");
     svcState = await r.json();
     paintLiveDots(svcState);
+    paintStatusBar();
     if (document.getElementById("home").classList.contains("active")) paintHomeServices();
   } catch {}
 }
@@ -5569,6 +5625,8 @@ let bwTalkers = [];
 let bwLocalIps = [];
 let bwCaptureErr = "";
 function fmtBps(bps) {
+  if (bps == null) return "—";
+  if (bps > 1_000_000_000) return (bps / 1_000_000_000).toFixed(2) + " Gbps";
   if (bps > 1_000_000) return (bps / 1_000_000).toFixed(2) + " Mbps";
   if (bps > 1_000) return (bps / 1_000).toFixed(1) + " Kbps";
   return Math.round(bps) + " bps";
@@ -8918,13 +8976,6 @@ async function apiJSON(url, body) {
   if (!r.ok && !d.error) d.error = `HTTP ${r.status}`;
   return d;
 }
-function fmtBps(bps) {
-  if (bps == null) return "—";
-  if (bps >= 1e9) return (bps / 1e9).toFixed(2) + " Gbit/s";
-  if (bps >= 1e6) return (bps / 1e6).toFixed(1) + " Mbit/s";
-  if (bps >= 1e3) return (bps / 1e3).toFixed(0) + " kbit/s";
-  return Math.round(bps) + " bit/s";
-}
 function fmtTime(ts) { return new Date(ts * 1000).toLocaleString("en-GB", { hour12: false }); }
 function warnBox(el, msg, bad) { el.innerHTML = msg ? `<div class="sc-warn${bad ? " bad" : ""}">${esc(msg)}</div>` : ""; }
 let ifaceCache = null;
@@ -9389,6 +9440,10 @@ new MutationObserver(muts => {
 
 // initial route: #tab in the URL (bookmarkable / survives refresh), otherwise the overview
 switchTab(location.hash.slice(1) || "home");
+refreshLinkBar();
+refreshServices();
+// result areas announce updates to screen readers
+document.querySelectorAll('[id$="Result"], [id$="Status"], #pmGrid, #slTable').forEach(el => el.setAttribute("aria-live", "polite"));
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 window.scrollTo(0, 0);
 window.addEventListener("load", () => window.scrollTo(0, 0));
