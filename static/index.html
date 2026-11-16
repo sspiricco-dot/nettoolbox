@@ -750,6 +750,75 @@
   .sc-snippet { margin-top: 16px; }
   .sc-snippet pre { background: var(--surface-solid); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 12px; direction: ltr; text-align: left; font-family: var(--mono); margin: 6px 0 0; overflow-x: auto; }
 
+  /* generic resizable stage (serial console, web console) — same behaviour as the terminal */
+  .stage {
+    position: relative; height: calc(100vh - 260px); min-height: 420px; margin-top: 4px;
+    resize: vertical; overflow: hidden; border-radius: 8px; background: #000; border: 1px solid var(--line);
+  }
+  .stage.light { background: #fff; }
+  .stage.tall { height: calc(100vh - 40px); }
+  .stage:hover .term-tools { opacity: 1; }
+  .stage:fullscreen, .stage:-webkit-full-screen { width: 100%; height: 100%; border: 0; border-radius: 0; resize: none; }
+  .stage .term-tools { top: auto; bottom: 10px; }
+
+  .pm-hosts { min-height: 64px; direction: ltr; text-align: left; }
+  .pm-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .pm-summary:empty { display: none; }
+  .pm-grid { display: grid; gap: 8px; }
+  .pm-row {
+    display: grid; grid-template-columns: minmax(150px, 1.3fr) repeat(5, minmax(64px, .6fr)) minmax(160px, 2fr) auto;
+    align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--surface-solid); font-size: 13px;
+  }
+  .pm-row.down { border-color: color-mix(in srgb, var(--down) 60%, var(--line)); background: color-mix(in srgb, var(--down) 7%, var(--surface-solid)); }
+  .pm-row.head { background: none; border: none; padding-block: 0; color: var(--ink-dim); font-size: 11.5px; }
+  .pm-host { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .pm-host .nm { font-family: var(--mono); font-weight: 700; direction: ltr; unicode-bidi: isolate; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pm-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--closed); flex-shrink: 0; }
+  .pm-row.up .pm-dot { background: var(--up); }
+  .pm-row.down .pm-dot { background: var(--down); animation: livepulse 1.2s ease-out infinite; }
+  .pm-num { font-family: var(--mono); direction: ltr; unicode-bidi: isolate; text-align: start; }
+  .pm-num.bad { color: var(--down); font-weight: 700; }
+  .pm-num.warn { color: var(--warn); }
+  .pm-row .pm-spark { display: block; min-width: 0; }
+  .pm-row canvas { width: 100%; height: 30px; display: block; }
+  .pm-row .pm-x { background: none; border: none; color: var(--ink-dim); cursor: pointer; font-size: 16px; width: 26px; height: 26px; border-radius: 6px; }
+  .pm-row .pm-x:hover { color: var(--down); background: var(--surface-2); }
+  .pm-err { grid-column: 1 / -1; color: var(--down); font-size: 12px; font-family: var(--mono); direction: ltr; text-align: left; }
+  .pm-events { max-height: 260px; overflow: auto; font-size: 12.5px; }
+  .pm-ev { display: flex; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); align-items: baseline; flex-wrap: wrap; }
+  .pm-ev:first-child { border-top: none; }
+  .pm-ev .tm { font-family: var(--mono); color: var(--ink-dim); direction: ltr; }
+  .pm-ev .h { font-family: var(--mono); font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+  .pm-ev.down .st { color: var(--down); font-weight: 700; }
+  .pm-ev.up .st { color: var(--up); font-weight: 700; }
+
+  .sr-log { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .sr-log:first-child { border-top: none; }
+  .sr-log .nm { flex: 1; min-width: 180px; font-family: var(--mono); font-size: 12.5px; direction: ltr; unicode-bidi: isolate; text-align: start; }
+  .sr-log .sz { color: var(--ink-dim); font-family: var(--mono); font-size: 12px; }
+
+  .wc-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .wc-tabs:empty { display: none; }
+  .wc-tab {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 12px; border-radius: 8px; cursor: pointer;
+    background: var(--surface-solid); border: 1px solid var(--line); color: var(--ink-dim); font-size: 12.5px; font-family: var(--mono);
+  }
+  [dir="rtl"] .wc-tab { padding: 6px 12px 6px 6px; }
+  .wc-tab .nm { direction: ltr; unicode-bidi: isolate; }
+  .wc-tab.active { color: var(--ink); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface-solid)); }
+  .wc-tab button { background: none; border: none; color: inherit; cursor: pointer; width: 20px; height: 20px; border-radius: 5px; font-size: 14px; line-height: 1; }
+  .wc-tab button:hover { color: var(--down); background: var(--surface-2); }
+  @media (max-width: 760px) {
+    .pm-row { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; row-gap: 6px; }
+    .pm-row.head { display: none; }
+    .pm-row .pm-host { grid-column: 1 / 4; grid-row: 1; }
+    .pm-row .pm-x { grid-column: 4; grid-row: 1; }
+    .pm-row .pm-spark { grid-column: 1 / -1; }
+    .pm-row .pm-hide-m { display: none; }
+    .stage { height: calc(100vh - 160px); }
+  }
+
   .home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .home-card {
     background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px;
@@ -909,6 +978,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           <span data-i18n="nav_ping">پینگ</span>
         </button>
+        <button class="tab" data-panel="pingmon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><polyline points="5 13 8 13 10 9 13 16 15 12 19 12"></polyline></svg>
+          <span data-i18n="nav_pingmon">مانیتور پینگ</span>
+        </button>
         <button class="tab" data-panel="traceroute">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
           <span data-i18n="nav_traceroute">Traceroute</span>
@@ -1028,6 +1101,14 @@
         <button class="tab" data-panel="terminal">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
           <span data-i18n="nav_terminal">SSH/Telnet</span>
+        </button>
+        <button class="tab" data-panel="serial">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v4M15 2v4"></path><rect x="6" y="6" width="12" height="8" rx="2"></rect><path d="M12 14v3a3 3 0 0 1-3 3H6"></path></svg>
+          <span data-i18n="nav_serial">کنسول سریال</span>
+        </button>
+        <button class="tab" data-panel="webconsole">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><line x1="2" y1="8" x2="22" y2="8"></line><circle cx="5.5" cy="5.5" r=".5"></circle><circle cx="8" cy="5.5" r=".5"></circle><path d="M8 13l-2 2 2 2M16 13l2 2-2 2M13 12l-2 6"></path></svg>
+          <span data-i18n="nav_webconsole">وب کنسول</span>
         </button>
         <button class="tab" data-panel="rdp">
           <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
@@ -1968,6 +2049,106 @@
         </div>
       </section>
 
+      <section id="pingmon" class="panel">
+        <header class="panel-head">
+          <div class="kicker">ICMP · CONTINUOUS</div>
+          <h2 data-i18n="nav_pingmon">مانیتور پینگ</h2>
+          <p class="lede" data-i18n="pm_lede">چند دستگاه را همزمان و پیوسته پینگ کنید: وضعیت، تأخیر، درصد از دست رفتن، uptime و لحظه‌ی قطع و وصل هر کدام. موقع تعویض کابل، ری‌استارت سوییچ یا پیدا کردن قطعی‌های لحظه‌ای.</p>
+        </header>
+        <div class="row">
+          <textarea id="pmHosts" class="pm-hosts" spellcheck="false" placeholder="192.168.1.1  8.8.8.8  core-sw.local&#10;10.0.0.0/30 → (one host per entry)"></textarea>
+        </div>
+        <div class="row">
+          <select id="pmInterval" title="interval">
+            <option value="0.5">0.5s</option>
+            <option value="1" selected>1s</option>
+            <option value="2">2s</option>
+            <option value="5">5s</option>
+            <option value="10">10s</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="pmBeep"> <span data-i18n="pm_beep">صدا موقع قطع</span></label>
+          <label class="chk"><input type="checkbox" id="pmNotify"> <span data-i18n="pm_notify">اعلان مرورگر</span></label>
+          <button class="action" id="pmStartBtn" data-i18n="pm_start">شروع</button>
+          <button class="action secondary" id="pmStopBtn" data-i18n="pm_stop" disabled>توقف</button>
+          <button class="action secondary" id="pmResetBtn" data-i18n="pm_reset">صفر کردن آمار</button>
+        </div>
+        <div class="pm-summary" id="pmSummary"></div>
+        <div id="pmGrid" class="pm-grid"><div class="empty" data-i18n="pm_empty">آدرس‌ها را وارد کنید و «شروع» را بزنید. مانیتور در پس‌زمینه ادامه می‌دهد حتی اگر به تب دیگری بروید.</div></div>
+        <div class="bezel" style="margin-top:18px">
+          <div class="bezel-label" data-i18n="pm_events">رویدادها</div>
+          <div id="pmEvents" class="pm-events"><div class="empty" data-i18n="pm_no_events">هنوز قطعی‌ای ثبت نشده.</div></div>
+        </div>
+      </section>
+
+      <section id="serial" class="panel">
+        <header class="panel-head">
+          <div class="kicker">RS-232 · USB CONSOLE</div>
+          <h2 data-i18n="nav_serial">کنسول سریال</h2>
+          <p class="lede" data-i18n="sr_lede">کابل کنسول (USB یا USB به RJ45) را به لپ‌تاپ بزنید و مستقیم به کنسول سوییچ، روتر یا فایروال وصل شوید؛ برای کانفیگ اولیه یا وقتی دستگاه IP ندارد.</p>
+        </header>
+        <div id="srMountWarn" class="sc-warn" hidden></div>
+        <div class="row">
+          <select id="srPort"></select>
+          <button class="action secondary" id="srRefreshBtn" data-i18n="sr_refresh">تازه‌سازی</button>
+          <select id="srPreset">
+            <option value="" data-i18n="sr_preset">پیش‌تنظیم…</option>
+            <option value="9600|8N1|n">Cisco / Juniper / HP / Aruba / Fortinet / Huawei — 9600</option>
+            <option value="115200|8N1|n">MikroTik / Ubiquiti / OpenWrt / Linux — 115200</option>
+            <option value="38400|8N1|n">Allied Telesis / old Nortel — 38400</option>
+            <option value="57600|8N1|n">Some Netgear / D-Link — 57600</option>
+          </select>
+        </div>
+        <div class="row">
+          <select id="srBaud" title="baud"></select>
+          <select id="srFrame" title="data bits / parity / stop bits"></select>
+          <select id="srFlow" title="flow control">
+            <option value="n" data-i18n="sr_flow_n">بدون flow control</option>
+            <option value="h">RTS/CTS</option>
+            <option value="s">XON/XOFF</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="srLog"> <span data-i18n="sr_log">ذخیره‌ی لاگ جلسه</span></label>
+          <button class="action" id="srConnectBtn" data-i18n="sr_connect">اتصال</button>
+          <button class="action secondary" id="srDisconnectBtn" data-i18n="sr_disconnect" disabled>قطع</button>
+        </div>
+        <div class="hint" data-i18n="sr_hint">خروج: Ctrl-A سپس Ctrl-X · ارسال BREAK (برای ROMMON / بازیابی رمز): Ctrl-A سپس Ctrl-\ · اگر چیزی نمی‌آید Enter بزنید یا سرعت (baud) را عوض کنید.</div>
+        <div id="srStage" class="stage" hidden>
+          <div class="term-tools">
+            <button type="button" class="st-tall" data-i18n="term_taller">بزرگ‌تر</button>
+            <button type="button" class="st-fs" data-i18n="rdp_fullscreen">تمام‌صفحه</button>
+          </div>
+          <iframe class="term" id="srFrame" title="Serial console" allow="clipboard-read; clipboard-write"></iframe>
+        </div>
+        <div class="bezel" style="margin-top:18px">
+          <div class="bezel-label" data-i18n="sr_logs">لاگ‌های ذخیره‌شده</div>
+          <div id="srLogs"><div class="empty" data-i18n="sr_no_logs">لاگی نیست. «ذخیره‌ی لاگ جلسه» را قبل از اتصال تیک بزنید؛ مثلاً برای گرفتن خروجی show run.</div></div>
+        </div>
+      </section>
+
+      <section id="webconsole" class="panel">
+        <header class="panel-head">
+          <div class="kicker">HTTP(S) PROXY · 127.0.0.1</div>
+          <h2 data-i18n="nav_webconsole">وب کنسول</h2>
+          <p class="lede" data-i18n="wc_lede">صفحه‌ی مدیریت روتر، سوییچ، پرینتر، دوربین یا NAS را داخل همین داشبورد باز کنید. خطای گواهی self-signed و TLS قدیمی را خودش رد می‌کند و چند دستگاه را در تب‌های جدا نگه می‌دارد.</p>
+        </header>
+        <div class="row">
+          <input id="wcUrl" class="ltr" dir="ltr" list="wcRecent" spellcheck="false" placeholder="192.168.1.1  ·  https://10.0.0.2:8443" />
+          <datalist id="wcRecent"></datalist>
+          <button class="action" id="wcOpenBtn" data-i18n="wc_open">باز کردن</button>
+        </div>
+        <div id="wcMsg" class="sc-warn bad" hidden></div>
+        <div class="wc-tabs" id="wcTabs"></div>
+        <div id="wcStage" class="stage light" hidden>
+          <div class="term-tools">
+            <button type="button" id="wcReloadBtn" data-i18n="wc_reload">بارگذاری دوباره</button>
+            <button type="button" id="wcNewTabBtn" data-i18n="wc_newtab">تب جدید</button>
+            <button type="button" class="st-tall" data-i18n="term_taller">بزرگ‌تر</button>
+            <button type="button" class="st-fs" data-i18n="rdp_fullscreen">تمام‌صفحه</button>
+          </div>
+          <iframe class="term" id="wcFrame" title="Web console"></iframe>
+        </div>
+        <div class="hint" data-i18n="wc_hint">پروکسی فقط روی 127.0.0.1 گوش می‌دهد (پورت‌های 8700 به بعد) و با بستن تب خاموش می‌شود. اگر صفحه‌ای داخل قاب درست کار نکرد، «تب جدید» را بزنید.</div>
+      </section>
+
       <section id="rdp" class="panel">
         <header class="panel-head">
           <div class="kicker">TCP · 3389</div>
@@ -2032,6 +2213,25 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "همسایه‌ها", nav_netmap: "نقشه شبکه", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "پهنای‌باند",
+    nav_pingmon: "مانیتور پینگ", nav_serial: "کنسول سریال", nav_webconsole: "وب کنسول",
+    pm_lede: "چند دستگاه را همزمان و پیوسته پینگ کنید: وضعیت، تأخیر، درصد از دست رفتن، uptime و لحظه‌ی قطع و وصل هر کدام. موقع تعویض کابل، ری‌استارت سوییچ یا پیدا کردن قطعی‌های لحظه‌ای.",
+    pm_beep: "صدا موقع قطع", pm_notify: "اعلان مرورگر", pm_start: "شروع", pm_stop: "توقف", pm_reset: "صفر کردن آمار",
+    pm_empty: "آدرس‌ها را وارد کنید و «شروع» را بزنید. مانیتور در پس‌زمینه ادامه می‌دهد حتی اگر به تب دیگری بروید.",
+    pm_events: "رویدادها", pm_no_events: "هنوز قطعی‌ای ثبت نشده.",
+    pm_h_host: "میزبان", pm_h_last: "آخرین", pm_h_avg: "میانگین", pm_h_max: "بیشترین", pm_h_loss: "از دست رفته", pm_h_out: "قطعی‌ها", pm_h_hist: "تاریخچه",
+    pm_up: "وصل", pm_down: "قطع", pm_running: "در حال اجرا", pm_conn_lost: "ارتباط با سرور قطع شد",
+    pm_ev_down: "قطع شد", pm_ev_up: "وصل شد", pm_ev_after: "بعد از", pm_back: "دوباره وصل شد", pm_went_down: "قطع شد",
+    sr_lede: "کابل کنسول (USB یا USB به RJ45) را به لپ‌تاپ بزنید و مستقیم به کنسول سوییچ، روتر یا فایروال وصل شوید؛ برای کانفیگ اولیه یا وقتی دستگاه IP ندارد.",
+    sr_refresh: "تازه‌سازی", sr_preset: "پیش‌تنظیم…", sr_flow_n: "بدون flow control", sr_log: "ذخیره‌ی لاگ جلسه",
+    sr_connect: "اتصال", sr_disconnect: "قطع", sr_logs: "لاگ‌های ذخیره‌شده", sr_delete: "حذف",
+    sr_hint: "خروج: Ctrl-A سپس Ctrl-X · ارسال BREAK (برای ROMMON / بازیابی رمز): Ctrl-A سپس Ctrl-\\ · اگر چیزی نمی‌آید Enter بزنید یا سرعت (baud) را عوض کنید.",
+    sr_no_logs: "لاگی نیست. «ذخیره‌ی لاگ جلسه» را قبل از اتصال تیک بزنید؛ مثلاً برای گرفتن خروجی show run.",
+    sr_no_ports: "کابل کنسولی پیدا نشد — کابل را وصل کنید",
+    sr_no_ports_mount: "کانتینر به USB دسترسی ندارد",
+    sr_no_mount: "کانتینر به پورت‌های USB دسترسی ندارد. یک بار با run.sh جدید اجرا کنید (که ‎-v /dev:/hostdev:ro و ‎--device-cgroup-rule='c 188:* rmw' و ‎'c 166:* rmw' را اضافه می‌کند).",
+    wc_lede: "صفحه‌ی مدیریت روتر، سوییچ، پرینتر، دوربین یا NAS را داخل همین داشبورد باز کنید. خطای گواهی self-signed و TLS قدیمی را خودش رد می‌کند و چند دستگاه را در تب‌های جدا نگه می‌دارد.",
+    wc_open: "باز کردن", wc_reload: "بارگذاری دوباره", wc_newtab: "تب جدید",
+    wc_hint: "پروکسی فقط روی 127.0.0.1 گوش می‌دهد (پورت‌های 8700 به بعد) و با بستن تب خاموش می‌شود. اگر صفحه‌ای داخل قاب درست کار نکرد، «تب جدید» را بزنید.",
     nav_home: "خلاصه", nav_search_ph: "جستجوی ابزار…", nav_search_none: "ابزاری پیدا نشد",
     home_title: "خلاصه", home_lede: "وضعیت همین جعبه در یک نگاه: لینک، IP عمومی و سرویس‌هایی که الان روی شبکه باز هستند.",
     home_link: "لینک", home_public: "IP عمومی", home_services: "سرویس‌های باز روی شبکه", home_quick: "دسترسی سریع (اخیر)",
@@ -2551,6 +2751,25 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "Neighbors", nav_netmap: "Network map", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "Bandwidth",
+    nav_pingmon: "Ping monitor", nav_serial: "Serial console", nav_webconsole: "Web console",
+    pm_lede: "Ping many devices at once, continuously: state, latency, loss, uptime and the moment each one drops or comes back. For cable swaps, switch reboots or hunting short outages.",
+    pm_beep: "Beep on outage", pm_notify: "Browser notification", pm_start: "Start", pm_stop: "Stop", pm_reset: "Reset stats",
+    pm_empty: "Enter addresses and press Start. The monitor keeps running in the background when you switch tabs.",
+    pm_events: "Events", pm_no_events: "No outages yet.",
+    pm_h_host: "Host", pm_h_last: "Last", pm_h_avg: "Avg", pm_h_max: "Max", pm_h_loss: "Loss", pm_h_out: "Outages", pm_h_hist: "History",
+    pm_up: "up", pm_down: "down", pm_running: "running", pm_conn_lost: "lost connection to the server",
+    pm_ev_down: "went down", pm_ev_up: "came back", pm_ev_after: "after", pm_back: "is back", pm_went_down: "went down",
+    sr_lede: "Plug a console cable (USB or USB-to-RJ45) into the laptop and talk straight to a switch, router or firewall console: first-time setup, or when the device has no IP.",
+    sr_refresh: "Refresh", sr_preset: "Preset…", sr_flow_n: "No flow control", sr_log: "Save session log",
+    sr_connect: "Connect", sr_disconnect: "Disconnect", sr_logs: "Saved logs", sr_delete: "Delete",
+    sr_hint: "Exit: Ctrl-A then Ctrl-X · Send BREAK (ROMMON / password recovery): Ctrl-A then Ctrl-\\ · Nothing shows? Press Enter or try another baud rate.",
+    sr_no_logs: "No logs. Tick \"Save session log\" before connecting, e.g. to capture show run output.",
+    sr_no_ports: "No console cable found — plug it in",
+    sr_no_ports_mount: "The container has no USB access",
+    sr_no_mount: "The container cannot see USB ports. Re-run it once with the new run.sh (adds -v /dev:/hostdev:ro and --device-cgroup-rule='c 188:* rmw' / 'c 166:* rmw').",
+    wc_lede: "Open the admin page of a router, switch, printer, camera or NAS inside the dashboard. Self-signed certificates and old TLS are handled, and each device stays in its own tab.",
+    wc_open: "Open", wc_reload: "Reload", wc_newtab: "New tab",
+    wc_hint: "The proxy listens only on 127.0.0.1 (ports 8700 and up) and stops when you close the tab. If a page misbehaves inside the frame, use \"New tab\".",
     nav_home: "Overview", nav_search_ph: "Search tools…", nav_search_none: "No tool found",
     home_title: "Overview", home_lede: "This box at a glance: link, public IP and the services currently listening on the LAN.",
     home_link: "Link", home_public: "Public IP", home_services: "Services open on the LAN", home_quick: "Quick access (recent)",
@@ -3154,6 +3373,8 @@ function switchTab(id) {
   if (id === "fileshare") loadFileShare();
   if (id === "tftp") loadTftp();
   if (id === "compress") loadCompressCodecs();
+  if (id === "serial") loadSerial();
+  if (id === "webconsole") loadWebConsole();
 }
 tabs.forEach(tb => tb.onclick = () => { switchTab(tb.dataset.panel); if (sideNav.classList.contains("searching")) clearNavSearch(); });
 // panels carry the same id as the hash, so the browser would jump to them; tabs always start at the top instead
@@ -3213,6 +3434,9 @@ const NAV_KEYWORDS = {
   tls: "ssl tls certificate cert گواهی fullchain privkey pem pfx p12 p7b crt key bundle",
   geoip: "geo location ip country موقعیت",
   quickconnect: "quick connect bookmark server اتصال",
+  pingmon: "ping monitor uptime latency loss continuous پینگ مانیتور قطعی",
+  serial: "serial console com usb rs232 picocom cisco console کنسول سریال",
+  webconsole: "web console browser router gui proxy https وب مرورگر",
 };
 function navNorm(x) { return (x || "").toLowerCase().replace(/[\u200c\s]+/g, " ").trim(); }
 let navSel = -1;
@@ -3274,6 +3498,7 @@ let svcState = null;
 function paintLiveDots(data) {
   const live = new Set((data && data.services || []).filter(x => x.up).map(x => x.panel));
   if (data && data.rdp) live.add("rdp");
+  if (typeof pmRunning !== "undefined" && pmRunning) live.add("pingmon");
   tabs.forEach(b => {
     const on = live.has(b.dataset.panel);
     b.classList.toggle("live", on);
@@ -8058,6 +8283,387 @@ document.getElementById("netmapHtmlBtn").onclick = () => {
   a.click();
   window.open(url, "_blank");
 };
+
+// ---------------------------------------------------------------- shared resizable stage
+function wireStage(stage, storageKey, focusEl) {
+  const tallBtn = stage.querySelector(".st-tall");
+  const fsBtn = stage.querySelector(".st-fs");
+  const fsOn = () => (document.fullscreenElement || document.webkitFullscreenElement) === stage;
+  const setTall = (tall) => {
+    stage.classList.toggle("tall", tall);
+    tallBtn.dataset.i18n = tall ? "term_smaller" : "term_taller";
+    tallBtn.textContent = t(tallBtn.dataset.i18n);
+  };
+  fsBtn.onclick = async () => {
+    try {
+      if (fsOn()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+      const req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+      if (req) await req.call(stage);
+    } catch (_) {}
+  };
+  const sync = () => {
+    fsBtn.dataset.i18n = fsOn() ? "rdp_exit_fs" : "rdp_fullscreen";
+    fsBtn.textContent = t(fsBtn.dataset.i18n);
+    if (focusEl) setTimeout(() => { try { focusEl().focus(); } catch (_) {} }, 50);
+  };
+  document.addEventListener("fullscreenchange", sync);
+  document.addEventListener("webkitfullscreenchange", sync);
+  tallBtn.onclick = () => {
+    stage.style.height = "";
+    const tall = !stage.classList.contains("tall");
+    setTall(tall);
+    if (tall) stage.scrollIntoView({ block: "start", behavior: "smooth" });
+    try { localStorage.setItem(storageKey, tall ? "1" : "0"); } catch (_) {}
+  };
+  try { if (localStorage.getItem(storageKey) === "1") setTall(true); } catch (_) {}
+}
+
+// ---------------------------------------------------------------- Ping monitor
+const PM_KEY = "nettoolbox_pingmon_hosts";
+const PM_WINDOW = 180;
+let pmES = null, pmRunning = false, pmStarted = 0, pmStats = {}, pmOrder = [], pmRenderQueued = false, pmEvents = [];
+try { document.getElementById("pmHosts").value = localStorage.getItem(PM_KEY) || ""; } catch (_) {}
+function pmParse() {
+  return [...new Set(document.getElementById("pmHosts").value.split(/[\s,;]+/).map(x => x.trim()).filter(Boolean))];
+}
+function pmNew() { return { samples: [], sent: 0, recv: 0, sum: 0, min: null, max: null, last: null, state: "unknown", miss: 0, since: Date.now(), outages: 0, downAt: null, error: "" }; }
+function pmFmtDur(ms) {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return s + "s";
+  if (s < 3600) return Math.floor(s / 60) + "m " + (s % 60) + "s";
+  return Math.floor(s / 3600) + "h " + Math.floor((s % 3600) / 60) + "m";
+}
+function pmClock(ts) { return new Date(ts).toLocaleTimeString("en-GB"); }
+function pmBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.15, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    o.start(); o.stop(ctx.currentTime + 0.5);
+  } catch (_) {}
+}
+function pmNotify(text) {
+  try { if (document.getElementById("pmNotify").checked && window.Notification && Notification.permission === "granted") new Notification("NetToolbox", { body: text }); } catch (_) {}
+}
+document.getElementById("pmNotify").onchange = e => {
+  if (e.target.checked && window.Notification && Notification.permission === "default") Notification.requestPermission();
+};
+function pmEvent(host, kind, extra) {
+  pmEvents.unshift({ host, kind, extra, at: Date.now() });
+  pmEvents = pmEvents.slice(0, 200);
+}
+function pmApply(sm) {
+  const st = pmStats[sm.host];
+  if (!st) return;
+  if (sm.error) { st.error = sm.error; st.state = "down"; return; }
+  st.error = "";
+  st.sent++;
+  st.samples.push(sm.rtt);
+  if (st.samples.length > PM_WINDOW) st.samples.shift();
+  if (sm.rtt != null) {
+    st.recv++; st.sum += sm.rtt; st.last = sm.rtt;
+    st.min = st.min == null ? sm.rtt : Math.min(st.min, sm.rtt);
+    st.max = st.max == null ? sm.rtt : Math.max(st.max, sm.rtt);
+    st.miss = 0;
+    if (st.state !== "up") {
+      if (st.state === "down" && st.downAt) {
+        const dur = Date.now() - st.downAt;
+        pmEvent(sm.host, "up", dur);
+        pmNotify(`${sm.host} ${t("pm_back")} (${pmFmtDur(dur)})`);
+      }
+      st.state = "up"; st.since = Date.now(); st.downAt = null;
+    }
+  } else {
+    st.last = null; st.miss++;
+    if (st.miss >= 2 && st.state !== "down") {
+      if (st.state === "up") {
+        st.outages++;
+        pmEvent(sm.host, "down", sm.note || "");
+        if (document.getElementById("pmBeep").checked) pmBeep();
+        pmNotify(`${sm.host} ${t("pm_went_down")}`);
+      }
+      st.state = "down"; st.since = Date.now(); st.downAt = Date.now() - 1000 * (st.miss - 1);
+    }
+  }
+}
+function pmSpark(canvas, samples) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 160, h = canvas.clientHeight || 30;
+  if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  const c = canvas.getContext("2d");
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, w, h);
+  const vals = samples.filter(v => v != null);
+  const max = Math.max(5, ...vals) * 1.1;
+  const bw = w / PM_WINDOW;
+  const okCol = cssVar("--accent2"), badCol = cssVar("--down");
+  const off = PM_WINDOW - samples.length;
+  samples.forEach((v, i) => {
+    const x = (off + i) * bw;
+    if (v == null) { c.fillStyle = badCol; c.fillRect(x, 0, Math.max(1, bw - .3), h); }
+    else { const bh = Math.max(1.5, (v / max) * h); c.fillStyle = okCol; c.fillRect(x, h - bh, Math.max(1, bw - .3), bh); }
+  });
+}
+function pmRender() {
+  pmRenderQueued = false;
+  const grid = document.getElementById("pmGrid");
+  if (!pmOrder.length) return;
+  if (!grid.querySelector(".pm-row.head")) {
+    grid.innerHTML = `<div class="pm-row head"><span>${esc(t("pm_h_host"))}</span><span>${esc(t("pm_h_last"))}</span><span>${esc(t("pm_h_avg"))}</span><span class="pm-hide-m">${esc(t("pm_h_max"))}</span><span>${esc(t("pm_h_loss"))}</span><span class="pm-hide-m">${esc(t("pm_h_out"))}</span><span class="pm-spark">${esc(t("pm_h_hist"))}</span><span></span></div>` +
+      pmOrder.map(h => `<div class="pm-row" data-host="${esc(h)}">
+        <span class="pm-host"><i class="pm-dot"></i><span class="nm" title="${esc(h)}">${esc(h)}</span></span>
+        <span class="pm-num" data-k="last"></span><span class="pm-num" data-k="avg"></span><span class="pm-num pm-hide-m" data-k="max"></span>
+        <span class="pm-num" data-k="loss"></span><span class="pm-num pm-hide-m" data-k="out"></span>
+        <span class="pm-spark"><canvas></canvas></span>
+        <button type="button" class="pm-x" title="remove" data-rm="${esc(h)}">×</button>
+        <div class="pm-err" hidden></div>
+      </div>`).join("");
+    grid.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => pmRemove(b.dataset.rm));
+  }
+  let up = 0, down = 0;
+  pmOrder.forEach(h => {
+    const st = pmStats[h], row = grid.querySelector(`.pm-row[data-host="${CSS.escape(h)}"]`);
+    if (!st || !row) return;
+    row.classList.toggle("up", st.state === "up");
+    row.classList.toggle("down", st.state === "down");
+    if (st.state === "up") up++; else if (st.state === "down") down++;
+    const loss = st.sent ? (100 * (st.sent - st.recv) / st.sent) : 0;
+    const set = (k, v, cls) => { const el = row.querySelector(`[data-k="${k}"]`); el.textContent = v; el.className = "pm-num" + (["max", "out"].includes(k) ? " pm-hide-m" : "") + (cls ? " " + cls : ""); };
+    set("last", st.last == null ? (st.sent ? "—" : "…") : st.last.toFixed(1) + " ms", st.state === "down" ? "bad" : "");
+    set("avg", st.recv ? (st.sum / st.recv).toFixed(1) + " ms" : "—");
+    set("max", st.max == null ? "—" : st.max.toFixed(0) + " ms");
+    set("loss", st.sent ? loss.toFixed(loss < 10 && loss > 0 ? 1 : 0) + "%" : "—", loss >= 5 ? "bad" : loss > 0 ? "warn" : "");
+    set("out", st.state === "down" && st.downAt ? `↓ ${pmFmtDur(Date.now() - st.downAt)}` : String(st.outages), st.state === "down" ? "bad" : st.outages ? "warn" : "");
+    const err = row.querySelector(".pm-err");
+    err.hidden = !st.error; err.textContent = st.error;
+    pmSpark(row.querySelector("canvas"), st.samples);
+  });
+  const sum = document.getElementById("pmSummary");
+  sum.innerHTML = `<span class="pill up">${up} ${esc(t("pm_up"))}</span>` +
+    (down ? `<span class="pill down">${down} ${esc(t("pm_down"))}</span>` : "") +
+    (pmRunning ? `<span class="pill warn">● ${esc(t("pm_running"))} · ${pmFmtDur(Date.now() - pmStarted)}</span>` : "");
+  const ev = document.getElementById("pmEvents");
+  ev.innerHTML = pmEvents.length ? pmEvents.map(e => `<div class="pm-ev ${e.kind}">
+      <span class="tm">${esc(pmClock(e.at))}</span><span class="h">${esc(e.host)}</span>
+      <span class="st">${esc(t(e.kind === "down" ? "pm_ev_down" : "pm_ev_up"))}</span>
+      <span class="tm">${e.kind === "up" ? esc(t("pm_ev_after")) + " " + esc(pmFmtDur(e.extra)) : esc(e.extra || "")}</span></div>`).join("")
+    : `<div class="empty">${esc(t("pm_no_events"))}</div>`;
+}
+function pmQueue() { if (!pmRenderQueued) { pmRenderQueued = true; setTimeout(pmRender, 300); } }
+function pmSetRunning(on) {
+  pmRunning = on;
+  document.getElementById("pmStartBtn").disabled = on;
+  document.getElementById("pmStopBtn").disabled = !on;
+  if (typeof paintLiveDots === "function") paintLiveDots(svcState);
+  pmQueue();
+}
+function pmStop() {
+  if (pmES) { pmES.close(); pmES = null; }
+  pmSetRunning(false);
+}
+function pmStart() {
+  const hosts = pmParse();
+  if (!hosts.length) return;
+  try { localStorage.setItem(PM_KEY, hosts.join("\n")); } catch (_) {}
+  if (pmES) pmES.close();
+  const keep = {};
+  hosts.forEach(h => { keep[h] = pmStats[h] || pmNew(); });
+  pmStats = keep; pmOrder = hosts;
+  document.getElementById("pmGrid").innerHTML = "";
+  pmStarted = pmStarted && pmRunning ? pmStarted : Date.now();
+  const iv = document.getElementById("pmInterval").value;
+  pmES = new EventSource(`/api/pingmon/stream?interval=${encodeURIComponent(iv)}&hosts=${encodeURIComponent(hosts.join(","))}`);
+  pmES.onmessage = ev => {
+    const d = JSON.parse(ev.data);
+    if (d.samples) { d.samples.forEach(pmApply); pmQueue(); }
+    if (d.ended) pmStop();
+  };
+  pmES.onerror = () => {
+    if (pmES && pmES.readyState === EventSource.CLOSED) {
+      pmStop();
+      document.getElementById("pmSummary").insertAdjacentHTML("beforeend", `<span class="pill down">${esc(t("pm_conn_lost"))}</span>`);
+    }
+  };
+  pmSetRunning(true);
+}
+function pmRemove(host) {
+  document.getElementById("pmHosts").value = pmParse().filter(h => h !== host).join("\n");
+  delete pmStats[host];
+  pmOrder = pmOrder.filter(h => h !== host);
+  if (pmRunning) { pmOrder.length ? pmStart() : pmStop(); }
+  else { document.getElementById("pmGrid").innerHTML = ""; pmRender(); }
+}
+document.getElementById("pmStartBtn").onclick = pmStart;
+document.getElementById("pmStopBtn").onclick = pmStop;
+document.getElementById("pmResetBtn").onclick = () => {
+  Object.keys(pmStats).forEach(h => { pmStats[h] = pmNew(); });
+  pmEvents = []; pmStarted = Date.now(); pmRender();
+};
+setInterval(() => { if (pmRunning && document.getElementById("pingmon").classList.contains("active")) pmQueue(); }, 1000);
+document.addEventListener("ntb-lang", () => { const g = document.getElementById("pmGrid"); if (pmOrder.length) { g.innerHTML = ""; pmRender(); } });
+
+// ---------------------------------------------------------------- Serial console
+const SR_KEY = "nettoolbox_serial";
+const srStage = document.getElementById("srStage"), srFrame = document.getElementById("srFrame");
+let srConnected = false, srMeta = null;
+wireStage(srStage, "nettoolbox_serial_tall", () => srFrame);
+function srPrefs() { try { return JSON.parse(localStorage.getItem(SR_KEY) || "{}"); } catch (_) { return {}; } }
+function srSavePrefs() {
+  try {
+    localStorage.setItem(SR_KEY, JSON.stringify({
+      port: document.getElementById("srPort").value, baud: document.getElementById("srBaud").value,
+      frame: document.getElementById("srFrame").value, flow: document.getElementById("srFlow").value,
+      log: document.getElementById("srLog").checked,
+    }));
+  } catch (_) {}
+}
+function srPaintLogs(logs) {
+  const box = document.getElementById("srLogs");
+  if (!logs.length) { box.innerHTML = `<div class="empty">${esc(t("sr_no_logs"))}</div>`; return; }
+  box.innerHTML = logs.map(l => `<div class="sr-log"><span class="nm">${esc(l.name)}</span><span class="sz">${esc(fmtBytes(l.size))}</span>
+    <a class="action secondary" style="text-decoration:none;padding:6px 12px;font-size:12px" href="/api/serial/log?name=${encodeURIComponent(l.name)}">${esc(t("sc_dl"))}</a>
+    <button type="button" class="action secondary" style="padding:6px 12px;font-size:12px" data-del="${esc(l.name)}">${esc(t("sr_delete"))}</button></div>`).join("");
+  box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    const r = await fetch("/api/serial/log/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: b.dataset.del }) });
+    const d = await r.json(); if (d.logs) srPaintLogs(d.logs);
+  });
+}
+async function loadSerial() {
+  let d;
+  try { d = await (await fetch("/api/serial")).json(); } catch (_) { return; }
+  srMeta = d;
+  const prefs = srPrefs();
+  const baud = document.getElementById("srBaud"), frame = document.getElementById("srFrame");
+  if (!baud.options.length) {
+    baud.innerHTML = d.bauds.map(b => `<option value="${b}">${b}</option>`).join("");
+    frame.innerHTML = d.frames.map(f => `<option value="${f}">${f}</option>`).join("");
+    baud.value = prefs.baud || "9600"; frame.value = prefs.frame || "8N1";
+    document.getElementById("srFlow").value = prefs.flow || "n";
+    document.getElementById("srLog").checked = !!prefs.log;
+  }
+  const warn = document.getElementById("srMountWarn");
+  warn.hidden = d.mounted;
+  if (!d.mounted) warn.textContent = t("sr_no_mount");
+  const sel = document.getElementById("srPort");
+  const cur = sel.value || prefs.port;
+  if (d.ports.length) {
+    sel.innerHTML = d.ports.map(p => `<option value="${esc(p.name)}">${esc(p.name)} — ${esc(p.label)}${p.usb && p.usb.vendor_id ? ` (${esc(p.usb.vendor_id)}:${esc(p.usb.product_id)})` : ""}${p.accessible ? "" : " ⚠"}</option>`).join("");
+    if (d.ports.some(p => p.name === cur)) sel.value = cur;
+  } else {
+    sel.innerHTML = `<option value="">${esc(t(d.mounted ? "sr_no_ports" : "sr_no_ports_mount"))}</option>`;
+  }
+  document.getElementById("srConnectBtn").disabled = !d.ports.length;
+  srPaintLogs(d.logs || []);
+}
+document.getElementById("srRefreshBtn").onclick = loadSerial;
+document.getElementById("srPreset").onchange = e => {
+  if (!e.target.value) return;
+  const [b, f, fl] = e.target.value.split("|");
+  document.getElementById("srBaud").value = b; document.getElementById("srFrame").value = f; document.getElementById("srFlow").value = fl;
+  e.target.value = ""; srSavePrefs();
+};
+["srPort", "srBaud", "srFrame", "srFlow", "srLog"].forEach(id => document.getElementById(id).addEventListener("change", srSavePrefs));
+function srSetConnected(on) {
+  srConnected = on;
+  document.getElementById("srDisconnectBtn").disabled = !on;
+  ["srPort", "srBaud", "srFrame", "srFlow", "srLog"].forEach(id => { document.getElementById(id).disabled = on; });
+}
+document.getElementById("srConnectBtn").onclick = () => {
+  const port = document.getElementById("srPort").value;
+  if (!port) return;
+  srSavePrefs();
+  srFrame.src = buildTermUrl(["serial", port, document.getElementById("srBaud").value, document.getElementById("srFrame").value,
+    document.getElementById("srFlow").value, document.getElementById("srLog").checked ? "1" : "0"]);
+  srStage.hidden = false;
+  srFrame.onload = () => { try { srFrame.focus(); } catch (_) {} };
+  srSetConnected(true);
+};
+document.getElementById("srDisconnectBtn").onclick = () => {
+  srFrame.src = "about:blank";
+  srStage.hidden = true;
+  srSetConnected(false);
+  setTimeout(loadSerial, 800);
+};
+// pick up a console cable as soon as it is plugged in
+setInterval(() => {
+  if (!srConnected && !document.hidden && document.getElementById("serial").classList.contains("active")) loadSerial();
+}, 3000);
+document.addEventListener("ntb-lang", () => { if (srMeta) loadSerial(); });
+
+// ---------------------------------------------------------------- Web console
+const WC_RECENT = "nettoolbox_wc_recent";
+const wcStage = document.getElementById("wcStage");
+const wcFrames = {};
+let wcTargets = [], wcActive = null;
+document.getElementById("wcFrame").remove();
+wireStage(wcStage, "nettoolbox_wc_tall", () => wcFrames[wcActive]);
+function wcRecent() { try { return JSON.parse(localStorage.getItem(WC_RECENT) || "[]"); } catch (_) { return []; } }
+function wcPaintRecent() {
+  document.getElementById("wcRecent").innerHTML = wcRecent().map(u => `<option value="${esc(u)}"></option>`).join("");
+}
+function wcMsg(text) { const el = document.getElementById("wcMsg"); el.hidden = !text; el.textContent = text || ""; }
+function wcFrameFor(tg) {
+  let f = wcFrames[tg.id];
+  if (!f) {
+    f = document.createElement("iframe");
+    f.className = "term";
+    f.title = tg.target;
+    f.src = tg.url;
+    wcStage.appendChild(f);
+    wcFrames[tg.id] = f;
+  }
+  return f;
+}
+function wcPaint() {
+  const tabs = document.getElementById("wcTabs");
+  tabs.innerHTML = wcTargets.map(tg => `<span class="wc-tab${tg.id === wcActive ? " active" : ""}" data-id="${tg.id}"><span class="nm">${esc(tg.target.replace(/^http:\/\//, ""))}</span><button type="button" data-close="${tg.id}" title="close">×</button></span>`).join("");
+  tabs.querySelectorAll(".wc-tab").forEach(el => el.onclick = e => { if (!e.target.dataset.close) { wcActive = +el.dataset.id; wcPaint(); } });
+  tabs.querySelectorAll("[data-close]").forEach(b => b.onclick = async e => {
+    e.stopPropagation();
+    const id = +b.dataset.close;
+    try { await fetch("/api/webconsole/close", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }); } catch (_) {}
+    if (wcFrames[id]) { wcFrames[id].remove(); delete wcFrames[id]; }
+    wcTargets = wcTargets.filter(x => x.id !== id);
+    if (wcActive === id) wcActive = wcTargets.length ? wcTargets[wcTargets.length - 1].id : null;
+    wcPaint();
+  });
+  Object.keys(wcFrames).forEach(id => { if (!wcTargets.some(x => x.id === +id)) { wcFrames[id].remove(); delete wcFrames[id]; } });
+  wcTargets.forEach(tg => { wcFrameFor(tg).style.display = tg.id === wcActive ? "block" : "none"; });
+  wcStage.hidden = !wcTargets.length;
+}
+async function loadWebConsole() {
+  wcPaintRecent();
+  try { wcTargets = (await (await fetch("/api/webconsole")).json()).targets || []; } catch (_) { return; }
+  if (!wcTargets.some(x => x.id === wcActive)) wcActive = wcTargets.length ? wcTargets[wcTargets.length - 1].id : null;
+  wcPaint();
+}
+async function wcOpen() {
+  const btn = document.getElementById("wcOpenBtn");
+  const url = document.getElementById("wcUrl").value.trim();
+  if (!url) return;
+  wcMsg("");
+  setLoading(btn, true);
+  try {
+    const r = await fetch("/api/webconsole/open", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+    const d = await r.json();
+    if (d.error) { wcMsg(d.error); return; }
+    const existing = wcTargets.find(x => x.id === d.id);
+    if (existing) { Object.assign(existing, d); if (wcFrames[d.id]) wcFrames[d.id].src = d.url; }
+    else wcTargets.push(d);
+    wcActive = d.id;
+    try { localStorage.setItem(WC_RECENT, JSON.stringify([url, ...wcRecent().filter(x => x !== url)].slice(0, 12))); } catch (_) {}
+    wcPaintRecent();
+    wcPaint();
+    document.getElementById("wcUrl").value = "";
+  } catch (err) {
+    wcMsg(t("error_prefix") + (err.message || err));
+  } finally { setLoading(btn, false); }
+}
+document.getElementById("wcOpenBtn").onclick = wcOpen;
+document.getElementById("wcUrl").addEventListener("keydown", e => { if (e.key === "Enter") wcOpen(); });
+document.getElementById("wcReloadBtn").onclick = () => { const f = wcFrames[wcActive]; if (f) { const u = f.src; f.src = "about:blank"; setTimeout(() => { f.src = u; }, 30); } };
+document.getElementById("wcNewTabBtn").onclick = () => { const tg = wcTargets.find(x => x.id === wcActive); if (tg) window.open(tg.url, "_blank", "noopener"); };
 
 // initial route: #tab in the URL (bookmarkable / survives refresh), otherwise the overview
 switchTab(location.hash.slice(1) || "home");

@@ -1,6 +1,7 @@
 import atexit
 import ipaddress
 import json
+import queue
 import os
 import re
 import shutil
@@ -27,6 +28,8 @@ import compress as complab
 import sshkeys
 import sslconv
 from neighbors import listen as neighbor_listen
+import serialports
+import webproxy
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
@@ -840,6 +843,149 @@ def ping_stream():
             proc.terminate()
 
     return Response(generate(), mimetype="text/event-stream")
+
+
+PINGMON_MAX = 50
+
+
+@app.route("/api/pingmon/stream")
+def pingmon_stream():
+    """Continuous ping of many hosts at once: one long-running `ping` per host, merged into SSE."""
+    raw = re.split(r"[\s,;]+", request.args.get("hosts", ""))
+    hosts = []
+    for h in raw:
+        h = h.strip()
+        if h and h not in hosts:
+            if not _valid_host(h):
+                return jsonify({"error": f"invalid host: {h[:60]}"}), 400
+            hosts.append(h)
+    if not hosts:
+        return jsonify({"error": "add at least one host"}), 400
+    if len(hosts) > PINGMON_MAX:
+        return jsonify({"error": f"at most {PINGMON_MAX} hosts"}), 400
+    try:
+        interval = float(request.args.get("interval", "1"))
+    except ValueError:
+        interval = 1.0
+    interval = min(max(interval, 0.5), 60.0)
+    timeout = max(1, min(int(interval) if interval >= 1 else 1, 5))
+
+    q = queue.Queue()
+    procs = []
+
+    def reader(host, proc):
+        for line in proc.stdout:
+            m = re.search(r"icmp_seq=(\d+).*?time=([\d.]+)", line)
+            if m:
+                q.put({"host": host, "seq": int(m.group(1)), "rtt": float(m.group(2)), "t": time.time()})
+                continue
+            m = re.search(r"no answer yet for icmp_seq=(\d+)", line)
+            if m:
+                q.put({"host": host, "seq": int(m.group(1)), "rtt": None, "t": time.time()})
+                continue
+            m = re.search(r"icmp_seq=(\d+).*(Unreachable|unreachable|exceeded|Redirect)", line)
+            if m:
+                q.put({"host": host, "seq": int(m.group(1)), "rtt": None, "t": time.time(), "note": m.group(2)})
+        rc = proc.wait()
+        err = (proc.stderr.read() or "").strip() if proc.stderr else ""
+        if rc not in (0, -15) and err:
+            q.put({"host": host, "error": err.splitlines()[-1][:160], "t": time.time()})
+
+    for h in hosts:
+        proc = subprocess.Popen(
+            ["ping", "-n", "-O", "-i", str(interval), "-W", str(timeout), h],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1,
+        )
+        procs.append(proc)
+        threading.Thread(target=reader, args=(h, proc), daemon=True).start()
+
+    def generate():
+        last_ka = time.time()
+        try:
+            yield f"data: {json.dumps({'start': True, 'hosts': hosts, 'interval': interval})}\n\n"
+            while True:
+                batch = []
+                try:
+                    batch.append(q.get(timeout=0.5))
+                    while True:
+                        batch.append(q.get_nowait())
+                except queue.Empty:
+                    pass
+                if batch:
+                    yield f"data: {json.dumps({'samples': batch})}\n\n"
+                    last_ka = time.time()
+                elif time.time() - last_ka > 5:
+                    yield ": keep-alive\n\n"
+                    last_ka = time.time()
+                if all(p.poll() is not None for p in procs) and q.empty():
+                    yield f"data: {json.dumps({'ended': True})}\n\n"
+                    return
+        finally:
+            for p in procs:
+                if p.poll() is None:
+                    p.terminate()
+            for p in procs:
+                try:
+                    p.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    p.kill()
+
+    resp = Response(stream_with_context(generate()), mimetype="text/event-stream")
+    resp.headers["Cache-Control"] = "no-store"
+    resp.headers["X-Accel-Buffering"] = "no"
+    return resp
+
+
+@app.route("/api/serial")
+def serial_info():
+    return jsonify({
+        "mounted": serialports.mounted(),
+        "ports": serialports.list_ports(),
+        "bauds": serialports.BAUDS,
+        "frames": serialports.FRAMES,
+        "logs": serialports.logs(),
+    })
+
+
+@app.route("/api/serial/log")
+def serial_log_download():
+    try:
+        path = serialports.log_path(request.args.get("name", ""))
+    except (ValueError, FileNotFoundError):
+        return jsonify({"error": "log not found"}), 404
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True,
+                               mimetype="text/plain")
+
+
+@app.route("/api/serial/log/delete", methods=["POST"])
+def serial_log_delete():
+    try:
+        os.remove(serialports.log_path((request.json or {}).get("name", "")))
+    except (ValueError, FileNotFoundError, OSError):
+        return jsonify({"error": "log not found"}), 404
+    return jsonify({"ok": True, "logs": serialports.logs()})
+
+
+@app.route("/api/webconsole")
+def webconsole_list():
+    return jsonify({"targets": webproxy.list_targets()})
+
+
+@app.route("/api/webconsole/open", methods=["POST"])
+def webconsole_open():
+    try:
+        return jsonify(webproxy.open_target((request.json or {}).get("url", "")))
+    except webproxy.WebConsoleError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/api/webconsole/close", methods=["POST"])
+def webconsole_close():
+    try:
+        webproxy.close_target(int((request.json or {}).get("id", 0)))
+    except (webproxy.WebConsoleError, ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"targets": webproxy.list_targets()})
 
 
 @app.route("/api/wifi/interfaces")
