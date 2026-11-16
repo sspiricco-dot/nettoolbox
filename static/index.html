@@ -202,6 +202,7 @@
   .sb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--closed); align-self: center; }
   #sbLink.up .sb-dot { background: var(--up); } #sbLink.down .sb-dot { background: var(--down); }
   #sbLat.slow b { color: var(--warn); } #sbLat.dead b { color: var(--down); }
+  #sbSpark { width: 60px; height: 14px; align-self: center; }
   .sb-svc { margin-inline-start: auto; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; color: inherit; font: inherit; cursor: pointer; }
   .sb-svc.on { border-color: color-mix(in srgb, var(--warn) 60%, var(--line)); color: var(--warn); }
   .sb-svc.on .sb-k { color: var(--warn); }
@@ -1245,7 +1246,7 @@
       <span class="sb-item" id="sbLink"><i class="sb-dot"></i><span class="sb-k" data-i18n="sb_link">لینک</span><b id="sbIface">—</b></span>
       <span class="sb-item"><span class="sb-k">IP</span><b id="sbIp">—</b></span>
       <span class="sb-item"><span class="sb-k">GW</span><b id="sbGw">—</b></span>
-      <span class="sb-item" id="sbLat"><span class="sb-k">1.1.1.1</span><b id="sbRtt">—</b></span>
+      <span class="sb-item" id="sbLat"><span class="sb-k">1.1.1.1</span><b id="sbRtt">—</b><canvas id="sbSpark" width="60" height="14" aria-hidden="true"></canvas></span>
       <span class="sb-item sb-hide-m"><span class="sb-k" data-i18n="sb_public">عمومی</span><b id="sbPub">—</b></span>
       <button type="button" class="sb-item sb-svc" id="sbSvc"><span class="sb-k" data-i18n="sb_exposed">روی LAN</span><b id="sbSvcN">0</b></button>
     </div>
@@ -3861,10 +3862,6 @@ function paintStatusBar() {
   document.getElementById("sbIface").textContent = ifc ? ifc.name : "—";
   document.getElementById("sbIp").textContent = v4 ? `${v4.address}/${v4.prefix}` : "—";
   document.getElementById("sbGw").textContent = gw.gateway || "—";
-  const rtt = svcState ? svcState.latency_ms : undefined;
-  const lat = document.getElementById("sbLat");
-  document.getElementById("sbRtt").textContent = rtt == null ? (svcState ? "timeout" : "—") : rtt.toFixed(rtt < 10 ? 1 : 0) + " ms";
-  lat.classList.toggle("dead", !!svcState && rtt == null); lat.classList.toggle("slow", rtt != null && rtt > 150);
   if (homePublic && homePublic.ip) document.getElementById("sbPub").textContent = homePublic.ip;
   const n = svcState ? svcState.services.filter(x => x.up).length : 0;
   document.getElementById("sbSvcN").textContent = n;
@@ -3876,7 +3873,30 @@ async function refreshLinkBar() {
   paintStatusBar();
 }
 document.getElementById("sbSvc").onclick = () => switchTab("home");
-setInterval(() => { if (!document.hidden) refreshLinkBar(); }, 30000);
+setInterval(() => { if (!document.hidden) refreshLinkBar(); }, 3000);
+
+// live latency: one ping per second through the ping-monitor stream, paused while the tab is hidden
+let sbES = null, sbRtts = [];
+function paintLatency(rtt) {
+  sbRtts = sbRtts.concat([rtt]).slice(-30);
+  const lat = document.getElementById("sbLat");
+  document.getElementById("sbRtt").textContent = rtt == null ? "timeout" : rtt.toFixed(rtt < 10 ? 1 : 0) + " ms";
+  lat.classList.toggle("dead", rtt == null); lat.classList.toggle("slow", rtt != null && rtt > 150);
+  const c = document.getElementById("sbSpark"), g = c.getContext("2d"), max = Math.max(20, ...sbRtts.filter(v => v != null));
+  g.clearRect(0, 0, 60, 14);
+  sbRtts.forEach((v, i) => {
+    g.fillStyle = v == null ? cssVar("--down") : cssVar("--accent2");
+    const h = v == null ? 14 : Math.max(2, 14 * v / max);
+    g.fillRect(i * 2, 14 - h, 1.5, h);
+  });
+}
+function liveLatency(on) {
+  if (sbES) { sbES.close(); sbES = null; }
+  if (!on) return;
+  sbES = new EventSource("/api/pingmon/stream?interval=1&hosts=1.1.1.1");
+  sbES.onmessage = ev => { const d = JSON.parse(ev.data); (d.samples || []).forEach(x => paintLatency(x.error ? null : x.rtt)); };
+}
+document.addEventListener("visibilitychange", () => { liveLatency(!document.hidden); if (!document.hidden) refreshLinkBar(); });
 async function refreshServices() {
   try {
     const r = await fetch("/api/services");
@@ -9442,6 +9462,7 @@ new MutationObserver(muts => {
 switchTab(location.hash.slice(1) || "home");
 refreshLinkBar();
 refreshServices();
+liveLatency(!document.hidden);
 // result areas announce updates to screen readers
 document.querySelectorAll('[id$="Result"], [id$="Status"], #pmGrid, #slTable').forEach(el => el.setAttribute("aria-live", "polite"));
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";

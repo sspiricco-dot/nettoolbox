@@ -3965,16 +3965,6 @@ def rdp_status():
     )
 
 
-def _quick_rtt(host):
-    """One ping, at most ~1 s; None when there is no answer."""
-    try:
-        out = subprocess.run(["ping", "-n", "-c", "1", "-W", "1", host], capture_output=True, text=True, timeout=3).stdout
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    m = re.search(r"time=([\d.]+)", out)
-    return float(m.group(1)) if m else None
-
-
 @app.route("/api/services")
 def services_status():
     """Cheap summary of everything that may be listening on the LAN (home page + sidebar dots)."""
@@ -3997,7 +3987,6 @@ def services_status():
             ],
             "rdp": _rdp_proc is not None and _rdp_proc.poll() is None,
             "pcap": netjobs.capture.up,
-            "latency_ms": _quick_rtt("1.1.1.1"),
         }
     )
 
