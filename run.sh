@@ -14,6 +14,9 @@ fi
 # container rebuilds. Losing a key can lock you out of a server.
 ssh_dir="${NETTOOLBOX_SSH_HOST_DIR:-$HOME/.config/nettoolbox/ssh-keys}"
 mkdir -p "$ssh_dir" && chmod 700 "$ssh_dir"
+# Config backups (Config backup tab) also live on the host.
+cfg_dir="${NETTOOLBOX_CONFIG_HOST_DIR:-$HOME/.config/nettoolbox/configs}"
+mkdir -p "$cfg_dir" && chmod 700 "$cfg_dir"
 docker run -d \
   --restart unless-stopped \
   --net=host \
@@ -21,6 +24,7 @@ docker run -d \
   --cap-add=NET_RAW \
   $docker_nm \
   -v "$ssh_dir:/data/ssh-keys" \
+  -v "$cfg_dir:/data/configs" \
   -v /dev:/hostdev:ro \
   --device-cgroup-rule='c 188:* rmw' \
   --device-cgroup-rule='c 166:* rmw' \
@@ -33,4 +37,6 @@ echo "LAN OpenSpeedTest (port 3000) stays off until you start it in the Speed Te
 echo "LAN file drop (port 8765) stays off until you start it in the File drop tab"
 echo "TFTP server (UDP 69) stays off until you start it in the TFTP tab"
 echo "SSH keys are stored on the host in $ssh_dir"
+echo "Config backups are stored on the host in $cfg_dir"
+echo "Syslog (UDP 514) and iperf3 (TCP 5201) servers stay off until started from their tabs"
 echo "Serial Console sees USB console cables (ttyUSB*/ttyACM*) as they are plugged in"

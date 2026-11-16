@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     sshpass \
     picocom \
+    iperf3 \
+    tcpdump \
     telnet \
     iproute2 \
     iputils-ping \
@@ -83,7 +85,10 @@ COPY sshkeys.py /app/sshkeys.py
 COPY sslconv.py /app/sslconv.py
 COPY neighbors.py /app/neighbors.py
 COPY serialports.py /app/serialports.py
-COPY webproxy.py /app/webproxy.py
+COPY syslogd.py /app/syslogd.py
+COPY lancheck.py /app/lancheck.py
+COPY configbackup.py /app/configbackup.py
+COPY netjobs.py /app/netjobs.py
 COPY static /app/static
 COPY start.sh /app/start.sh
 COPY connect.sh /app/connect.sh

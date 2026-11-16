@@ -1,12 +1,12 @@
 # NetToolbox
 
-**v2.12.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
+**v2.13.0** — a portable network & security dashboard for network engineers, system administrators, and field technicians.
 
 One Docker container. One web UI. Run it on your laptop, workstation, server, home lab, or client site.
 
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sajadprp/nettoolbox?logo=docker)](https://hub.docker.com/r/sajadprp/nettoolbox)
-[![Version](https://img.shields.io/badge/version-2.12.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
+[![Version](https://img.shields.io/badge/version-2.13.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)](https://www.docker.com/)
 [![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)](https://hub.docker.com/r/sajadprp/nettoolbox)
@@ -19,7 +19,7 @@ Demo walkthrough (sample lab data only — not a real customer network): This li
 
 Docker Hub: https://hub.docker.com/r/sajadprp/nettoolbox
 
-Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.12.0`
+Tags: `sajadprp/nettoolbox:latest` · `sajadprp/nettoolbox:v2` · `sajadprp/nettoolbox:v2.13.0`
 
 ### 1. Pull the Docker image
 
@@ -30,7 +30,7 @@ docker pull sajadprp/nettoolbox:latest
 Or pin a version:
 
 ```bash
-docker pull sajadprp/nettoolbox:v2.12.0
+docker pull sajadprp/nettoolbox:v2.13.0
 ```
 
 ### 2. Run NetToolbox
@@ -42,6 +42,7 @@ docker run -d \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -v "$HOME/.config/nettoolbox/configs:/data/configs" \
   -v /dev:/hostdev:ro \
   --device-cgroup-rule='c 188:* rmw' --device-cgroup-rule='c 166:* rmw' \
   -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
@@ -96,11 +97,12 @@ docker run -d \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -v "$HOME/.config/nettoolbox/configs:/data/configs" \
   -v /dev:/hostdev:ro \
   --device-cgroup-rule='c 188:* rmw' --device-cgroup-rule='c 166:* rmw' \
   -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
   --name nettoolbox \
-  sajadprp/nettoolbox:v2.12.0
+  sajadprp/nettoolbox:v2.13.0
 ```
 
 ## Build from source
@@ -117,42 +119,44 @@ docker build -t nettoolbox .
 **Copy a pre-built image to another laptop (USB, no rebuild)**
 
 ```bash
-docker save nettoolbox:v2.12.0 nettoolbox:latest | gzip > nettoolbox-v2.12.0.tar.gz
-gzip -dc nettoolbox-v2.12.0.tar.gz | docker load
+docker save nettoolbox:v2.13.0 nettoolbox:latest | gzip > nettoolbox-v2.13.0.tar.gz
+gzip -dc nettoolbox-v2.13.0.tar.gz | docker load
 mkdir -p ~/.config/nettoolbox/ssh-keys && chmod 700 ~/.config/nettoolbox/ssh-keys
 docker run -d --restart unless-stopped --net=host \
   --cap-add=NET_ADMIN --cap-add=NET_RAW \
   -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -v "$HOME/.config/nettoolbox/configs:/data/configs" \
   -v /dev:/hostdev:ro \
   --device-cgroup-rule='c 188:* rmw' --device-cgroup-rule='c 166:* rmw' \
   -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
-  --name nettoolbox nettoolbox:v2.12.0
+  --name nettoolbox nettoolbox:v2.13.0
 ```
 
 ## Versions
 
 `main` is always **v2**. v1 stays as a git tag.
 
-| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | v2.6 | v2.7 | v2.8 | v2.9 | v2.10 | v2.11 | **v2.12** |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Compression lab (Huffman, LZW, Deflate, bzip2, LZMA, Zstd, Brotli), quick/full Whois | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| SSH key manager (generate, install on server, key login in terminal) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Overview page, tool search (Ctrl+K), mobile layout, bookmarkable tabs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| SSL files → fullchain.pem / privkey.pem (PFX, P7B, AIA fetch) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Slim image (~130 MB pull, was ~290 MB), CDP/LLDP without tshark | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Serial console (USB), Ping monitor (many hosts), Web console (device web UIs) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| | v1 | v2.0 | v2.1 | v2.2 | v2.3 | v2.4 | v2.5 | v2.6 | v2.7 | v2.8 | v2.9 | v2.10 | v2.11 | v2.12 | **v2.13** |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Discover, ping, traceroute, port scan | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSH/Telnet in the browser | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSL, headers, hash/JWT, DNS, WiFi, WoL | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| In-browser RDP | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Link status / MTR / subnet / whois / export | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Host profiles | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SNMP, site report, script library | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| WiFi QR | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Network map, OpenSpeedTest LAN | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Domain IPs + MikroTik list export, whois intel, router audit | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| LAN file drop (download page + QR) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| TFTP server + client (start/stop, transfer log) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Compression lab (Huffman, LZW, Deflate, bzip2, LZMA, Zstd, Brotli), quick/full Whois | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSH key manager (generate, install on server, key login in terminal) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Overview page, tool search (Ctrl+K), mobile layout, bookmarkable tabs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| SSL files → fullchain.pem / privkey.pem (PFX, P7B, AIA fetch) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Slim image (~130 MB pull, was ~290 MB), CDP/LLDP without tshark | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Serial console (USB), Ping monitor (many hosts) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Syslog server, LAN check (rogue DHCP, VLAN probe, duplicate IP), config backup & diff, iperf3, packet capture | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ```bash
 git clone --branch v1.0.0 https://github.com/sspiricco-dot/nettoolbox.git nettoolbox-v1
@@ -228,6 +232,30 @@ Last discover + neighbors + link status + notes. Download Markdown or text for a
 
 Text, URL, or WiFi join. Copy or download PNG. WiFi QR from this laptop’s network or typed by hand.
 
+### LAN check
+
+- **DHCP servers / rogue DHCP**: broadcasts a DHCPDISCOVER and lists every server that answers (server ID, MAC, offered IP, mask, gateway, DNS, lease). More than one server is flagged.
+- **VLAN test on a trunk**: sends 802.1Q-tagged DISCOVERs for a VLAN list (`10,20,30-40`) and shows which VLANs actually hand out addresses, without creating VLAN interfaces.
+- **Duplicate IPs**: ARP-sweeps the subnet (up to /20) and reports IPs answered by more than one MAC, including this laptop's own address.
+
+Only DISCOVER is sent (never REQUEST), so no lease is taken.
+
+### Syslog server
+
+UDP syslog receiver (default 514) for switches, routers and firewalls: live view with severity badges, Cisco `%FAC-SEV-MNEMONIC` highlighting, filters by severity / source / text, per-severity counters, and a downloadable log file. Copy-ready config lines for Cisco, MikroTik, FortiGate and Huawei/H3C.
+
+### Config backup & diff
+
+Save devices (no passwords stored) and pull their running config over SSH (password or a key from the SSH keys tab) or Telnet (with Cisco `enable`). Cisco IOS/IOS-XE/NX-OS/ASA, MikroTik, Juniper, Huawei, HPE Comware/H3C, Aruba/ProCurve, FortiGate, Linux or any custom command. A new version is stored only when the config really changed (timestamps and similar volatile lines are ignored); pick two versions for a colored diff. Backups live on the host (`~/.config/nettoolbox/configs`).
+
+### iperf3
+
+Start an iperf3 server on this laptop (shows the `iperf3 -c ...` line for the other side) or run a client test: upload, download (`-R`) or both directions, TCP or UDP with bitrate, 1–8 streams, 5–60 s. Results show throughput, retransmits or jitter/loss, a per-second bar chart and a history of recent tests.
+
+### Packet capture
+
+tcpdump on any interface with a BPF filter (quick chips for ICMP, ARP, DNS, DHCP, SNMP, syslog, CDP/LLDP/STP, SYN/RST ...), size and time limits, a live packet summary, and pcap files to download for Wireshark.
+
 ### Serial Console
 
 Talk to a switch / router / firewall console over a USB (or USB-to-RJ45) console cable, in the browser: port picker with the adapter's USB name, baud / data-parity-stop / flow control, presets (Cisco & co. 9600, MikroTik/Ubiquiti/OpenWrt 115200 ...), optional session log you can download (e.g. a `show run` capture). Exit with `Ctrl-A Ctrl-X`; send BREAK for ROMMON / password recovery with `Ctrl-A Ctrl-\`. Cables plugged in later are picked up automatically (needs the `/dev` mount and cgroup rules above).
@@ -235,10 +263,6 @@ Talk to a switch / router / firewall console over a USB (or USB-to-RJ45) console
 ### Ping Monitor
 
 Continuous ping of up to 50 hosts at once (0.5–10 s interval): live state, last / avg / max latency, loss, outage count and current downtime, a 3-minute history bar per host, and an event log of every drop and recovery with its duration. Optional beep and browser notification on an outage. Keeps running when you switch tabs (green dot in the sidebar).
-
-### Web Console
-
-Open a device's web UI (router, switch, printer, camera, NAS) inside the dashboard, several at once in tabs. Each device gets its own reverse proxy on `127.0.0.1:8700+`; it accepts self-signed certificates and old TLS, strips framing blocks (X-Frame-Options, CSP frame-ancestors) and HSTS, rewrites redirects / cookies / absolute links, follows a device's http→https switch, and passes WebSockets through.
 
 ### SSL files → fullchain.pem / privkey.pem
 
@@ -291,6 +315,7 @@ docker run -d \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -v "$HOME/.config/nettoolbox/configs:/data/configs" \
   -v /dev:/hostdev:ro \
   --device-cgroup-rule='c 188:* rmw' --device-cgroup-rule='c 166:* rmw' \
   -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
@@ -314,7 +339,8 @@ docker run -d \
 | OpenSpeedTest | 3000 | LAN, **only while started** from the Speed Test tab |
 | File drop | 8765 | LAN, **only while started** from the File drop tab |
 | TFTP | 69/udp (configurable) | LAN, **only while started** from the TFTP tab |
-| Web Console proxies | 8700+ | loopback, one per device opened in the Web Console tab |
+| Syslog | 514/udp (configurable) | LAN, **only while started** from the Syslog tab |
+| iperf3 server | 5201/tcp (configurable) | LAN, **only while started** from the iperf3 tab |
 
 Dashboard:
 
@@ -350,6 +376,7 @@ docker run -d \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   -v "$HOME/.config/nettoolbox/ssh-keys:/data/ssh-keys" \
+  -v "$HOME/.config/nettoolbox/configs:/data/configs" \
   -v /dev:/hostdev:ro \
   --device-cgroup-rule='c 188:* rmw' --device-cgroup-rule='c 166:* rmw' \
   -e NETTOOLBOX_HOST_UID="$(id -u)" -e NETTOOLBOX_HOST_GID="$(id -g)" \
@@ -389,7 +416,7 @@ docker run -d `
 ```text
 sajadprp/nettoolbox:latest
 sajadprp/nettoolbox:v2
-sajadprp/nettoolbox:v2.12.0
+sajadprp/nettoolbox:v2.13.0
 ```
 
 ## How it compares

@@ -29,7 +29,10 @@ import sshkeys
 import sslconv
 from neighbors import listen as neighbor_listen
 import serialports
-import webproxy
+import syslogd
+import lancheck
+import configbackup
+import netjobs
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024 * 1024
@@ -966,26 +969,231 @@ def serial_log_delete():
     return jsonify({"ok": True, "logs": serialports.logs()})
 
 
-@app.route("/api/webconsole")
-def webconsole_list():
-    return jsonify({"targets": webproxy.list_targets()})
-
-
-@app.route("/api/webconsole/open", methods=["POST"])
-def webconsole_open():
+# ---------------------------------------------------------------- Syslog server
+@app.route("/api/syslog")
+def syslog_info():
     try:
-        return jsonify(webproxy.open_target((request.json or {}).get("url", "")))
-    except webproxy.WebConsoleError as exc:
+        since = int(request.args.get("since", "0"))
+    except ValueError:
+        since = 0
+    st = syslogd.receiver.state()
+    st["ips"] = [u["ip"] for u in _lan_http_urls(st["port"])]
+    st["entries"] = syslogd.receiver.entries(since, 1000)
+    return jsonify(st)
+
+
+@app.route("/api/syslog/start", methods=["POST"])
+def syslog_start():
+    try:
+        syslogd.receiver.start((request.json or {}).get("port", 514))
+    except syslogd.SyslogError as exc:
+        return jsonify({"error": str(exc)}), 409
+    return jsonify(syslogd.receiver.state())
+
+
+@app.route("/api/syslog/stop", methods=["POST"])
+def syslog_stop():
+    syslogd.receiver.stop()
+    return jsonify(syslogd.receiver.state())
+
+
+@app.route("/api/syslog/clear", methods=["POST"])
+def syslog_clear():
+    syslogd.receiver.clear()
+    return jsonify(syslogd.receiver.state())
+
+
+@app.route("/api/syslog/download")
+def syslog_download():
+    path = syslogd.receiver.file
+    if not os.path.exists(path):
+        return jsonify({"error": "no log yet"}), 404
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True,
+                               download_name=f"syslog-{time.strftime('%Y%m%d-%H%M%S')}.log", mimetype="text/plain")
+
+
+# ---------------------------------------------------------------- LAN check
+@app.route("/api/lancheck/dhcp", methods=["POST"])
+def lancheck_dhcp():
+    body = request.json or {}
+    iface = body.get("iface", "")
+    if not IFACE_RE.match(iface):
+        return jsonify({"error": "invalid interface"}), 400
+    try:
+        vlans = lancheck.parse_vlans(body.get("vlans", ""))
+        wait = max(2, min(float(body.get("wait", 4)), 15))
+        return jsonify(lancheck.dhcp_probe(iface, vlans, untagged=bool(body.get("untagged", True)) or not vlans, wait=wait))
+    except (lancheck.LanCheckError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except PermissionError:
+        return jsonify({"error": "needs CAP_NET_RAW"}), 500
+
+
+@app.route("/api/lancheck/arp", methods=["POST"])
+def lancheck_arp():
+    body = request.json or {}
+    iface = body.get("iface", "")
+    if not IFACE_RE.match(iface):
+        return jsonify({"error": "invalid interface"}), 400
+    try:
+        return jsonify(lancheck.arp_conflicts(iface, (body.get("cidr") or "").strip() or None))
+    except (lancheck.LanCheckError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except PermissionError:
+        return jsonify({"error": "needs CAP_NET_RAW"}), 500
+
+
+# ---------------------------------------------------------------- Config backup
+@app.route("/api/configs")
+def configs_list():
+    return jsonify({
+        "devices": configbackup.overview(),
+        "vendors": [{"id": k, "label": v[0]} for k, v in configbackup.VENDORS.items()],
+        "persistent": configbackup.persistent(),
+        "dir": configbackup.CONFIG_DIR,
+    })
+
+
+@app.route("/api/configs/device", methods=["POST"])
+def configs_device_save():
+    try:
+        return jsonify(configbackup.save_device(request.json or {}))
+    except configbackup.ConfigError as exc:
         return jsonify({"error": str(exc)}), 400
 
 
-@app.route("/api/webconsole/close", methods=["POST"])
-def webconsole_close():
+@app.route("/api/configs/device/delete", methods=["POST"])
+def configs_device_delete():
     try:
-        webproxy.close_target(int((request.json or {}).get("id", 0)))
-    except (webproxy.WebConsoleError, ValueError, TypeError) as exc:
+        configbackup.delete_device((request.json or {}).get("id", ""))
+    except configbackup.ConfigError as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify({"targets": webproxy.list_targets()})
+    return jsonify({"ok": True})
+
+
+@app.route("/api/configs/backup", methods=["POST"])
+def configs_backup():
+    body = request.json or {}
+    try:
+        return jsonify(configbackup.backup(body.get("id", ""), body.get("password", ""),
+                                           body.get("passphrase", ""), body.get("enable", "")))
+    except configbackup.ConfigError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except OSError as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/configs/versions")
+def configs_versions():
+    return jsonify({"versions": configbackup.versions(request.args.get("id", ""))})
+
+
+@app.route("/api/configs/version")
+def configs_version():
+    did, ver = request.args.get("id", ""), request.args.get("v", "")
+    try:
+        text = configbackup.read_version(did, ver)
+    except configbackup.ConfigError as exc:
+        return jsonify({"error": str(exc)}), 404
+    if request.args.get("download"):
+        return Response(text, mimetype="text/plain",
+                        headers={"Content-Disposition": f'attachment; filename="{did}-{ver}.cfg"'})
+    return jsonify({"id": did, "version": ver, "text": text})
+
+
+@app.route("/api/configs/version/delete", methods=["POST"])
+def configs_version_delete():
+    body = request.json or {}
+    try:
+        configbackup.delete_version(body.get("id", ""), body.get("v", ""))
+    except configbackup.ConfigError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"ok": True})
+
+
+@app.route("/api/configs/diff")
+def configs_diff():
+    try:
+        return jsonify(configbackup.diff(request.args.get("id", ""), request.args.get("a", ""), request.args.get("b", "")))
+    except configbackup.ConfigError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+# ---------------------------------------------------------------- iperf3
+@app.route("/api/iperf")
+def iperf_info():
+    st = netjobs.iperf.state()
+    st["ips"] = [u["ip"] for u in _lan_http_urls(st["server"]["port"])]
+    return jsonify(st)
+
+
+@app.route("/api/iperf/server/start", methods=["POST"])
+def iperf_server_start():
+    try:
+        netjobs.iperf.start_server((request.json or {}).get("port", 5201))
+    except (netjobs.JobError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 409
+    return iperf_info()
+
+
+@app.route("/api/iperf/server/stop", methods=["POST"])
+def iperf_server_stop():
+    netjobs.iperf.stop_server()
+    return iperf_info()
+
+
+@app.route("/api/iperf/run", methods=["POST"])
+def iperf_run():
+    b = request.json or {}
+    try:
+        job = netjobs.iperf.run_client(
+            (b.get("host") or "").strip(), b.get("port", 5201), b.get("duration", 10), b.get("parallel", 1),
+            bool(b.get("reverse")), bool(b.get("udp")), (b.get("bitrate") or "").strip().upper(), bool(b.get("bidir")))
+    except (netjobs.JobError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(job)
+
+
+# ---------------------------------------------------------------- packet capture
+@app.route("/api/pcap")
+def pcap_info():
+    return jsonify(netjobs.capture.state())
+
+
+@app.route("/api/pcap/start", methods=["POST"])
+def pcap_start():
+    b = request.json or {}
+    try:
+        return jsonify(netjobs.capture.start(b.get("iface", ""), b.get("filter", ""), b.get("max_mb", 50),
+                                             b.get("max_secs", 300), b.get("snaplen", 0)))
+    except (netjobs.JobError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/api/pcap/stop", methods=["POST"])
+def pcap_stop():
+    netjobs.capture.stop()
+    time.sleep(0.3)
+    return jsonify(netjobs.capture.state())
+
+
+@app.route("/api/pcap/download")
+def pcap_download():
+    try:
+        path = netjobs.capture.path(request.args.get("name", ""))
+    except netjobs.JobError as exc:
+        return jsonify({"error": str(exc)}), 404
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), as_attachment=True,
+                               mimetype="application/vnd.tcpdump.pcap")
+
+
+@app.route("/api/pcap/delete", methods=["POST"])
+def pcap_delete():
+    try:
+        os.remove(netjobs.capture.path((request.json or {}).get("name", "")))
+    except (netjobs.JobError, OSError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(netjobs.capture.state())
 
 
 @app.route("/api/wifi/interfaces")
@@ -3772,8 +3980,13 @@ def services_status():
                  "proto": "http", "port": SHARE_PORT},
                 {"id": "ost", "panel": "speedtest", "name": "OpenSpeedTest", "up": _tcp_up("127.0.0.1", OST_PORT),
                  "proto": "http", "port": OST_PORT},
+                {"id": "syslog", "panel": "syslog", "name": "Syslog", "up": syslogd.receiver.up,
+                 "proto": "udp", "port": syslogd.receiver.port},
+                {"id": "iperf", "panel": "iperf", "name": "iperf3", "up": netjobs.iperf.server_up,
+                 "proto": "tcp", "port": netjobs.iperf.server_port},
             ],
             "rdp": _rdp_proc is not None and _rdp_proc.poll() is None,
+            "pcap": netjobs.capture.up,
         }
     )
 
