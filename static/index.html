@@ -1022,10 +1022,10 @@
           <span data-lang="en">EN</span>
         </div>
         <div id="themeToggle">
-          <button data-theme-choice="dark" title="Dark">
+          <button data-theme-choice="dark" title="Dark" aria-label="Dark theme">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           </button>
-          <button data-theme-choice="light" title="Light">
+          <button data-theme-choice="light" title="Light" aria-label="Light theme">
             <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
           </button>
         </div>
@@ -2451,6 +2451,12 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "همسایه‌ها", nav_netmap: "نقشه شبکه", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "پهنای‌باند",
+    confirm_del_file: "«{n}» حذف شود؟",
+    ctl_iface: "اینترفیس", ctl_proto: "پروتکل", ctl_duration: "مدت (ثانیه)", ctl_community: "SNMP community", ctl_version: "نسخه",
+    ctl_profile: "پروفایل", ctl_mode: "حالت", ctl_vendor: "برند دستگاه", ctl_port: "پورت", ctl_algo: "الگوریتم", ctl_action: "عملیات",
+    ctl_security: "نوع امنیت", ctl_host_pick: "میزبان ذخیره‌شده", ctl_os: "سیستم‌عامل", ctl_run: "نحوه‌ی اجرا", ctl_key_type: "نوع کلید",
+    ctl_key: "کلید SSH", ctl_script: "اسکریپت", ctl_serial_port: "پورت سریال", ctl_preset: "پیش‌تنظیم", ctl_direction: "جهت تست",
+    ctl_streams: "تعداد جریان", ctl_max_size: "سقف حجم", ctl_max_time: "سقف زمان", ctl_severity: "سطح", ctl_source: "دستگاه",
     nav_lancheck: "بررسی LAN", nav_pcap: "ضبط پکت", nav_configs: "بکاپ کانفیگ",
     lc_lede: "سرورهای DHCP روی شبکه را پیدا کنید (DHCP غیرمجاز)، روی پورت trunk تست کنید کدام VLANها واقعاً IP می‌دهند، و IPهای تکراری را پیدا کنید. فقط DISCOVER فرستاده می‌شود؛ هیچ IPای گرفته نمی‌شود.",
     lc_dhcp_title: "سرورهای DHCP و تست VLAN", lc_vlans_ph: "VLANها (اختیاری): 10,20,30-40", lc_untagged: "بدون تگ هم تست شود", lc_dhcp_btn: "جستجوی DHCP",
@@ -3017,6 +3023,12 @@ const translations = {
     nav_traceroute: "Traceroute", nav_neighbors: "Neighbors", nav_netmap: "Network map", nav_wifi: "WiFi",
     nav_speedtest: "Speed Test", nav_wol: "Wake-on-LAN",
     nav_arp: "ARP Table", nav_bandwidth: "Bandwidth",
+    confirm_del_file: "Delete \"{n}\"?",
+    ctl_iface: "Interface", ctl_proto: "Protocol", ctl_duration: "Duration (seconds)", ctl_community: "SNMP community", ctl_version: "Version",
+    ctl_profile: "Profile", ctl_mode: "Mode", ctl_vendor: "Device vendor", ctl_port: "Port", ctl_algo: "Algorithm", ctl_action: "Action",
+    ctl_security: "Security type", ctl_host_pick: "Saved host", ctl_os: "Operating system", ctl_run: "Run as", ctl_key_type: "Key type",
+    ctl_key: "SSH key", ctl_script: "Script", ctl_serial_port: "Serial port", ctl_preset: "Preset", ctl_direction: "Test direction",
+    ctl_streams: "Parallel streams", ctl_max_size: "Size limit", ctl_max_time: "Time limit", ctl_severity: "Severity", ctl_source: "Device",
     nav_lancheck: "LAN check", nav_pcap: "Packet capture", nav_configs: "Config backup",
     lc_lede: "Find DHCP servers on the wire (rogue DHCP), test which VLANs on a trunk port really hand out addresses, and find duplicate IPs. Only DISCOVER is sent; no lease is taken.",
     lc_dhcp_title: "DHCP servers & VLAN test", lc_vlans_ph: "VLANs (optional): 10,20,30-40", lc_untagged: "Also test untagged", lc_dhcp_btn: "Find DHCP servers",
@@ -4964,6 +4976,7 @@ async function shareUpload(fileList) {
   }
 }
 async function shareDelete(name) {
+  if (!confirm(t("confirm_del_file").replace("{n}", name))) return;
   const res = await fetch("/api/share/delete", {
     method: "POST", headers: {"Content-Type": "application/json"},
     body: JSON.stringify({name})
@@ -5370,7 +5383,7 @@ function paintTftp(data) {
         <a class="action secondary" href="/api/tftp/download?name=${encodeURIComponent(f.name)}">${esc(t("tftp_download"))}</a>
         <button type="button" class="action secondary tftp-del" data-name="${esc(f.name)}">${esc(t("share_remove"))}</button>
       </div>`).join("");
-    filesEl.querySelectorAll(".tftp-del").forEach(btn => { btn.onclick = () => tftpPost("/api/tftp/delete", {name: btn.dataset.name}); });
+    filesEl.querySelectorAll(".tftp-del").forEach(btn => { btn.onclick = () => { if (confirm(t("confirm_del_file").replace("{n}", btn.dataset.name))) tftpPost("/api/tftp/delete", {name: btn.dataset.name}); }; });
   }
 
   const jobs = data.jobs || [];
@@ -7702,7 +7715,7 @@ function addDumpCard(preset) {
         <option value="mikrotik">MikroTik</option>
       </select>
       <input type="text" class="dump-label" data-i18n-placeholder="netmap_label_ph" placeholder="${esc(t("netmap_label_ph"))}" />
-      <button type="button" class="dump-del">×</button>
+      <button type="button" class="dump-del" aria-label="${esc(t("sr_delete"))}">×</button>
     </div>
     <div class="dump-grid">
       <div>
@@ -8719,7 +8732,7 @@ function pmRender() {
         <span class="pm-num" data-k="last"></span><span class="pm-num" data-k="avg"></span><span class="pm-num pm-hide-m" data-k="max"></span>
         <span class="pm-num" data-k="loss"></span><span class="pm-num pm-hide-m" data-k="out"></span>
         <span class="pm-spark"><canvas></canvas></span>
-        <button type="button" class="pm-x" title="remove" data-rm="${esc(h)}">×</button>
+        <button type="button" class="pm-x" title="${esc(t("sr_delete"))}" aria-label="${esc(t("sr_delete") + " " + h)}" data-rm="${esc(h)}">×</button>
         <div class="pm-err" hidden></div>
       </div>`).join("");
     grid.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => pmRemove(b.dataset.rm));
@@ -8828,6 +8841,7 @@ function srPaintLogs(logs) {
     <a class="action secondary" style="text-decoration:none;padding:6px 12px;font-size:12px" href="/api/serial/log?name=${encodeURIComponent(l.name)}">${esc(t("sc_dl"))}</a>
     <button type="button" class="action secondary" style="padding:6px 12px;font-size:12px" data-del="${esc(l.name)}">${esc(t("sr_delete"))}</button></div>`).join("");
   box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm(t("confirm_del_file").replace("{n}", b.dataset.del))) return;
     const r = await fetch("/api/serial/log/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: b.dataset.del }) });
     const d = await r.json(); if (d.logs) srPaintLogs(d.logs);
   });
@@ -9095,7 +9109,10 @@ function pcPaint(st) {
     <a class="mini-btn" href="/api/pcap/download?name=${encodeURIComponent(f.name)}">${esc(t("sc_dl"))}</a>
     <button type="button" class="mini-btn danger" data-del="${esc(f.name)}">${esc(t("sr_delete"))}</button></div>`).join("")
     : `<div class="empty">${esc(t("pc_no_files"))}</div>`;
-  files.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => pcPaint(await apiJSON("/api/pcap/delete", { name: b.dataset.del })));
+  files.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm(t("confirm_del_file").replace("{n}", b.dataset.del))) return;
+    pcPaint(await apiJSON("/api/pcap/delete", { name: b.dataset.del }));
+  });
   clearTimeout(pcTimer);
   if (up) pcTimer = setTimeout(loadPcap, 1000);
   if (typeof paintLiveDots === "function" && svcState) { svcState.pcap = up; paintLiveDots(svcState); }
@@ -9329,6 +9346,46 @@ document.getElementById("cfSaveBtn").onclick = async () => {
   document.getElementById("cfAdd").open = false;
   loadConfigs();
 };
+
+// ---------------------------------------------------------------- accessible names for form controls
+// Controls without a visible <label> get aria-label from an explicit key below, else from their
+// (translated) placeholder/title. Re-run on language change; new controls are labelled as they appear.
+const CONTROL_LABELS = {
+  ifaceSelect: "ctl_iface", cdpIfaceSelect: "ctl_iface", wifiIfaceSelect: "ctl_iface", bwIfaceSelect: "ctl_iface",
+  lcIface: "ctl_iface", pcIface: "ctl_iface", neighborProto: "ctl_proto", auditProto: "ctl_proto", qcProto: "ctl_proto",
+  termProto: "ctl_proto", ipProto: "ctl_proto", cfProto: "ctl_proto", cdpDuration: "ctl_duration", ipDur: "ctl_duration",
+  snmpCommunity: "ctl_community", snmpVersion: "ctl_version", snmpProfile: "ctl_profile", snmpMode: "ctl_mode",
+  auditVendor: "ctl_vendor", cfVendor: "ctl_vendor", tlsPort: "ctl_port", scriptPort: "ctl_port", ipSrvPort: "ctl_port",
+  ipPort: "ctl_port", slPort: "ctl_port", hashMode: "ctl_algo", czAlgo: "ctl_algo", tftpAction: "ctl_action",
+  qrWifiSec: "ctl_security", scriptHostPick: "ctl_host_pick", edOs: "ctl_os", edRun: "ctl_run", skType: "ctl_key_type",
+  skUseKey: "ctl_key", cfKey: "ctl_key", termScriptPick: "ctl_script", rdpScriptPick: "ctl_script", srPort: "ctl_serial_port",
+  srPreset: "ctl_preset", ipMode: "ctl_direction", ipPar: "ctl_streams", pcMaxMb: "ctl_max_size", pcMaxSecs: "ctl_max_time",
+  slSev: "ctl_severity", slSrc: "ctl_source",
+  // dynamic controls without an id are matched by class
+  "dump-vendor": "ctl_vendor", "dump-cfg": "netmap_cfg", "dump-nb": "netmap_nb",
+};
+const CONTROL_SEL = 'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea';
+function labelControl(el) {
+  if (el.labels && el.labels.length) return;
+  if (el.hasAttribute("aria-label") && !("autoLabel" in el.dataset)) return;
+  const key = CONTROL_LABELS[el.id] || [...el.classList].map(c => CONTROL_LABELS[c]).find(Boolean);
+  const txt = (key ? t(key) : (el.placeholder || el.title || "")).trim();
+  if (!txt) return;
+  el.setAttribute("aria-label", txt);
+  el.dataset.autoLabel = "";
+}
+function labelControls(root) {
+  (root || document).querySelectorAll(CONTROL_SEL).forEach(labelControl);
+}
+labelControls();
+document.addEventListener("ntb-lang", () => labelControls());
+new MutationObserver(muts => {
+  for (const m of muts) for (const n of m.addedNodes) {
+    if (n.nodeType !== 1) continue;
+    if (n.matches && n.matches(CONTROL_SEL)) labelControl(n);
+    else if (n.querySelector && n.querySelector("input, select, textarea")) labelControls(n);
+  }
+}).observe(document.body, { childList: true, subtree: true });
 
 // initial route: #tab in the URL (bookmarkable / survives refresh), otherwise the overview
 switchTab(location.hash.slice(1) || "home");
