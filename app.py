@@ -525,7 +525,7 @@ def index():
 
 @app.route("/favicon.ico")
 def favicon():
-    return send_from_directory("static", "favicon.svg", mimetype="image/svg+xml")
+    return send_from_directory("static/brand", "favicon.png", mimetype="image/png")
 
 
 @app.route("/api/interfaces")

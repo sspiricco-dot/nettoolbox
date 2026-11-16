@@ -6,7 +6,7 @@ One Docker container. One web UI. Run it on your laptop, workstation, server, ho
 
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sajadprp/nettoolbox?logo=docker)](https://hub.docker.com/r/sajadprp/nettoolbox)
-[![Version](https://img.shields.io/badge/version-2.13.0-d4894a)](https://hub.docker.com/r/sajadprp/nettoolbox)
+[![Version](https://img.shields.io/badge/version-2.13.0-1677ff)](https://hub.docker.com/r/sajadprp/nettoolbox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20mac%20%7C%20windows-lightgrey)](https://www.docker.com/)
 [![No CDN](https://img.shields.io/badge/dependencies-self--contained-success)](https://hub.docker.com/r/sajadprp/nettoolbox)

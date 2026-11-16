@@ -5,10 +5,11 @@
 <title>NetToolbox</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1220">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/brand/favicon.png" type="image/png">
 <link rel="icon" href="/favicon.ico">
 <style>
   /* Vazirmatn ships with the image (static/fonts, OFL) — phones and other LAN clients rarely have it. */
+  @font-face { font-family: "Aldrich"; src: url("fonts/Aldrich-Regular.ttf") format("truetype"); font-display: swap; }
   @font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn-Regular.ttf") format("truetype"); font-weight: 100 500; font-display: swap; }
   @font-face { font-family: "Vazirmatn"; src: url("fonts/Vazirmatn-Bold.ttf") format("truetype"); font-weight: 600 900; font-display: swap; }
   /* Persian letters inside monospace text: route only the Arabic-script ranges to Vazirmatn so they join. */
@@ -17,22 +18,24 @@
   @font-face { font-family: "NTB Fa"; src: url("fonts/Vazirmatn-Bold.ttf") format("truetype"); font-weight: 600 900;
     unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; font-display: swap; }
   :root {
+    --display: "Aldrich", "Vazirmatn", sans-serif;
+    --radius: 18px;
     --mono: "NTB Fa", ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
-    --bg: #0b1220; --surface: rgba(20, 30, 46, 0.72); --surface-solid: #141e2e; --surface-2: #1b283c;
-    --line: rgba(148, 174, 204, 0.16); --ink: #e8eef6; --ink-dim: #8a9bb0;
-    --accent: #d4894a; --accent2: #5ec8e0;
-    --up: #3ecf8e; --down: #e85d5d; --closed: #8a9bb0; --warn: #e6b84c;
-    --grad: linear-gradient(135deg, #d4894a 0%, #e0a15e 52%, #5ec8e0 140%);
-    --glow: rgba(212, 137, 74, .28); --glow-cyan: rgba(94, 200, 224, .22);
-    --on-accent: #1a1208;
+    --bg: #000000; --surface: rgba(23, 24, 29, 0.78); --surface-solid: #16171c; --surface-2: #1f2127;
+    --line: rgba(255, 255, 255, 0.09); --ink: #e9ebec; --ink-dim: #8a9099;
+    --accent: #1677ff; --accent2: #00d6c9;
+    --up: #10b981; --down: #ef4444; --closed: #6b7079; --warn: #f5a524;
+    --grad: linear-gradient(135deg, #1677ff 0%, #00d6c9 100%);
+    --glow: rgba(22, 119, 255, .16); --glow-cyan: rgba(0, 214, 201, .08);
+    --on-accent: #ffffff;
     color-scheme: dark;
   }
   :root[data-theme="light"] {
-    --bg: #e9eef5; --surface: rgba(255,255,255,0.78); --surface-solid: #ffffff; --surface-2: #dfe7f1;
-    --line: rgba(21, 32, 51, 0.12); --ink: #152033; --ink-dim: #5b6b80;
-    --accent: #c56a2d; --accent2: #1f8aa0;
+    --bg: #f4f6fa; --surface: rgba(255,255,255,0.78); --surface-solid: #ffffff; --surface-2: #eceff4;
+    --line: rgba(10, 13, 20, 0.10); --ink: #0b0d12; --ink-dim: #5b6270;
+    --accent: #1366e8; --accent2: #00a89e;
     --up: #1a8a58; --down: #c63d3d; --closed: #5b6b80; --warn: #b8860b;
-    --glow: rgba(197, 106, 45, .18); --glow-cyan: rgba(31, 138, 160, .14);
+    --glow: rgba(22, 119, 255, .10); --glow-cyan: rgba(0, 168, 158, .06);
     --on-accent: #ffffff;
     color-scheme: light;
   }
@@ -56,12 +59,12 @@
     background-image:
       linear-gradient(var(--line) 1px, transparent 1px),
       linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 48px 48px; opacity: .45;
+    background-size: 48px 48px; opacity: .12;
     mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, black 0%, transparent 78%);
     -webkit-mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, black 0%, transparent 78%);
   }
   /* Letter-spacing tears Persian letters apart (and uppercase is meaningless there). */
-  :root[dir="rtl"] body *:not(svg):not(svg *) { letter-spacing: normal !important; }
+  :root[dir="rtl"] body *:not(svg):not(svg *):not(.kicker):not(.brand-by) { letter-spacing: normal !important; }
   :root[dir="rtl"] .nav-group-title, :root[dir="rtl"] .bezel-label, :root[dir="rtl"] .panel-head .kicker,
   :root[dir="rtl"] .stat .l, :root[dir="rtl"] th, :root[dir="rtl"] .info-grid .k, :root[dir="rtl"] .brand p {
     font-family: inherit;
@@ -95,16 +98,11 @@
   }
   .sidebar-brand { padding: 18px 20px; border-bottom: 1px solid var(--line); }
   .brand { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
-  .brand .mark {
-    width: 34px; height: 34px; border-radius: 9px; background: var(--grad);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), 0 8px 20px var(--glow);
-  }
-  .brand .mark svg { width: 18px; height: 18px; stroke: var(--on-accent); }
-  .brand h1 { margin: 0; font-size: 16px; letter-spacing: .1px; font-weight: 700; }
-  .brand p {
-    margin: 2px 0 0; color: var(--ink-dim); font-size: 10.5px; letter-spacing: .03em;
-    font-family: var(--mono);
+  .brand .mark { width: 34px; height: auto; flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(0, 214, 201, .35)); }
+  .brand h1 { margin: 0; font-size: 16px; font-weight: 700; font-family: var(--display); letter-spacing: .02em; }
+  .brand .brand-by {
+    margin: 2px 0 0; color: var(--ink-dim); font-size: 10px; font-family: var(--display);
+    letter-spacing: .4em !important; direction: ltr;
   }
 
   .toggles { display: flex; align-items: center; gap: 8px; }
@@ -133,7 +131,7 @@
     background: none; border: none; cursor: pointer; text-align: inherit;
     color: var(--ink-dim); font-size: 10px; font-weight: 700; text-transform: uppercase;
     letter-spacing: .12em; padding: 14px 10px 6px; border-radius: 6px;
-    font-family: var(--mono);
+    font-family: var(--display);
   }
   .nav-group-title:hover { color: var(--ink); }
   .nav-group-title .chev { width: 13px; height: 13px; stroke: currentColor; transition: transform .18s ease; opacity: .7; }
@@ -212,11 +210,11 @@
   @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   .panel-head { margin-bottom: 18px; }
   .panel-head .kicker {
-    font-family: var(--mono);
+    font-family: var(--display);
     font-size: 10.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
     color: var(--accent2); margin-bottom: 6px;
   }
-  .panel-head h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+  .panel-head h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.02em; text-wrap: balance; }
   .panel-head .lede { margin: 8px 0 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.65; max-width: 62ch; }
 
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
@@ -240,7 +238,7 @@
 
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 12px; }
   .card {
-    background: var(--surface-solid); border: 1px solid var(--line); border-radius: 12px;
+    background: var(--surface-solid); border: 1px solid var(--line); border-radius: 14px;
     padding: 16px; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
   }
   .card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 12px 28px rgba(0,0,0,.18); }
@@ -321,7 +319,7 @@
   .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; margin-inline-end: 6px; }
   .pill.up { color: var(--up); border: 1px solid var(--up); }
   .pill.down { color: var(--down); border: 1px solid var(--down); }
-  .pill.warn { color: #d4894a; border: 1px solid #d4894a; }
+  .pill.warn { color: var(--warn); border: 1px solid var(--warn); }
   .whois-raw { margin-top: 12px; }
   .audit-score { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
   .finding {
@@ -458,7 +456,7 @@
   }
   #termStage:hover .term-tools { opacity: 1; }
   .term-tools button {
-    background: rgba(20, 30, 46, .85); border: 1px solid var(--line); color: #e8eef6;
+    background: rgba(16, 17, 21, .85); border: 1px solid var(--line); color: #e9ebec;
     padding: 5px 10px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer;
   }
   .term-tools button:hover { border-color: var(--accent); }
@@ -478,18 +476,12 @@
 
   /* Instrument bezel — the one signature device: every tool reads like a labeled gauge. */
   .bezel {
-    position: relative; border: 1px solid var(--line); border-radius: 14px;
-    padding: 20px; background: var(--surface); margin-top: 2px;
+    position: relative; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px; background: var(--surface-solid); margin-top: 2px;
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
-  .bezel::before, .bezel::after {
-    content: ""; position: absolute; width: 14px; height: 14px;
-    border-color: var(--accent); border-style: solid; border-width: 0; opacity: .7;
-  }
-  .bezel::before { top: -1px; inset-inline-start: -1px; border-top-width: 2px; border-inline-start-width: 2px; }
-  .bezel::after { bottom: -1px; inset-inline-end: -1px; border-bottom-width: 2px; border-inline-end-width: 2px; }
   .bezel-label {
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    font-family: var(--display); font-size: 10.5px; font-weight: 700;
     text-transform: uppercase; letter-spacing: .14em; color: var(--ink-dim); margin-bottom: 12px;
   }
 
@@ -915,7 +907,7 @@
   .diff div { padding: 0 12px; white-space: pre; color: #b9c6d6; }
   .diff .add { background: rgba(62, 207, 142, .13); color: #7ee2b0; }
   .diff .del { background: rgba(232, 93, 93, .13); color: #f19a9a; }
-  .diff .hunk { color: #5ec8e0; background: rgba(94, 200, 224, .07); }
+  .diff .hunk { color: #00d6c9; background: rgba(0, 214, 201, .07); }
   .diff .meta { color: #8a9bb0; }
   @media (max-width: 760px) {
     .ip-grid { grid-template-columns: 1fr; }
@@ -926,7 +918,7 @@
 
   .home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .home-card {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px;
+    background: var(--surface-solid); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px;
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); min-width: 0;
   }
   .home-card.wide { grid-column: 1 / -1; }
@@ -975,6 +967,7 @@
       background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--line);
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     }
+    .mb-mark { width: 26px; height: auto; filter: drop-shadow(0 0 6px rgba(0, 214, 201, .35)); }
     .mb-title { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
     .mb-brand { font-size: 11px; color: var(--ink-dim); font-weight: 600; }
     #mbTab { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1021,7 +1014,8 @@
     <button type="button" id="navMenuBtn" class="icon-btn" aria-label="Menu" aria-controls="sideNav" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
     </button>
-    <div class="mb-title"><span class="mb-brand">NetToolbox</span><span id="mbTab"></span></div>
+    <img class="mb-mark" src="brand/mark.png" width="26" height="27" alt="Santix">
+    <div class="mb-title"><span class="mb-brand" translate="no">NetToolbox</span><span id="mbTab"></span></div>
     <button type="button" id="mbSearchBtn" class="icon-btn" aria-label="Search">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     </button>
@@ -1030,10 +1024,10 @@
   <aside class="sidebar" id="sideNav">
     <div class="sidebar-brand">
       <div class="brand">
-        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div>
+        <img class="mark" src="brand/mark.png" width="34" height="35" alt="Santix">
         <div>
-          <h1>NetToolbox</h1>
-          <p data-i18n="subtitle">ابزار شبکه و امنیت پرتابل</p>
+          <h1 translate="no">NetToolbox</h1>
+          <p class="brand-by" translate="no">SANTIX&nbsp;LAB</p>
         </div>
       </div>
       <div class="toggles">
@@ -1259,6 +1253,10 @@
           <p class="lede" data-i18n="home_lede">وضعیت همین جعبه در یک نگاه: لینک، IP عمومی و سرویس‌هایی که الان روی شبکه باز هستند.</p>
         </header>
         <div class="home-grid">
+          <div class="home-card wide" id="homeServices">
+            <div class="hc-label"><span data-i18n="home_services">سرویس‌های باز روی شبکه</span><span class="hc-count" id="homeSvcCount"></span></div>
+            <div class="hc-body" id="homeSvcList"><div class="hc-skel"></div></div>
+          </div>
           <div class="home-card" id="homeLink">
             <div class="hc-label" data-i18n="home_link">لینک</div>
             <div class="hc-body"><div class="hc-skel"></div><div class="hc-skel short"></div></div>
@@ -1266,10 +1264,6 @@
           <div class="home-card" id="homePublic">
             <div class="hc-label" data-i18n="home_public">IP عمومی</div>
             <div class="hc-body"><div class="hc-skel"></div><div class="hc-skel short"></div></div>
-          </div>
-          <div class="home-card wide" id="homeServices">
-            <div class="hc-label"><span data-i18n="home_services">سرویس‌های باز روی شبکه</span><span class="hc-count" id="homeSvcCount"></span></div>
-            <div class="hc-body" id="homeSvcList"><div class="hc-skel"></div></div>
           </div>
         </div>
         <div class="home-section-title" data-i18n="home_quick">دسترسی سریع</div>
@@ -7997,8 +7991,8 @@ function netmapPalette(forPrint) {
   return {
     ink: forPrint ? "#152033" : cssVar("--ink"),
     dim: forPrint ? "#5b6b80" : cssVar("--ink-dim"),
-    copper: forPrint ? "#c56a2d" : cssVar("--accent"),
-    cyan: forPrint ? "#1f8aa0" : cssVar("--accent2"),
+    copper: forPrint ? "#1677ff" : cssVar("--accent"),
+    cyan: forPrint ? "#00a89e" : cssVar("--accent2"),
     up: forPrint ? "#1a8a58" : cssVar("--up"),
     bg: forPrint ? "#ffffff" : cssVar("--surface-solid"),
     bg2: forPrint ? "#f3f6fa" : cssVar("--surface-2"),
@@ -8454,11 +8448,11 @@ function buildNetmapCustomerHtml(topo) {
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${esc(customer || "Network")} · ${esc(site || "Map")}</title>
 <style>
-:root{--ink:#1b2430;--dim:#5c6b7a;--paper:#fffdf8;--bg:#ebe4d6;--line:#ddcfc0;--copper:#c56a2d;--teal:#1f7a86;--navy:#1e2a3a}
+:root{--ink:#1b2430;--dim:#5c6b7a;--paper:#ffffff;--bg:#eef1f6;--line:#dde3ec;--copper:#1677ff;--teal:#00a89e;--navy:#05070d}
 *{box-sizing:border-box}
 body{margin:0;font-family:Vazirmatn,"Segoe UI",Tahoma,sans-serif;color:var(--ink);background:radial-gradient(900px 400px at 10% -10%,rgba(197,106,45,.18),transparent 50%),radial-gradient(700px 380px at 100% 0%,rgba(31,122,134,.14),transparent 46%),var(--bg)}
 .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
-header.hero{background:linear-gradient(135deg,#1e2a3a,#2a3d52 55%,#c56a2d);color:#f7efe6;border-radius:22px;padding:28px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 18px 40px rgba(30,42,58,.22)}
+header.hero{background:linear-gradient(135deg,#000,#0b1630 55%,#1677ff);color:#f7efe6;border-radius:22px;padding:28px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 18px 40px rgba(30,42,58,.22)}
 header.hero .k{letter-spacing:.18em;font-size:11px;opacity:.75;font-family:ui-monospace,monospace}
 header.hero h1{margin:8px 0 6px;font-size:28px}
 .tools button{border:0;background:rgba(255,255,255,.14);color:#fff;padding:8px 12px;border-radius:9px;cursor:pointer;font:inherit}
@@ -8473,14 +8467,14 @@ header.hero h1{margin:8px 0 6px;font-size:28px}
 .legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-inline-end:6px;vertical-align:middle}
 .stage{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:auto;direction:ltr;min-height:420px;touch-action:none}
 .stage svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.box{position:absolute;width:176px;background:#fff;border:1.6px solid #1f7a86;border-radius:12px;padding:10px 12px 12px;cursor:grab;box-shadow:0 8px 18px rgba(30,42,58,.08);user-select:none}
+.box{position:absolute;width:176px;background:#fff;border:1.6px solid #00a89e;border-radius:12px;padding:10px 12px 12px;cursor:grab;box-shadow:0 8px 18px rgba(30,42,58,.08);user-select:none}
 .box.is-drag{cursor:grabbing;box-shadow:0 14px 28px rgba(30,42,58,.18);z-index:4}
-.box.router{border-color:#c56a2d}
+.box.router{border-color:#1677ff}
 .box h3{margin:0;font-size:13px;font-family:ui-monospace,Menlo,monospace}
 .box .who{font-size:11px;color:var(--dim);margin-top:3px}
-.box .ip{font-size:11px;color:#1f7a86;margin-top:4px;font-family:ui-monospace,monospace}
+.box .ip{font-size:11px;color:#00a89e;margin-top:4px;font-family:ui-monospace,monospace}
 .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-.chip{font-size:10px;font-family:ui-monospace,monospace;background:#f4efe6;border:1px solid var(--line);border-radius:999px;padding:2px 7px;color:#c56a2d}
+.chip{font-size:10px;font-family:ui-monospace,monospace;background:#f2f5fa;border:1px solid var(--line);border-radius:999px;padding:2px 7px;color:#1677ff}
 h2{font-size:18px;margin:28px 0 12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
@@ -8526,8 +8520,8 @@ html[data-lang="en"]{direction:ltr}
 </div>
 <h2 class="fa">نقشه زنده</h2><h2 class="en">Live map</h2>
 <div class="legend">
-  <span><i style="background:#c56a2d"></i><span class="fa">کابل مشترک</span><span class="en">Trunk</span></span>
-  <span><i style="background:#1f8aa0"></i><span class="fa">پورت کاربر</span><span class="en">Access</span></span>
+  <span><i style="background:#1677ff"></i><span class="fa">کابل مشترک</span><span class="en">Trunk</span></span>
+  <span><i style="background:#00a89e"></i><span class="fa">پورت کاربر</span><span class="en">Access</span></span>
   <span><i style="background:#1a8a58"></i><span class="fa">مسیر لایه ۳</span><span class="en">Routed</span></span>
 </div>
 <div class="stage" id="stage"><svg id="wires" xmlns="http://www.w3.org/2000/svg"></svg></div>
@@ -8552,10 +8546,10 @@ html[data-lang="en"]{direction:ltr}
   var byId = {};
   D.devices.forEach(function(d){ byId[d.id] = d; });
   function color(lk){
-    if (lk.bundle) return "#c56a2d";
-    if (lk.kind === "access") return "#1f8aa0";
+    if (lk.bundle) return "#1677ff";
+    if (lk.kind === "access") return "#00a89e";
     if (lk.kind === "routed") return "#1a8a58";
-    return "#c56a2d";
+    return "#1677ff";
   }
   function sizeStage(){
     var maxX = 480, maxY = 380;
