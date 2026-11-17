@@ -42,6 +42,7 @@
     color-scheme: light;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { height: 100%; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
@@ -924,6 +925,17 @@
     .cf-ver { grid-template-columns: 1fr auto; }
   }
 
+  .seg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-solid); margin-bottom: 14px; }
+  .seg button { background: none; border: none; color: var(--ink-dim); font: inherit; font-size: 13.5px; padding: 7px 16px; border-radius: 999px; cursor: pointer; }
+  .seg button.active { background: var(--grad); color: var(--on-accent); font-weight: 600; }
+  .hx-item { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--surface-solid); }
+  .hx-item + .hx-item { margin-top: 10px; }
+  .hx-item .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .hx-item .nm { font-weight: 700; font-family: var(--mono); direction: ltr; unicode-bidi: isolate; }
+  .hx-item .top .mini-btn { margin-inline-start: auto; }
+  .hx-item .note { color: var(--ink-dim); font-size: 12.5px; margin-top: 6px; }
+  .hx-item pre { margin: 8px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font-family: var(--mono); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; direction: ltr; text-align: left; max-height: 360px; overflow: auto; }
+
   .home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .home-card {
     background: var(--surface-solid); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px;
@@ -1780,31 +1792,36 @@
 
       <section id="hashtools" class="panel">
         <header class="panel-head">
-          <div class="kicker">HASH · BASE64 · JWT</div>
+          <div class="kicker">AUTO-DETECT · DECODE · ENCODE</div>
           <h2 data-i18n="nav_hashtools">Hash/Base64/JWT</h2>
+          <p class="lede" data-i18n="hx_lede">هر رشته‌ای بچسبانید: نوعش را خودش تشخیص می‌دهد (JWT، Base64، Hex، URL، رمز Cisco type 7، هش‌ها و…) و دیکودش می‌کند. یا متن را به Base64، Hex، URL یا هش تبدیل کنید.</p>
         </header>
+        <div class="seg" role="tablist">
+          <button type="button" role="tab" data-hx="detect" class="active" aria-selected="true" data-i18n="hx_detect">تشخیص و دیکود</button>
+          <button type="button" role="tab" data-hx="encode" aria-selected="false" data-i18n="hx_encode">انکود و هش</button>
+        </div>
         <div class="row">
+          <textarea id="hashInput" class="ltr" dir="ltr" spellcheck="false" data-i18n-placeholder="hash_input_placeholder" placeholder="متن یا توکن رو اینجا وارد کنید…"></textarea>
+        </div>
+        <div class="row" id="hxEncodeRow" hidden>
           <select id="hashMode">
+            <option value="b64">Base64</option>
+            <option value="b64url">Base64url</option>
+            <option value="hex">Hex</option>
+            <option value="url">URL encode</option>
+            <option value="html">HTML entities</option>
             <option value="md5">MD5</option>
             <option value="sha1">SHA-1</option>
-            <option value="sha256">SHA-256</option>
+            <option value="sha256" selected>SHA-256</option>
             <option value="sha384">SHA-384</option>
             <option value="sha512">SHA-512</option>
-            <option value="b64enc">Base64 Encode</option>
-            <option value="b64dec">Base64 Decode</option>
-            <option value="jwt">JWT Decode</option>
+            <option value="cisco7">Cisco type 7</option>
           </select>
-        </div>
-        <div class="row">
-          <textarea id="hashInput" data-i18n-placeholder="hash_input_placeholder" placeholder="متن یا توکن رو اینجا وارد کنید…"></textarea>
-        </div>
-        <div class="row">
-          <button class="action" id="hashRunBtn" data-i18n="hash_run_btn">اجرا</button>
         </div>
         <div class="hint" data-i18n="hash_hint">همه‌چیز توی همین مرورگر انجام می‌شه، هیچی به سرور فرستاده نمی‌شه.</div>
         <div class="bezel">
-          <div class="bezel-label" data-i18n="nav_hashtools">Hash/Base64/JWT</div>
-          <div id="hashResult" class="empty" data-i18n="empty_generic">هنوز اجرا نشده.</div>
+          <div class="bezel-label" data-i18n="hx_result">نتیجه</div>
+          <div id="hashResult" class="empty" data-i18n="hx_empty">چیزی وارد کنید.</div>
         </div>
       </section>
 
@@ -2883,7 +2900,13 @@ const translations = {
     headers_btn: "بررسی هدرها",
     headers_hint: "هدرهای امنیتی مهم (HSTS، CSP، X-Frame-Options و…) رو چک می‌کنه و کل هدرهای HTTP رو نشون می‌ده.",
     hash_input_placeholder: "متن یا توکن رو اینجا وارد کنید…",
-    hash_run_btn: "اجرا",
+    hash_run_btn: "اجرا", hx_lede: "هر رشته‌ای بچسبانید: نوعش را خودش تشخیص می‌دهد (JWT، Base64، Hex، URL، رمز Cisco type 7، هش‌ها و…) و دیکودش می‌کند. یا متن را به Base64، Hex، URL یا هش تبدیل کنید.",
+    hx_detect: "تشخیص و دیکود", hx_encode: "انکود و هش", hx_result: "نتیجه", hx_empty: "چیزی وارد کنید.",
+    hx_none: "فرمت شناخته‌شده‌ای پیدا نشد؛ احتمالاً متن معمولی است. برای تبدیل، «انکود و هش» را بزنید.",
+    hx_oneway: "هش یک‌طرفه است و دیکود نمی‌شود؛ فقط نوعش از روی ساختار/طول حدس زده شد.",
+    hx_jwt_note: "امضا بررسی نشده؛ محتوای توکن را بدون کلید نمی‌شود معتبر دانست.", hx_expired: "منقضی شده",
+    hx_c7_note: "رمز type 7 سیسکو فقط پنهان‌سازی است و برگشت‌پذیر؛ روی دستگاه به‌جایش از secret (type 8/9) استفاده کنید.",
+    hx_conf_high: "مطمئن", hx_conf_medium: "محتمل", hx_conf_low: "ضعیف",
     hash_hint: "همه‌چیز توی همین مرورگر انجام می‌شه، هیچی به سرور فرستاده نمی‌شه.",
     qc_name_placeholder: "اسم (مثلاً سوییچ اصلی)…", qc_host_placeholder: "IP یا host…",
     qc_add_btn: "افزودن",
@@ -3455,7 +3478,13 @@ const translations = {
     headers_btn: "Check headers",
     headers_hint: "Checks key security headers (HSTS, CSP, X-Frame-Options…) and shows all HTTP headers.",
     hash_input_placeholder: "Enter text or a token here…",
-    hash_run_btn: "Run",
+    hash_run_btn: "Run", hx_lede: "Paste any string: it detects what it is (JWT, Base64, hex, URL, Cisco type 7, hashes…) and decodes it. Or encode text as Base64, hex, URL or a hash.",
+    hx_detect: "Detect & decode", hx_encode: "Encode & hash", hx_result: "Result", hx_empty: "Type or paste something.",
+    hx_none: "No known format found; probably plain text. Use \"Encode & hash\" to convert it.",
+    hx_oneway: "A hash is one-way and cannot be decoded; only its type was guessed from its shape/length.",
+    hx_jwt_note: "Signature not verified; the token contents cannot be trusted without the key.", hx_expired: "expired",
+    hx_c7_note: "Cisco type 7 is only obfuscation and reversible; use a secret (type 8/9) on the device instead.",
+    hx_conf_high: "certain", hx_conf_medium: "likely", hx_conf_low: "weak",
     hash_hint: "Everything runs in this browser, nothing is sent to the server.",
     qc_name_placeholder: "Name (e.g. Core switch)…", qc_host_placeholder: "IP or host…",
     qc_add_btn: "Add",
@@ -3822,7 +3851,7 @@ const NAV_KEYWORDS = {
   speedtest: "speed bandwidth openspeedtest سرعت",
   bandwidth: "bandwidth traffic iftop پهنای",
   whois: "whois domain owner",
-  hashtools: "hash base64 jwt md5 sha",
+  hashtools: "hash base64 jwt md5 sha decode encode hex url cisco type 7 password timestamp دیکود انکود رمز",
   tls: "ssl tls certificate cert گواهی fullchain privkey pem pfx p12 p7b crt key bundle",
   geoip: "geo location ip country موقعیت",
   quickconnect: "quick connect bookmark server اتصال",
@@ -6337,26 +6366,133 @@ function decodeJWT(token) {
   const payload = JSON.parse(base64UrlDecode(parts[1]));
   return JSON.stringify({header, payload}, null, 2);
 }
-document.getElementById("hashRunBtn").onclick = async () => {
-  const mode = document.getElementById("hashMode").value;
-  const input = document.getElementById("hashInput").value;
-  const out = document.getElementById("hashResult");
+// ---- detect & decode / encode (all in the browser)
+const HASH_LEN = { 32: "MD5 / NTLM", 40: "SHA-1", 56: "SHA-224", 64: "SHA-256", 96: "SHA-384", 128: "SHA-512" };
+const CISCO7_KEY = "dsfd;kfoA,.iyewrkldJKDHSUBsgvca69834ncxv9873254k;fg87";
+function cisco7Decode(h) {
+  const seed = parseInt(h.slice(0, 2), 10);
+  let out = "";
+  for (let i = 2; i < h.length; i += 2) out += String.fromCharCode(parseInt(h.slice(i, i + 2), 16) ^ CISCO7_KEY.charCodeAt((seed + (i - 2) / 2) % CISCO7_KEY.length));
+  return out;
+}
+function cisco7Encode(p) {
+  const seed = Math.floor(Math.random() * 16);
+  let out = String(seed).padStart(2, "0");
+  for (let i = 0; i < p.length; i++) out += (p.charCodeAt(i) ^ CISCO7_KEY.charCodeAt((seed + i) % CISCO7_KEY.length)).toString(16).toUpperCase().padStart(2, "0");
+  return out;
+}
+function bytesFromB64(s) {
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4) s += "=";
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
+function bytesFromHex(s) { return Uint8Array.from(s.match(/../g) || [], h => parseInt(h, 16)); }
+function bytesAsText(b) {
+  try {
+    const txt = new TextDecoder("utf-8", { fatal: true }).decode(b);
+    return /[\x00-\x08\x0e-\x1f\x7f]/.test(txt) ? null : txt;
+  } catch (_) { return null; }
+}
+function sniffBytes(b) {
+  const sig = [[[0x1f, 0x8b], "gzip"], [[0x50, 0x4b, 0x03], "zip"], [[0x89, 0x50, 0x4e, 0x47], "PNG"], [[0xff, 0xd8, 0xff], "JPEG"], [[0x25, 0x50, 0x44, 0x46], "PDF"], [[0x30, 0x82], "DER (X.509 / key)"]];
+  const hit = sig.find(([m]) => m.every((v, i) => b[i] === v));
+  return hit ? hit[1] : null;
+}
+function hexdump(b) { return [...b.slice(0, 64)].map(x => x.toString(16).padStart(2, "0")).join(" ") + (b.length > 64 ? " …" : ""); }
+function binaryNote(b) { return `${sniffBytes(b) || "binary"} · ${b.length} bytes\n${hexdump(b)}`; }
+function prettyJson(txt) { try { return JSON.stringify(JSON.parse(txt), null, 2); } catch (_) { return txt; } }
+
+function detectFormats(raw) {
+  const s = raw.trim(), r = [];
+  if (!s) return r;
+  const c7 = s.match(/^(?:.*\b(?:password|secret|key-string|key)\s+7\s+)?([0-9]{2}(?:[0-9A-Fa-f]{2})+)$/);
+  let isC7 = false;
+  if (c7 && parseInt(c7[1].slice(0, 2), 10) <= 15) {
+    const p = cisco7Decode(c7[1]);
+    if ((isC7 = /^[\x20-\x7e]+$/.test(p))) r.push({ name: "Cisco type 7", conf: /\s7\s/.test(s) ? "high" : "medium", out: p, note: t("hx_c7_note") });
+  }
+  if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/.test(s)) {
+    try {
+      const [h64, p64] = s.split(".");
+      const h = JSON.parse(base64UrlDecode(h64));
+      if (h && (h.alg || h.typ)) {
+        const p = JSON.parse(base64UrlDecode(p64));
+        const times = ["exp", "iat", "nbf"].filter(k => typeof p[k] === "number")
+          .map(k => `${k}: ${fmtTime(p[k])}${k === "exp" && p.exp * 1000 < Date.now() ? " — " + t("hx_expired") : ""}`).join("\n");
+        r.push({ name: "JWT", conf: "high", out: JSON.stringify({ header: h, payload: p }, null, 2) + (times ? "\n\n" + times : ""), note: t("hx_jwt_note") });
+      }
+    } catch (_) {}
+  }
+  const crypt = [[/^\$2[abxy]?\$\d\d\$[./A-Za-z0-9]{50,60}$/, "bcrypt"], [/^\$1\$/, "MD5-crypt (Cisco type 5)"], [/^\$5\$/, "SHA-256-crypt"], [/^\$6\$/, "SHA-512-crypt"],
+    [/^\$8\$/, "Cisco type 8 (PBKDF2-SHA256)"], [/^\$9\$/, "Cisco type 9 (scrypt)"], [/^\$argon2(id|i|d)\$/, "Argon2"], [/^\$apr1\$/, "Apache MD5"], [/^\{SSHA\}/i, "LDAP SSHA"]];
+  for (const [re, n] of crypt) if (re.test(s)) r.push({ name: n, conf: "high", out: null, note: t("hx_oneway") });
+  if (/^[0-9a-fA-F]+$/.test(s) && HASH_LEN[s.length]) r.push({ name: HASH_LEN[s.length], conf: "medium", out: null, note: t("hx_oneway") });
+  if (/^\d{10}(\d{3})?$/.test(s)) r.push({ name: "Unix timestamp", conf: "medium", out: fmtTime(s.length === 13 ? +s / 1000 : +s) });
+  if (/%[0-9A-Fa-f]{2}/.test(s)) { try { r.push({ name: "URL encoding", conf: "high", out: decodeURIComponent(s.replace(/\+/g, " ")) }); } catch (_) {} }
+  if (/&(#\d+|#x[0-9a-f]+|[a-z]+);/i.test(s)) { const ta = document.createElement("textarea"); ta.innerHTML = s; if (ta.value !== s) r.push({ name: "HTML entities", conf: "high", out: ta.value }); }
+  const hx = s.replace(/[\s:]/g, "");
+  if (/^[0-9a-fA-F]+$/.test(hx) && hx.length % 2 === 0 && hx.length >= 4 && !HASH_LEN[hx.length] && !isC7) {
+    const b = bytesFromHex(hx), txt = bytesAsText(b);
+    r.push({ name: "Hex", conf: txt ? "high" : "low", out: txt != null ? prettyJson(txt) : binaryNote(b) });
+  }
+  const b64 = s.replace(/\s+/g, "");
+  if (b64.length >= 4 && /^[A-Za-z0-9+/_-]+={0,2}$/.test(b64) && !/^[0-9a-fA-F]+$/.test(b64) && b64.length % 4 !== 1 && !r.some(x => x.name === "JWT")) {
+    try {
+      const b = bytesFromB64(b64), txt = bytesAsText(b), kind = /[-_]/.test(b64) ? "Base64url" : "Base64", sn = sniffBytes(b);
+      if (txt != null && txt.trim()) r.push({ name: kind, conf: b64.length >= 8 ? "high" : "medium", out: prettyJson(txt) });
+      else if (sn || b64.length >= 16) r.push({ name: kind + (sn ? ` (${sn})` : ""), conf: sn ? "high" : "low", out: binaryNote(b) });
+    } catch (_) {}
+  }
+  const order = { high: 0, medium: 1, low: 2 };
+  return r.sort((a, b) => order[a.conf] - order[b.conf]);
+}
+async function encodeAs(mode, s) {
+  switch (mode) {
+    case "b64": return b64encode(s);
+    case "b64url": return b64encode(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    case "hex": return [...new TextEncoder().encode(s)].map(b => b.toString(16).padStart(2, "0")).join("");
+    case "url": return encodeURIComponent(s);
+    case "html": return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    case "md5": return md5(s);
+    case "sha1": return shaDigest("SHA-1", s);
+    case "sha256": return shaDigest("SHA-256", s);
+    case "sha384": return shaDigest("SHA-384", s);
+    case "sha512": return shaDigest("SHA-512", s);
+    case "cisco7": return cisco7Encode(s);
+  }
+  return "";
+}
+let hxMode = "detect", hxTimer = null;
+function hxCard(name, conf, note, out) {
+  return `<div class="hx-item"><div class="top"><span class="nm">${esc(name)}</span>${conf ? `<span class="pill ${conf === "high" ? "up" : conf === "medium" ? "warn" : ""}" style="${conf === "low" ? "border:1px solid var(--line)" : ""}">${esc(t("hx_conf_" + conf))}</span>` : ""}
+    ${out != null ? copyBtnHtml(out) : ""}</div>${note ? `<div class="note">${esc(note)}</div>` : ""}${out != null ? `<pre>${esc(out)}</pre>` : ""}</div>`;
+}
+async function hxRun() {
+  const input = document.getElementById("hashInput").value, out = document.getElementById("hashResult");
+  if (!input.trim()) { out.className = "empty"; out.textContent = t("hx_empty"); return; }
   out.className = "";
   try {
-    let result;
-    if (mode === "md5") result = md5(input);
-    else if (mode === "sha1") result = await shaDigest("SHA-1", input);
-    else if (mode === "sha256") result = await shaDigest("SHA-256", input);
-    else if (mode === "sha384") result = await shaDigest("SHA-384", input);
-    else if (mode === "sha512") result = await shaDigest("SHA-512", input);
-    else if (mode === "b64enc") result = b64encode(input);
-    else if (mode === "b64dec") result = b64decode(input);
-    else if (mode === "jwt") result = decodeJWT(input.trim());
-    out.innerHTML = `<div class="dns-block"><div class="dns-value" style="white-space:pre-wrap">${esc(result)}</div></div>`;
+    if (hxMode === "detect") {
+      const found = detectFormats(input);
+      out.innerHTML = found.length ? found.map(f => hxCard(f.name, f.conf, f.note, f.out)).join("") : `<div class="empty">${esc(t("hx_none"))}</div>`;
+    } else {
+      const mode = document.getElementById("hashMode");
+      out.innerHTML = hxCard(mode.options[mode.selectedIndex].text, null, mode.value === "cisco7" ? t("hx_c7_note") : "", await encodeAs(mode.value, input));
+    }
+    wireCopy(out);
   } catch (e) {
-    out.innerHTML = `<div class="empty">${esc(t("error_prefix"))}${esc(e.message)}</div>`;
+    out.innerHTML = `<div class="empty">${esc(t("error_prefix") + e.message)}</div>`;
   }
-};
+}
+document.getElementById("hashInput").addEventListener("input", () => { clearTimeout(hxTimer); hxTimer = setTimeout(hxRun, 200); });
+document.getElementById("hashMode").addEventListener("change", hxRun);
+document.querySelectorAll("[data-hx]").forEach(b => b.onclick = () => {
+  hxMode = b.dataset.hx;
+  document.querySelectorAll("[data-hx]").forEach(x => { x.classList.toggle("active", x === b); x.setAttribute("aria-selected", String(x === b)); });
+  document.getElementById("hxEncodeRow").hidden = hxMode !== "encode";
+  hxRun();
+});
+document.addEventListener("ntb-lang", () => { if (document.getElementById("hashInput").value.trim()) hxRun(); });
 
 function defaultPort(proto) {
   return proto === "rdp" ? "3389" : proto === "telnet" ? "23" : "22";
