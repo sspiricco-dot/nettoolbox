@@ -453,12 +453,14 @@
   #rdpFsBtn:hover { border-color: var(--accent); }
   /* Web terminal: fills the viewport, drag the corner to resize, or go fullscreen. */
   #termStage {
-    position: relative; height: calc(100vh - 230px); min-height: 420px;
-    resize: vertical; overflow: hidden; border-radius: 8px; background: #000;
-    border: 1px solid var(--line);
+    position: relative; height: calc(100vh - 72px); min-height: 420px; scroll-margin-top: 58px;
+    resize: vertical; overflow: hidden; border-radius: 8px; background: #0a0a0a;
+    border: 1px solid var(--line); direction: ltr;
   }
-  #termStage.tall { height: calc(100vh - 40px); }
-  iframe.term { display: block; width: 100%; height: 100%; border: 0; background: #000; }
+  /* ttyd draws a light native scrollbar on the right; make the frame wider and let the stage clip it
+     (xterm leaves that strip empty anyway; scrolling with the wheel still works) */
+  iframe.term { display: block; width: calc(100% + 18px); height: 100%; border: 0; background: #0a0a0a; }
+  .stage { direction: ltr; }
   .term-tools {
     position: absolute; top: 8px; inset-inline-end: 18px; z-index: 2; display: flex; gap: 6px;
     opacity: .55; transition: opacity .15s;
@@ -825,6 +827,7 @@
     .pm-row .pm-spark { grid-column: 1 / -1; }
     .pm-row .pm-hide-m { display: none; }
     .stage { height: calc(100vh - 160px); }
+    #termStage { height: calc(100vh - 80px); scroll-margin-top: 70px; }
   }
 
   /* ---- shared bits for the field tools (syslog, lan check, iperf, pcap, configs) */
@@ -2224,8 +2227,15 @@
           <button class="action" id="termConnectBtn" data-i18n="term_connect_btn">اتصال</button>
           <button class="action secondary" id="termBlankBtn" data-i18n="term_blank_btn">ترمینال خالی</button>
         </div>
-        <div class="hint" data-i18n="term_hint">پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید. برای تغییر اندازه، گوشه‌ی پایین ترمینال رو بکشید، یا «بزرگ‌تر» / «تمام‌صفحه» (F11) رو بزنید.</div>
-        <div class="bezel session-script" id="termScriptBox">
+        <div class="hint" data-i18n="term_hint">پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید. ترمینال کل ارتفاع صفحه را می‌گیرد؛ گوشه‌ی پایینش را بکشید یا «تمام‌صفحه» (F11) را بزنید.</div>
+        <div id="termPlaceholder" class="empty" data-i18n="term_placeholder">فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.</div>
+        <div id="termStage" hidden>
+          <div class="term-tools">
+            <button type="button" id="termFsBtn" data-i18n="rdp_fullscreen">تمام‌صفحه</button>
+          </div>
+          <iframe class="term" id="termFrame" title="Terminal" allow="clipboard-read; clipboard-write"></iframe>
+        </div>
+        <div class="bezel session-script" id="termScriptBox" style="margin-top:16px">
           <div class="bezel-label" data-i18n="session_scripts">اسکریپت روی همین اتصال</div>
           <div class="hint" data-i18n="session_hint_term">اول وصل شوید و لاگین کنید. اسکریپت داخل همین ترمینال اجرا می‌شود. اسکریپت بزرگ یا ویندوز رمز SSH می‌خواهد.</div>
           <div class="row">
@@ -2237,14 +2247,6 @@
           </div>
           <div id="termScriptVars" class="row"></div>
           <pre class="rawout" id="termScriptOut" style="max-height:140px"></pre>
-        </div>
-        <div id="termPlaceholder" class="empty" data-i18n="term_placeholder">فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.</div>
-        <div id="termStage" hidden>
-          <div class="term-tools">
-            <button type="button" id="termTallBtn" data-i18n="term_taller">بزرگ‌تر</button>
-            <button type="button" id="termFsBtn" data-i18n="rdp_fullscreen">تمام‌صفحه</button>
-          </div>
-          <iframe class="term" id="termFrame" title="Terminal" allow="clipboard-read; clipboard-write"></iframe>
         </div>
       </section>
 
@@ -2920,7 +2922,7 @@ const translations = {
     qc_empty: "هنوز میزبانی ذخیره نشده.",
     term_host_placeholder: "host یا IP…", term_port_placeholder: "پورت (پیش‌فرض 22/23)…",
     term_user_placeholder: "یوزرنیم (فقط SSH)…", term_connect_btn: "اتصال", term_blank_btn: "ترمینال خالی",
-    term_hint: "پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید. برای تغییر اندازه، گوشه‌ی پایین ترمینال رو بکشید، یا «بزرگ‌تر» / «تمام‌صفحه» (F11) رو بزنید.",
+    term_hint: "پسورد رو داخل خود ترمینال بعد از اتصال وارد کنید. ترمینال کل ارتفاع صفحه را می‌گیرد؛ گوشه‌ی پایینش را بکشید یا «تمام‌صفحه» (F11) را بزنید.",
     term_placeholder: "فرم بالا رو پر کنید و «اتصال» بزنید، یا «ترمینال خالی» برای یه شل ساده.…",
     rdp_lede: "دسکتاپ ویندوز را داخل همین مرورگر باز می‌کند — مثل SSH، فقط روی localhost.",
     rdp_hint: "برای سرورهای داخلی گواهی نامعتبر نادیده گرفته می‌شود. جلسه قبلی با اتصال جدید جایگزین می‌شود. تمام‌صفحه تصویر را بزرگ می‌کند.",
@@ -3500,7 +3502,7 @@ const translations = {
     qc_empty: "No saved hosts yet.",
     term_host_placeholder: "host or IP…", term_port_placeholder: "port (default 22/23)…",
     term_user_placeholder: "username (SSH only)…", term_connect_btn: "Connect", term_blank_btn: "Blank shell",
-    term_hint: "Type your password inside the terminal after connecting. Drag the bottom corner to resize, or use Taller / Fullscreen (F11).",
+    term_hint: "Type your password inside the terminal after connecting. The terminal fills the screen height; drag its bottom corner or use Fullscreen (F11).",
     term_placeholder: "Fill the form above and hit \"Connect\", or \"Blank shell\" for a plain shell.",
     rdp_lede: "Opens a Windows desktop in this browser — same as SSH, loopback only.",
     rdp_hint: "Internal/self-signed certificates are ignored. A new connect replaces the previous session. Use fullscreen for a larger desktop.",
@@ -7112,6 +7114,7 @@ const termStage = document.getElementById("termStage");
 function showTermStage() {
   termPlaceholder.style.display = "none";
   termStage.hidden = false;
+  requestAnimationFrame(() => termStage.scrollIntoView({ block: "start", behavior: "smooth" }));
   termFrame.onload = () => { try { termFrame.focus(); } catch (_) {} };
 }
 function termFsOn() { return (document.fullscreenElement || document.webkitFullscreenElement) === termStage; }
@@ -7131,21 +7134,6 @@ async function toggleTermFullscreen() {
   } catch (_) { /* browser blocked fullscreen */ }
 }
 document.getElementById("termFsBtn").onclick = toggleTermFullscreen;
-document.getElementById("termTallBtn").onclick = () => {
-  termStage.style.height = "";
-  const tall = termStage.classList.toggle("tall");
-  document.getElementById("termTallBtn").textContent = t(tall ? "term_smaller" : "term_taller");
-  if (tall) termStage.scrollIntoView({block: "start", behavior: "smooth"});
-  try { localStorage.setItem("nettoolbox_term_tall", tall ? "1" : "0"); } catch (_) {}
-  termFrame.focus();
-};
-try {
-  if (localStorage.getItem("nettoolbox_term_tall") === "1") {
-    termStage.classList.add("tall");
-    document.getElementById("termTallBtn").dataset.i18n = "term_smaller";
-    document.getElementById("termTallBtn").textContent = t("term_smaller");
-  }
-} catch (_) {}
 document.addEventListener("fullscreenchange", syncTermFsLabel);
 document.addEventListener("webkitfullscreenchange", syncTermFsLabel);
 document.addEventListener("keydown", ev => {
