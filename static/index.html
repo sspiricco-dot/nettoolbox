@@ -283,7 +283,7 @@
   .card-actions button:hover { color: var(--ink); border-color: var(--accent); }
 
   .scan-stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
     gap: 10px; margin-bottom: 16px;
   }
   .stat {
@@ -291,7 +291,7 @@
     padding: 12px 14px;
   }
   .stat .n {
-    font-size: 22px; font-weight: 700; font-family: var(--mono);
+    font-size: 19px; font-weight: 700; font-family: var(--mono);
     color: var(--ink); letter-spacing: -.03em; overflow-wrap: anywhere;
   }
   .stat .l { color: var(--ink-dim); font-size: 11px; margin-top: 2px; text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); }
@@ -876,7 +876,7 @@
   a.action.secondary { background: var(--surface-solid); border: 1px solid var(--line); color: var(--ink); }
   a.action.secondary:hover { border-color: var(--accent); }
   /* LTR fields (IPs, filters, commands) keep an RTL placeholder in Persian until something is typed */
-  [dir="rtl"] input.ltr:placeholder-shown, [dir="rtl"] input[dir="ltr"]:placeholder-shown { direction: rtl; text-align: right; }
+  [dir="rtl"] :is(input, textarea).ltr:placeholder-shown, [dir="rtl"] :is(input, textarea)[dir="ltr"]:placeholder-shown { direction: rtl; text-align: right; }
   .sl-stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
   .sl-stats:empty { display: none; }
   .sev { display: inline-block; min-width: 58px; text-align: center; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; }
